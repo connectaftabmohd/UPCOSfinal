@@ -1,0 +1,6 @@
+{
+  "name": "UP Outsource Seva Nigam News & Information",
+  "description": "उत्तर प्रदेश राज्य सरकार के विभिन्न विभागों में कार्यरत आउटसोर्स कर्मचारियों के लिए समाचार, शासनादेश, वेतन अपडेट और सेवा संबंधी जानकारी का स्वतंत्र मंच।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
