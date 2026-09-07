@@ -7,6 +7,7 @@ interface LatestNewsGridProps {
   onNavigate: (view: PageView) => void;
   title?: string;
   showViewAll?: boolean;
+  onOpenSewayojanSync?: () => void;
 }
 
 export const LatestNewsGrid: React.FC<LatestNewsGridProps> = ({
@@ -14,6 +15,7 @@ export const LatestNewsGrid: React.FC<LatestNewsGridProps> = ({
   onNavigate,
   title = 'ताज़ा खबरें',
   showViewAll = true,
+  onOpenSewayojanSync,
 }) => {
   return (
     <section className="py-8 bg-white border-b border-slate-200">
@@ -25,11 +27,23 @@ export const LatestNewsGrid: React.FC<LatestNewsGridProps> = ({
               <Newspaper className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                {title}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  {title}
+                </h2>
+                {onOpenSewayojanSync && (
+                  <button
+                    onClick={onOpenSewayojanSync}
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-[11px] font-bold transition cursor-pointer"
+                    title="उत्तर प्रदेश सेवायोजन पोर्टल (sewayojan.up.nic.in/jobs.aspx) ऑटो-अपडेट"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>सेवायोजन ऑटो-सिंक</span>
+                  </button>
+                )}
+              </div>
               <p className="text-xs text-slate-500 font-medium hidden sm:block">
-                प्रदेश भर के संविदा एवं आउटसोर्स कार्मिकों से जुड़ी अद्यतन सूचनाएं
+                प्रदेश भर के संविदा एवं आउटसोर्स कार्मिकों से जुड़ी अद्यतन सूचनाएं व सेवायोजन भर्तियां
               </p>
             </div>
           </div>
@@ -61,6 +75,10 @@ export const LatestNewsGrid: React.FC<LatestNewsGridProps> = ({
                   src={item.featuredImage}
                   alt={item.title}
                   loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
+                  }}
                   className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-500"
                 />
                 <div className="absolute top-3 left-3 flex items-center gap-1.5">

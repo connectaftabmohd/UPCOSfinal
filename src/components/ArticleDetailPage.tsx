@@ -195,6 +195,10 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
               <img
                 src={article.featuredImage}
                 alt={article.title}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
+                }}
                 className="w-full h-full object-cover"
               />
             </div>

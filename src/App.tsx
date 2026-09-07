@@ -31,10 +31,15 @@ import { SearchResultsPage } from './components/SearchResultsPage';
 import { StaticPages } from './components/StaticPages';
 import { AdminCMS } from './components/AdminCMS';
 import { TalkCornerPage } from './components/TalkCornerPage';
+import { BloggerThemeExportModal } from './components/BloggerThemeExportModal';
+import { SewayojanSyncModal } from './components/SewayojanSyncModal';
+import { initializeAutoSyncEngine } from './services/sewayojanSyncService';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<PageView>({ type: 'home' });
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isBloggerModalOpen, setIsBloggerModalOpen] = useState(false);
+  const [isSewayojanModalOpen, setIsSewayojanModalOpen] = useState(false);
   const [language, setLanguage] = useState<'HI' | 'EN'>('HI');
 
   // Load data from contentStore (localStorage enabled)
@@ -49,6 +54,15 @@ export default function App() {
 
   useEffect(() => {
     refreshData();
+
+    // Start background auto-sync for Sewayojan jobs (https://sewayojan.up.nic.in/jobs.aspx)
+    const cleanup = initializeAutoSyncEngine(() => {
+      refreshData();
+    });
+
+    return () => {
+      cleanup();
+    };
   }, []);
 
   const handleNavigate = (view: PageView) => {
@@ -66,6 +80,8 @@ export default function App() {
         currentView={currentView}
         onNavigate={handleNavigate}
         onOpenSearch={() => setIsSearchModalOpen(true)}
+        onOpenBloggerExport={() => setIsBloggerModalOpen(true)}
+        onOpenSewayojanSync={() => setIsSewayojanModalOpen(true)}
         language={language}
         onToggleLanguage={() => setLanguage((l) => (l === 'HI' ? 'EN' : 'HI'))}
       />
@@ -95,6 +111,7 @@ export default function App() {
               onNavigate={handleNavigate}
               title="ताज़ा खबरें"
               showViewAll={true}
+              onOpenSewayojanSync={() => setIsSewayojanModalOpen(true)}
             />
 
             {/* Important Updates Hub (Salary, PF, ESI, Renewal, etc.) */}
@@ -138,6 +155,7 @@ export default function App() {
             initialCategory={currentView.category}
             initialDepartment={currentView.department}
             onNavigate={handleNavigate}
+            onRefresh={refreshData}
           />
         )}
 
@@ -249,12 +267,17 @@ export default function App() {
             orders={orders}
             onRefresh={refreshData}
             onNavigate={handleNavigate}
+            onOpenBloggerExport={() => setIsBloggerModalOpen(true)}
+            onOpenSewayojanSync={() => setIsSewayojanModalOpen(true)}
           />
         )}
       </main>
 
       {/* Global Footer */}
-      <Footer onNavigate={handleNavigate} />
+      <Footer 
+        onNavigate={handleNavigate} 
+        onOpenBloggerExport={() => setIsBloggerModalOpen(true)}
+      />
 
       {/* Quick Search Modal */}
       <SearchModal
@@ -264,6 +287,19 @@ export default function App() {
         orders={orders}
         departments={departments}
         onNavigate={handleNavigate}
+      />
+
+      {/* Blogger.com XML Theme Export Modal */}
+      <BloggerThemeExportModal
+        isOpen={isBloggerModalOpen}
+        onClose={() => setIsBloggerModalOpen(false)}
+      />
+
+      {/* Sewayojan Jobs Live Auto-Sync Modal */}
+      <SewayojanSyncModal
+        isOpen={isSewayojanModalOpen}
+        onClose={() => setIsSewayojanModalOpen(false)}
+        onSyncSuccess={refreshData}
       />
     </div>
   );

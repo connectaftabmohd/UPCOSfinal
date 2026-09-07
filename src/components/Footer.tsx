@@ -8,7 +8,13 @@ import {
   ChevronRight,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  Download,
+  Facebook,
+  Youtube,
+  Twitter,
+  Instagram,
+  MessageCircle
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { Newsletter } from './Newsletter';
@@ -16,9 +22,10 @@ import { PageView } from '../types';
 
 interface FooterProps {
   onNavigate: (view: PageView) => void;
+  onOpenBloggerExport?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenBloggerExport }) => {
   return (
     <footer className="bg-slate-950 text-slate-300 pt-12 pb-8 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-3 sm:px-6">
@@ -48,27 +55,62 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
             {/* Social Media Links */}
             <div className="pt-2">
-              <span className="text-xs font-semibold text-slate-400 block mb-2">
+              <span className="text-xs font-semibold text-slate-400 block mb-2.5">
                 सोशल मीडिया पर जुड़ें (Follow Us):
               </span>
               <div className="flex items-center gap-2">
                 {[
-                  { name: 'WhatsApp', color: 'hover:bg-emerald-600', url: 'https://whatsapp.com' },
-                  { name: 'YouTube', color: 'hover:bg-red-600', url: 'https://youtube.com' },
-                  { name: 'Facebook', color: 'hover:bg-blue-600', url: 'https://facebook.com' },
-                  { name: 'X (Twitter)', color: 'hover:bg-slate-700', url: 'https://x.com' },
-                  { name: 'Instagram', color: 'hover:bg-pink-600', url: 'https://instagram.com' },
-                ].map((s) => (
-                  <a
-                    key={s.name}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs font-medium transition ${s.color} hover:text-white`}
-                  >
-                    {s.name}
-                  </a>
-                ))}
+                  { 
+                    name: 'Facebook', 
+                    icon: Facebook, 
+                    color: 'hover:bg-[#1877F2] hover:border-[#1877F2] text-slate-300 hover:text-white', 
+                    url: 'https://www.facebook.com/people/UP-outsource-Seva-Nigam-News-and-Information/61580301641301/',
+                    ariaLabel: 'Facebook - UP Outsource Seva Nigam News and Information'
+                  },
+                  { 
+                    name: 'WhatsApp', 
+                    icon: MessageCircle, 
+                    color: 'hover:bg-[#25D366] hover:border-[#25D366] text-slate-300 hover:text-white', 
+                    url: 'https://whatsapp.com',
+                    ariaLabel: 'WhatsApp चैनल व कम्युनिटी'
+                  },
+                  { 
+                    name: 'YouTube', 
+                    icon: Youtube, 
+                    color: 'hover:bg-[#FF0000] hover:border-[#FF0000] text-slate-300 hover:text-white', 
+                    url: 'https://youtube.com',
+                    ariaLabel: 'YouTube आधिकारिक चैनल'
+                  },
+                  { 
+                    name: 'X (Twitter)', 
+                    icon: Twitter, 
+                    color: 'hover:bg-slate-700 hover:border-slate-600 text-slate-300 hover:text-white', 
+                    url: 'https://x.com',
+                    ariaLabel: 'X (Twitter) आधिकारिक हैंडल'
+                  },
+                  { 
+                    name: 'Instagram', 
+                    icon: Instagram, 
+                    color: 'hover:bg-pink-600 hover:border-pink-500 text-slate-300 hover:text-white', 
+                    url: 'https://instagram.com',
+                    ariaLabel: 'Instagram आधिकारिक पेज'
+                  },
+                ].map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <a
+                      key={s.name}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={s.name}
+                      aria-label={s.ariaLabel}
+                      className={`w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-110 ${s.color}`}
+                    >
+                      <Icon className="w-4.5 h-4.5" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -144,6 +186,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   <span>UPCOS संदर्भ पोर्टल (upcos.org)</span>
                 </a>
               </li>
+              {onOpenBloggerExport && (
+                <li className="pt-1">
+                  <button
+                    onClick={onOpenBloggerExport}
+                    className="text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 font-bold cursor-pointer bg-amber-500/10 px-2 py-1 rounded border border-amber-500/30 text-[11px]"
+                  >
+                    <Download className="w-3 h-3 text-amber-400" />
+                    <span>ब्लॉगर थीम डाउनलोड (.XML Theme)</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 

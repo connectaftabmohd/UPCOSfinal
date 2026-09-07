@@ -10,12 +10,16 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { NewsItem, PageView } from '../types';
+import { SewayojanSyncBanner } from './SewayojanSyncBanner';
+import { SewayojanSyncModal } from './SewayojanSyncModal';
+import { SyncResult } from '../services/sewayojanSyncService';
 
 interface NewsListPageProps {
   news: NewsItem[];
   initialCategory?: string;
   initialDepartment?: string;
   onNavigate: (view: PageView) => void;
+  onRefresh?: () => void;
 }
 
 export const NewsListPage: React.FC<NewsListPageProps> = ({
@@ -23,11 +27,13 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
   initialCategory,
   initialDepartment,
   onNavigate,
+  onRefresh,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'ALL');
   const [selectedDept, setSelectedDept] = useState(initialDepartment || 'ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSewayojanModalOpen, setIsSewayojanModalOpen] = useState(false);
   const itemsPerPage = 9;
 
   const safeNews = news || [];
@@ -92,6 +98,14 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Sewayojan Portal Auto-Sync Module */}
+        <SewayojanSyncBanner
+          onOpenModal={() => setIsSewayojanModalOpen(true)}
+          onSyncComplete={() => {
+            if (onRefresh) onRefresh();
+          }}
+        />
 
         {/* Filter Controls Bar */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-8 shadow-2xs space-y-3">
@@ -187,6 +201,10 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
                   <img
                     src={item.featuredImage}
                     alt={item.title}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
+                    }}
                     className="w-full h-full object-cover group-hover:scale-104 transition duration-500"
                   />
                   <div className="absolute top-3 left-3">
@@ -260,6 +278,15 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
             </button>
           </div>
         )}
+
+        {/* Sewayojan Jobs Modal */}
+        <SewayojanSyncModal
+          isOpen={isSewayojanModalOpen}
+          onClose={() => setIsSewayojanModalOpen(false)}
+          onSyncSuccess={() => {
+            if (onRefresh) onRefresh();
+          }}
+        />
       </div>
     </div>
   );

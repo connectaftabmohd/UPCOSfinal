@@ -2,16 +2,27 @@ import { useState, useEffect } from 'react';
 import { NewsItem, GovernmentOrder } from '../types';
 import { NEWS_DATA, GOV_ORDERS_DATA } from './mockData';
 
-const NEWS_STORAGE_KEY = 'uposn_news_data_v1';
+const NEWS_STORAGE_KEY = 'uposn_news_data_v2';
 const GOV_ORDERS_STORAGE_KEY = 'uposn_gov_orders_v1';
 
 export function getStoredNews(): NewsItem[] {
   try {
-    const raw = localStorage.getItem(NEWS_STORAGE_KEY);
+    const raw = localStorage.getItem(NEWS_STORAGE_KEY) || localStorage.getItem('uposn_news_data_v1');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        // Automatically replace any outdated or mismatched photo with the relevant secretariat meeting photo
+        const sanitized = parsed.map((item: NewsItem) => {
+          if (item.featuredImage && (item.featuredImage.includes('photo-1541872703-74c5e44368f9') || item.id === 'news-1' && item.featuredImage.includes('photo-1541872703'))) {
+            return {
+              ...item,
+              featuredImage: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80',
+            };
+          }
+          return item;
+        });
+        localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(sanitized));
+        return sanitized;
       }
     }
   } catch (e) {

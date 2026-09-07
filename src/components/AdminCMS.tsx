@@ -13,17 +13,23 @@ import {
   KeyRound,
   ShieldAlert,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Download,
+  Zap,
+  RefreshCw
 } from 'lucide-react';
 import { NewsItem, GovernmentOrder, PageView } from '../types';
 import { contentStore } from '../data/contentStore';
 import { DEPARTMENTS_DATA } from '../data/mockData';
+import { syncSewayojanJobsToNewsBlog } from '../services/sewayojanSyncService';
 
 interface AdminCMSProps {
   news: NewsItem[];
   orders: GovernmentOrder[];
   onRefresh: () => void;
   onNavigate: (view: PageView) => void;
+  onOpenBloggerExport?: () => void;
+  onOpenSewayojanSync?: () => void;
 }
 
 export const AdminCMS: React.FC<AdminCMSProps> = ({
@@ -31,6 +37,8 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   orders,
   onRefresh,
   onNavigate,
+  onOpenBloggerExport,
+  onOpenSewayojanSync,
 }) => {
   const [isAuthorized, setIsAuthorized] = useState(() => {
     return sessionStorage.getItem('uposn_editor_auth') === 'true';
@@ -40,6 +48,25 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
 
   const [activeTab, setActiveTab] = useState<'NEWS' | 'ORDERS'>('NEWS');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isSewayojanSyncing, setIsSewayojanSyncing] = useState(false);
+
+  const handleSewayojanAdminSync = async () => {
+    setIsSewayojanSyncing(true);
+    setSuccessMsg('');
+    try {
+      const result = await syncSewayojanJobsToNewsBlog();
+      onRefresh();
+      if (result.newPostsCount > 0) {
+        setSuccessMsg(`सेवायोजन पोर्टल से ${result.newPostsCount} नई आउटसोर्स भर्तियां सफलतापूर्वक ब्लॉग में जोड़ी गईं!`);
+      } else {
+        setSuccessMsg('सेवायोजन पोर्टल की सभी उपलब्ध भर्तियां पहले से ही अद्यतित (Up-to-date) हैं।');
+      }
+    } catch {
+      setSuccessMsg('सिंक करने में त्रुटि आई। कृपया पुनः प्रयास करें।');
+    } finally {
+      setIsSewayojanSyncing(false);
+    }
+  };
 
   // New News form state
   const [newsTitle, setNewsTitle] = useState('');
@@ -269,6 +296,17 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {onOpenBloggerExport && (
+              <button
+                onClick={onOpenBloggerExport}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black rounded-xl shadow-xs transition cursor-pointer"
+                title="ब्लॉगर.कॉम (Blogger.com) थीम XML कोड डाउनलोड करें"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>ब्लॉगर थीम (.XML)</span>
+              </button>
+            )}
+
             <button
               onClick={handlePurgeUnauthorized}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
@@ -302,6 +340,81 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 p-3 rounded-xl mb-6 text-xs font-bold flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-600" />
             <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* Sewayojan Live Auto-Post Card */}
+        <div className="bg-linear-to-r from-emerald-950 via-slate-900 to-blue-950 text-white p-4.5 rounded-2xl mb-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-emerald-800/80">
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg shrink-0 shadow-md">
+              <Zap className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="bg-emerald-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Automated Jobs Scraper
+                </span>
+                <span className="text-emerald-300 font-mono text-xs">
+                  sewayojan.up.nic.in/jobs.aspx
+                </span>
+              </div>
+              <h4 className="font-black text-sm sm:text-base text-white mt-0.5">
+                सेवायोजन पोर्टल से ताज़ा खबरें ब्लॉग में आटोमैटिक पोस्टिंग
+              </h4>
+              <p className="text-xs text-slate-300 mt-1 max-w-xl">
+                उत्तर प्रदेश रोजगार संगम पोर्टल पर आने वाली संविदा व आउटसोर्सिंग नौकरियों को सीधे स्कैन कर ताज़ा खबरें ब्लॉग में जोड़ने की तकनीक सक्रिय है।
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleSewayojanAdminSync}
+              disabled={isSewayojanSyncing}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSewayojanSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSewayojanSyncing ? 'सिंक हो रहा है...' : 'अभी सिंक करें (Sync Now)'}</span>
+            </button>
+
+            {onOpenSewayojanSync && (
+              <button
+                onClick={onOpenSewayojanSync}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/15 transition cursor-pointer"
+              >
+                <span>कंट्रोल व जॉब्स</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Blogger Deployment Banner */}
+        {onOpenBloggerExport && (
+          <div className="bg-linear-to-r from-blue-900 to-slate-900 text-white p-4 rounded-2xl mb-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-blue-800">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg shrink-0">
+                B
+              </div>
+              <div>
+                <h4 className="font-extrabold text-sm sm:text-base flex items-center gap-2">
+                  <span>Blogger.com पर इस पोर्टल को परिनियोजित करें</span>
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                    Theme Code Ready
+                  </span>
+                </h4>
+                <p className="text-xs text-blue-200 mt-0.5">
+                  इस पूरे UP Outsource Seva Nigam पोर्टल का ब्लॉगर XML कोड तैयार है। आप सीधे Blogger पर Restore करके अपनी वेबसाइट लाइव कर सकते हैं।
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onOpenBloggerExport}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-xs transition cursor-pointer shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              <span>ब्लॉगर थीम डाउनलोड व गाइड</span>
+            </button>
           </div>
         )}
 

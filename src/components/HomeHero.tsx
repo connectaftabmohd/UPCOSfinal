@@ -80,6 +80,10 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                 src={activeFeatured.featuredImage}
                 alt={activeFeatured.title}
                 loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
+                }}
                 className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />

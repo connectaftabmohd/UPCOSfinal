@@ -11,9 +11,9 @@ import {
   Newspaper, 
   Home, 
   ShieldCheck, 
-  Info,
-  Layers,
-  MessageSquareQuote
+  MessageSquareQuote,
+  Download,
+  Zap
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { PageView } from '../types';
@@ -22,27 +22,35 @@ interface HeaderProps {
   currentView: PageView;
   onNavigate: (view: PageView) => void;
   onOpenSearch: () => void;
-  lang: 'hi' | 'en';
-  onToggleLang: () => void;
+  onOpenBloggerExport?: () => void;
+  onOpenSewayojanSync?: () => void;
+  lang?: 'hi' | 'en';
+  language?: 'HI' | 'EN';
+  onToggleLang?: () => void;
+  onToggleLanguage?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentView,
   onNavigate,
   onOpenSearch,
-  lang,
+  onOpenBloggerExport,
+  onOpenSewayojanSync,
+  lang = 'hi',
+  language,
   onToggleLang,
+  onToggleLanguage,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const currentLang = language ? (language.toLowerCase() as 'hi' | 'en') : lang;
 
   const navLinks = [
-    { label: lang === 'hi' ? 'होम' : 'Home', view: { type: 'home' } as PageView, icon: Home },
-    { label: lang === 'hi' ? 'ताज़ा खबरें' : 'Latest News', view: { type: 'news-list' } as PageView, icon: Newspaper },
-    { label: lang === 'hi' ? 'शासनादेश' : 'Gov Orders', view: { type: 'gov-orders' } as PageView, icon: FileText },
-    { label: lang === 'hi' ? 'विभाग' : 'Departments', view: { type: 'departments' } as PageView, icon: Building },
-    { label: lang === 'hi' ? 'कर्मचारी केंद्र' : 'Employee Hub', view: { type: 'employee-hub' } as PageView, icon: HelpCircle },
-    { label: lang === 'hi' ? 'टॉक कॉर्नर' : 'Talk Corner', view: { type: 'talk-corner' } as PageView, icon: MessageSquareQuote },
-    { label: lang === 'hi' ? 'हमारे बारे में' : 'About', view: { type: 'about' } as PageView, icon: Info },
+    { label: currentLang === 'hi' ? 'होम' : 'Home', view: { type: 'home' } as PageView, icon: Home },
+    { label: currentLang === 'hi' ? 'ताज़ा खबरें' : 'Latest News', view: { type: 'news-list' } as PageView, icon: Newspaper },
+    { label: currentLang === 'hi' ? 'शासनादेश' : 'Gov Orders', view: { type: 'gov-orders' } as PageView, icon: FileText },
+    { label: currentLang === 'hi' ? 'विभाग' : 'Departments', view: { type: 'departments' } as PageView, icon: Building },
+    { label: currentLang === 'hi' ? 'कर्मचारी केंद्र' : 'Employee Hub', view: { type: 'employee-hub' } as PageView, icon: HelpCircle },
+    { label: currentLang === 'hi' ? 'टॉक कॉर्नर' : 'Talk Corner', view: { type: 'talk-corner' } as PageView, icon: MessageSquareQuote },
   ];
 
   const isActive = (view: PageView) => {
@@ -86,6 +94,32 @@ export const Header: React.FC<HeaderProps> = ({
               UPCOS संदर्भ
             </a>
             <span className="text-slate-300 hidden sm:inline">|</span>
+            {onOpenSewayojanSync && (
+              <>
+                <button
+                  onClick={onOpenSewayojanSync}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white font-black text-[11px] shadow-2xs transition cursor-pointer"
+                  title="उत्तर प्रदेश सेवायोजन पोर्टल ऑटो-सिंक (sewayojan.up.nic.in/jobs.aspx)"
+                >
+                  <Zap className="w-3 h-3 text-amber-300" />
+                  <span>सेवायोजन ऑटो-सिंक</span>
+                </button>
+                <span className="text-slate-300 hidden sm:inline">|</span>
+              </>
+            )}
+            {onOpenBloggerExport && (
+              <>
+                <button
+                  onClick={onOpenBloggerExport}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] shadow-2xs transition cursor-pointer"
+                  title="ब्लॉगर.कॉम (Blogger/Blogspot) थीम XML डाउनलोड करें"
+                >
+                  <Download className="w-3 h-3 text-slate-950" />
+                  <span>ब्लॉगर थीम (.XML)</span>
+                </button>
+                <span className="text-slate-300 hidden sm:inline">|</span>
+              </>
+            )}
             <button
               onClick={() => handleNavClick({ type: 'admin' })}
               className="flex items-center gap-1 text-slate-600 hover:text-blue-700 font-medium cursor-pointer"
@@ -187,6 +221,19 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               );
             })}
+
+            {onOpenBloggerExport && (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenBloggerExport();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-xs transition cursor-pointer mb-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>ब्लॉगर थीम (.XML) डाउनलोड करें</span>
+              </button>
+            )}
 
             <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 px-1">
               <button

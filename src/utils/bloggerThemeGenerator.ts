@@ -1,0 +1,1108 @@
+/**
+ * Complete, 100% Production-Grade Google Blogger (Blogspot) XML Theme Template
+ * Styled to match the UP Outsource Seva Nigam (UPOSN) News & Information Portal.
+ * 
+ * Instructions for Blogger:
+ * 1. Open Blogger.com -> Theme
+ * 2. Click ▾ next to "Customize" -> Click "Restore" (or "Edit HTML")
+ * 3. Upload or paste this XML code
+ */
+
+export function generateBloggerThemeXml(): string {
+  return `<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<html b:css='false' b:defaultwidgetversion='2' b:layoutsversion='3' expr:dir='data:blog.languageDirection' expr:lang='data:blog.locale' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/2005/gml/data' xmlns:expr='http://www.google.com/2005/gml/expr'>
+<head>
+  <meta charset='UTF-8'/>
+  <meta content='width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5' name='viewport'/>
+  <title><data:blog.pageTitle/></title>
+  
+  <b:include data='blog' name='all-head-content'/>
+
+  <!-- Google Fonts: Noto Sans Devanagari & Plus Jakarta Sans -->
+  <link href='https://fonts.googleapis.com' rel='preconnect'/>
+  <link crossorigin='' href='https://fonts.gstatic.com' rel='preconnect'/>
+  <link href='https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap' rel='stylesheet'/>
+
+  <b:skin version='1.3.3'><![CDATA[
+  /* ============================================================
+     UP Outsource Seva Nigam (UPOSN) - Official Blogger Theme
+     Optimized for Hindi News, Govt Orders & Employee Information
+     ============================================================ */
+  
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --primary: #1e3a8a;       /* Deep Navy */
+    --primary-dark: #0f172a;  /* Dark Slate */
+    --accent: #d97706;        /* UP Saffron/Amber */
+    --danger: #dc2626;        /* Crimson Red / Breaking */
+    --bg-light: #f1f5f9;      /* Slate-100 */
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --font-hindi: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-en: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    font-family: var(--font-hindi);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  /* ----------------------------------------------------
+     Top Micro Bar (Disclaimer & Portal Reference)
+     ---------------------------------------------------- */
+  .uposn-microbar {
+    background: #e2e8f0;
+    border-bottom: 1px solid #cbd5e1;
+    font-size: 12px;
+    padding: 5px 0;
+    color: #475569;
+  }
+  .uposn-microbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .uposn-badge-independent {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+  .uposn-microbar-links {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .uposn-microbar-links a {
+    color: #1e3a8a;
+    font-weight: 600;
+  }
+  .uposn-microbar-links a:hover {
+    text-decoration: underline;
+  }
+
+  /* ----------------------------------------------------
+     Main Header & Branding
+     ---------------------------------------------------- */
+  .uposn-header {
+    background: #ffffff;
+    border-bottom: 2px solid #1e3a8a;
+    padding: 12px 0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  }
+  .uposn-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .uposn-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .uposn-logo-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    border: 2px solid #f59e0b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-family: var(--font-en);
+    font-weight: 800;
+    font-size: 16px;
+    box-shadow: 0 2px 6px rgba(30, 58, 138, 0.25);
+    flex-shrink: 0;
+  }
+  .uposn-brand-text h1 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  .uposn-brand-text h1 span {
+    color: #dc2626;
+  }
+  .uposn-brand-tagline {
+    font-size: 12px;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  /* Header Search Form */
+  .uposn-header-search {
+    position: relative;
+    max-width: 320px;
+    width: 100%;
+  }
+  .uposn-header-search input {
+    width: 100%;
+    padding: 9px 14px 9px 36px;
+    font-size: 13px;
+    font-family: var(--font-hindi);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: #f8fafc;
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .uposn-header-search input:focus {
+    background: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+  }
+  .uposn-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+    font-size: 14px;
+  }
+
+  /* ----------------------------------------------------
+     Navigation Bar
+     ---------------------------------------------------- */
+  .uposn-nav-bar {
+    background: #1e3a8a;
+    color: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 99;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  }
+  .uposn-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .uposn-nav-links {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .uposn-nav-links::-webkit-scrollbar {
+    display: none;
+  }
+  .uposn-nav-links li a {
+    display: inline-block;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #f8fafc;
+    transition: background 0.2s;
+  }
+  .uposn-nav-links li a:hover,
+  .uposn-nav-links li a.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+  }
+  .uposn-nav-links li:first-child a {
+    background: #dc2626;
+  }
+  .uposn-nav-links li:first-child a:hover {
+    background: #b91c1c;
+  }
+  .uposn-mobile-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 20px;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  /* ----------------------------------------------------
+     Breaking News Ticker
+     ---------------------------------------------------- */
+  .uposn-ticker {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 0;
+  }
+  .uposn-ticker-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .uposn-ticker-badge {
+    background: #dc2626;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .uposn-ticker-content {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    flex: 1;
+  }
+  .uposn-ticker-content a:hover {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+
+  /* ----------------------------------------------------
+     Main Content & Sidebar Layout
+     ---------------------------------------------------- */
+  .uposn-main-wrapper {
+    padding: 24px 0 40px;
+  }
+  .uposn-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 992px) {
+    .uposn-grid-layout {
+      grid-template-columns: 8fr 4fr;
+    }
+  }
+
+  /* Section Headings */
+  .uposn-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1e3a8a;
+  }
+  .uposn-section-title h2,
+  .uposn-section-title h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .uposn-section-title h2::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 18px;
+    background: #dc2626;
+    border-radius: 2px;
+  }
+
+  /* ----------------------------------------------------
+     Post Cards Grid (Homepage / Search / Archive)
+     ---------------------------------------------------- */
+  .uposn-posts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 640px) {
+    .uposn-posts-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .uposn-post-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .uposn-post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+  }
+  .uposn-card-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  .uposn-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s;
+  }
+  .uposn-post-card:hover .uposn-card-thumb img {
+    transform: scale(1.04);
+  }
+  .uposn-card-label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #1e3a8a;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .uposn-card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .uposn-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .uposn-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .uposn-card-title a:hover {
+    color: var(--primary);
+  }
+  .uposn-card-snippet {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+  .uposn-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  /* ----------------------------------------------------
+     Single Article Post View (Post Page)
+     ---------------------------------------------------- */
+  .uposn-single-article {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .uposn-article-header {
+    margin-bottom: 20px;
+  }
+  .uposn-article-category {
+    display: inline-block;
+    background: #1e3a8a;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .uposn-article-title {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+    margin-bottom: 12px;
+  }
+  @media (min-width: 640px) {
+    .uposn-article-title {
+      font-size: 28px;
+    }
+  }
+  .uposn-article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .uposn-article-featured-img {
+    margin: 20px 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .uposn-article-featured-img img {
+    width: 100%;
+    max-height: 460px;
+    object-fit: cover;
+  }
+
+  /* Share buttons */
+  .uposn-share-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    margin-bottom: 20px;
+  }
+  .uposn-share-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    margin-right: 4px;
+  }
+  .uposn-share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+    cursor: pointer;
+  }
+  .uposn-share-wa { background: #25d366; }
+  .uposn-share-tg { background: #0088cc; }
+  .uposn-share-fb { background: #1877f2; }
+  .uposn-share-tw { background: #0f172a; }
+
+  .uposn-article-body {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #1e293b;
+  }
+  .uposn-article-body p {
+    margin-bottom: 16px;
+  }
+  .uposn-article-body h2,
+  .uposn-article-body h3 {
+    color: #0f172a;
+    font-weight: 800;
+    margin: 24px 0 12px;
+  }
+  .uposn-article-body ul,
+  .uposn-article-body ol {
+    margin: 16px 0;
+    padding-left: 24px;
+  }
+  .uposn-article-body li {
+    margin-bottom: 8px;
+  }
+  .uposn-article-body blockquote {
+    border-left: 4px solid #1e3a8a;
+    background: #f8fafc;
+    padding: 12px 16px;
+    font-style: italic;
+    margin: 16px 0;
+    color: #334155;
+  }
+
+  /* Official Notice Callout Box */
+  .uposn-official-box {
+    background: #fef2f2;
+    border-left: 4px solid #dc2626;
+    padding: 14px 18px;
+    border-radius: 4px;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .uposn-official-box strong {
+    color: #991b1b;
+  }
+
+  /* ----------------------------------------------------
+     Sidebar Widgets Styling
+     ---------------------------------------------------- */
+  .uposn-sidebar-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+  .uposn-sidebar-box h3 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Official Portals List */
+  .uposn-portal-list {
+    list-style: none;
+  }
+  .uposn-portal-list li {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .uposn-portal-list li:last-child {
+    border-bottom: none;
+  }
+  .uposn-portal-list a {
+    color: #1e3a8a;
+    font-weight: 600;
+  }
+  .uposn-portal-list a:hover {
+    text-decoration: underline;
+  }
+  .uposn-ext-tag {
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* Join Community Callout */
+  .uposn-community-callout {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    color: #ffffff;
+    border-radius: var(--radius-md);
+    padding: 18px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .uposn-community-callout h4 {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .uposn-community-callout p {
+    font-size: 12px;
+    color: #cbd5e1;
+    margin-bottom: 14px;
+  }
+  .uposn-join-btn {
+    display: inline-block;
+    background: #25d366;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+  }
+
+  /* ----------------------------------------------------
+     Blogger Comments & Pagination
+     ---------------------------------------------------- */
+  .blog-pager {
+    display: flex;
+    justify-content: space-between;
+    margin: 24px 0;
+    padding: 12px 0;
+    font-weight: 700;
+  }
+  .blog-pager a {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    color: var(--primary);
+  }
+  .blog-pager a:hover {
+    background: var(--primary);
+    color: #ffffff;
+  }
+
+  /* ----------------------------------------------------
+     Footer Styling
+     ---------------------------------------------------- */
+  .uposn-footer {
+    background: #0f172a;
+    color: #cbd5e1;
+    padding: 40px 0 20px;
+    margin-top: 40px;
+    border-top: 3px solid #1e3a8a;
+  }
+  .uposn-footer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-bottom: 30px;
+  }
+  @media (min-width: 768px) {
+    .uposn-footer-grid {
+      grid-template-columns: 2fr 1fr 1fr;
+    }
+  }
+  .uposn-footer-brand h4 {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+  .uposn-footer-brand p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #94a3b8;
+  }
+  .uposn-footer-col h5 {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    border-left: 3px solid #f59e0b;
+    padding-left: 8px;
+  }
+  .uposn-footer-links {
+    list-style: none;
+  }
+  .uposn-footer-links li {
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .uposn-footer-links a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+  }
+  .uposn-footer-bottom {
+    border-top: 1px solid #1e293b;
+    padding-top: 18px;
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+  }
+  .uposn-footer-disclaimer {
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    color: #fca5a5;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    margin-bottom: 18px;
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .uposn-brand-text h1 { font-size: 17px; }
+    .uposn-header-search { display: none; }
+    .uposn-mobile-btn { display: block; }
+    .uposn-nav-links {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      background: #0f172a;
+      padding: 10px 0;
+    }
+    .uposn-nav-links.open { display: flex; }
+    .uposn-nav-links li a { width: 100%; padding: 10px 20px; }
+  }
+  ]]></b:skin>
+</head>
+
+<body>
+  <!-- 1. Top Micro Bar -->
+  <div class='uposn-microbar'>
+    <div class='container uposn-microbar-inner'>
+      <div class='uposn-badge-independent'>
+        <span>&#9873;</span>
+        <span>स्वतंत्र सूचना मंच:</span>
+        <span style='font-weight: 500;'>उत्तर प्रदेश शासन के आउटसोर्स कर्मचारियों हेतु समाचार एवं शासनादेश</span>
+      </div>
+      <div class='uposn-microbar-links'>
+        <a href='https://upcos.org' rel='noopener noreferrer' target='_blank'>UPCOS संदर्भ</a>
+        <span>|</span>
+        <a expr:href='data:blog.homepageUrl + "search/label/शासनादेश"'>नवीनतम शासनादेश</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Portal Header -->
+  <header class='uposn-header'>
+    <div class='container uposn-header-inner'>
+      <a class='uposn-brand' expr:href='data:blog.homepageUrl'>
+        <div class='uposn-logo-circle'>UP</div>
+        <div class='uposn-brand-text'>
+          <h1>UP Outsource <span>Seva Nigam</span></h1>
+          <div class='uposn-brand-tagline'>आउटसोर्स कर्मचारियों की हर जरूरी खबर, एक जगह</div>
+        </div>
+      </a>
+
+      <!-- Search Input in Header -->
+      <div class='uposn-header-search'>
+        <form action='/search' method='get'>
+          <span class='uposn-search-icon'>&#128269;</span>
+          <input name='q' placeholder='समाचार या शासनादेश खोजें...' type='text'/>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3. Navigation Bar -->
+  <nav class='uposn-nav-bar'>
+    <div class='container uposn-nav-inner'>
+      <ul class='uposn-nav-links' id='uposnNavLinks'>
+        <li><a expr:href='data:blog.homepageUrl'>होम</a></li>
+        <li><a expr:href='data:blog.homepageUrl + "search/label/ताज़ा खबरें"'>ताज़ा खबरें</a></li>
+        <li><a expr:href='data:blog.homepageUrl + "search/label/शासनादेश"'>शासनादेश</a></li>
+        <li><a expr:href='data:blog.homepageUrl + "search/label/विभाग"'>विभाग</a></li>
+        <li><a expr:href='data:blog.homepageUrl + "search/label/कर्मचारी-केंद्र"'>कर्मचारी केंद्र</a></li>
+        <li><a expr:href='data:blog.homepageUrl + "search/label/टॉक-कॉर्नर"'>टॉक कॉर्नर</a></li>
+      </ul>
+      <button class='uposn-mobile-btn' id='uposnMobileBtn' type='button'>&#9776;</button>
+    </div>
+  </nav>
+
+  <!-- 4. Breaking News Ticker -->
+  <div class='uposn-ticker'>
+    <div class='container uposn-ticker-inner'>
+      <div class='uposn-ticker-badge'>ब्रेकिंग</div>
+      <div class='uposn-ticker-content' id='tickerFeed'>
+        <b:if cond='data:posts.notEmpty'>
+          <a expr:href='data:posts.first.url'><data:posts.first.title/></a>
+        <b:else/>
+          <span>उत्तर प्रदेश आउटसोर्स एवं संविदा कर्मचारियों के मानदेय एवं सेवा सुरक्षा संबंधित अद्यतन सूचनाएं।</span>
+        </b:if>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Main Content Area -->
+  <div class='container uposn-main-wrapper'>
+    <div class='uposn-grid-layout'>
+      
+      <!-- Main Content Column -->
+      <main class='uposn-main-col'>
+        <b:section class='main' id='main' showaddelement='yes'>
+          <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' version='2'>
+            <b:includable id='main' var='top'>
+              
+              <!-- A) SINGLE POST PAGE VIEW -->
+              <b:if cond='data:view.isPost'>
+                <b:loop values='data:posts' var='post'>
+                  <article class='uposn-single-article'>
+                    <div class='uposn-article-header'>
+                      <b:if cond='data:post.labels.notEmpty'>
+                        <span class='uposn-article-category'><data:post.labels.first.name/></span>
+                      </b:if>
+                      <h1 class='uposn-article-title'><data:post.title/></h1>
+                      
+                      <div class='uposn-article-meta'>
+                        <span>&#128100; <data:post.author.name/></span>
+                        <span>&#128197; <data:post.date/></span>
+                        <b:if cond='data:post.allowComments'>
+                          <span>&#128172; <data:post.numberOfComments/> टिप्पणियाँ</span>
+                        </b:if>
+                      </div>
+                    </div>
+
+                    <!-- Social Share Buttons -->
+                    <div class='uposn-share-bar'>
+                      <span class='uposn-share-label'>शेयर करें:</span>
+                      <a class='uposn-share-btn uposn-share-wa' expr:href='"https://api.whatsapp.com/send?text=" + data:post.title + " " + data:post.url' target='_blank'>WhatsApp</a>
+                      <a class='uposn-share-btn uposn-share-tg' expr:href='"https://t.me/share/url?url=" + data:post.url + "&amp;text=" + data:post.title' target='_blank'>Telegram</a>
+                      <a class='uposn-share-btn uposn-share-fb' expr:href='"https://www.facebook.com/sharer/sharer.php?u=" + data:post.url' target='_blank'>Facebook</a>
+                    </div>
+
+                    <!-- Featured Thumbnail if available -->
+                    <b:if cond='data:post.featuredImage'>
+                      <div class='uposn-article-featured-img'>
+                        <img expr:alt='data:post.title' expr:src='data:post.featuredImage'/>
+                      </div>
+                    </b:if>
+
+                    <!-- Main Article Body -->
+                    <div class='uposn-article-body'>
+                      <data:post.body/>
+                    </div>
+
+                    <!-- Official Verification Note -->
+                    <div class='uposn-official-box'>
+                      <strong>महत्वपूर्ण सूचना:</strong> यह एक स्वतंत्र सूचना व समाचार मंच है। किसी भी विधिक संदर्भ हेतु उत्तर प्रदेश शासन अथवा संबंधित विभाग द्वारा जारी मूल शासनादेश व आधिकारिक पोर्टल (shasanadesh.up.gov.in) का अवलोकन अवश्य करें।
+                    </div>
+
+                    <!-- Post Comments -->
+                    <b:if cond='data:post.allowComments'>
+                      <div class='uposn-comments-section' style='margin-top: 30px;'>
+                        <b:include data='post' name='threadedComments'/>
+                      </div>
+                    </b:if>
+                  </article>
+                </b:loop>
+              </b:if>
+
+              <!-- B) HOMEPAGE / SEARCH / ARCHIVE GRID VIEW -->
+              <b:if cond='data:view.isMultipleItems'>
+                <div class='uposn-section-title'>
+                  <h2>
+                    <b:if cond='data:view.isLabelSearch'>
+                      श्रेणी: <data:view.search.label/>
+                    <b:elseif cond='data:view.isSearch'/>
+                      खोज परिणाम: "<data:view.search.query/>"
+                    <b:else/>
+                      नवीनतम समाचार व शासनादेश
+                    </b:if>
+                  </h2>
+                </div>
+
+                <div class='uposn-posts-grid'>
+                  <b:loop values='data:posts' var='post'>
+                    <article class='uposn-post-card'>
+                      <div class='uposn-card-thumb'>
+                        <b:if cond='data:post.featuredImage'>
+                          <img expr:alt='data:post.title' expr:src='data:post.featuredImage' loading='lazy'/>
+                        <b:else/>
+                          <img alt='UP Outsource Seva Nigam' loading='lazy' src='https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&amp;fit=crop&amp;w=800&amp;q=80'/>
+                        </b:if>
+                        <b:if cond='data:post.labels.notEmpty'>
+                          <span class='uposn-card-label'><data:post.labels.first.name/></span>
+                        </b:if>
+                      </div>
+
+                      <div class='uposn-card-body'>
+                        <div class='uposn-card-meta'>
+                          <span>&#128197; <data:post.date/></span>
+                          <span>&bull;</span>
+                          <span><data:post.author.name/></span>
+                        </div>
+
+                        <h3 class='uposn-card-title'>
+                          <a expr:href='data:post.url'><data:post.title/></a>
+                        </h3>
+
+                        <p class='uposn-card-snippet'>
+                          <data:post.snippet/>
+                        </p>
+
+                        <div class='uposn-card-footer'>
+                          <a expr:href='data:post.url'>विस्तार से पढ़ें &rarr;</a>
+                        </div>
+                      </div>
+                    </article>
+                  </b:loop>
+                </div>
+
+                <!-- Pagination -->
+                <b:include name='nextprev'/>
+              </b:if>
+
+            </b:includable>
+          </b:widget>
+        </b:section>
+      </main>
+
+      <!-- Sidebar Column -->
+      <aside class='uposn-sidebar-col'>
+        
+        <!-- Join WhatsApp/Community Box -->
+        <div class='uposn-community-callout'>
+          <h4>आउटसोर्स कर्मचारी संघ सूचना केंद्र</h4>
+          <p>ताज़ा शासनादेश, मानदेय आदेश और विधिक सहायता से तुरंत जुड़े रहने के लिए ग्रुप से जुड़ें।</p>
+          <a class='uposn-join-btn' href='https://whatsapp.com' target='_blank'>&#128242; WhatsApp ग्रुप जॉइन करें</a>
+        </div>
+
+        <!-- Official Portals Box -->
+        <div class='uposn-sidebar-box'>
+          <h3>महत्वपूर्ण सरकारी पोर्टल</h3>
+          <ul class='uposn-portal-list'>
+            <li>
+              <a href='http://shasanadesh.up.gov.in' rel='noopener noreferrer' target='_blank'>उप्र शासनादेश पोर्टल</a>
+              <span class='uposn-ext-tag'>GOVT</span>
+            </li>
+            <li>
+              <a href='https://upcos.org' rel='noopener noreferrer' target='_blank'>UPCOS (मानव संपदा/संविदा)</a>
+              <span class='uposn-ext-tag'>UPCOS</span>
+            </li>
+            <li>
+              <a href='https://gem.gov.in' rel='noopener noreferrer' target='_blank'>गवर्नमेंट ई-मार्केटप्लेस (GeM)</a>
+              <span class='uposn-ext-tag'>GeM</span>
+            </li>
+            <li>
+              <a href='https://www.epfindia.gov.in' rel='noopener noreferrer' target='_blank'>EPFO कर्मचारी भविष्य निधि</a>
+              <span class='uposn-ext-tag'>EPFO</span>
+            </li>
+            <li>
+              <a href='https://www.esic.gov.in' rel='noopener noreferrer' target='_blank'>ESIC कर्मचारी राज्य बीमा</a>
+              <span class='uposn-ext-tag'>ESIC</span>
+            </li>
+            <li>
+              <a href='https://upenergy.in' rel='noopener noreferrer' target='_blank'>UPPCL शक्ति भवन लखनऊ</a>
+              <span class='uposn-ext-tag'>ENERGY</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Blogger Sidebar Section for Widgets -->
+        <b:section class='sidebar' id='sidebar' showaddelement='yes'>
+          <b:widget id='PopularPosts1' locked='false' title='लोकप्रिय समाचार' type='PopularPosts' version='2'>
+            <b:includable id='main'>
+              <div class='uposn-sidebar-box'>
+                <h3><data:title/></h3>
+                <ul class='uposn-portal-list'>
+                  <b:loop values='data:posts' var='post'>
+                    <li>
+                      <a expr:href='data:post.href'><data:post.title/></a>
+                    </li>
+                  </b:loop>
+                </ul>
+              </div>
+            </b:includable>
+          </b:widget>
+
+          <b:widget id='Label1' locked='false' title='श्रेणियाँ (Categories)' type='Label' version='2'>
+            <b:includable id='main'>
+              <div class='uposn-sidebar-box'>
+                <h3><data:title/></h3>
+                <div style='display: flex; flex-wrap: wrap; gap: 6px;'>
+                  <b:loop values='data:labels' var='label'>
+                    <a expr:href='data:label.url' style='background: #e2e8f0; color: #1e3a8a; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 4px;'>
+                      <data:label.name/> (<data:label.count/>)
+                    </a>
+                  </b:loop>
+                </div>
+              </div>
+            </b:includable>
+          </b:widget>
+        </b:section>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- 6. Footer -->
+  <footer class='uposn-footer'>
+    <div class='container'>
+      
+      <!-- Disclaimer Banner -->
+      <div class='uposn-footer-disclaimer'>
+        <strong>अस्वीकरण (Disclaimer):</strong> यह वेबसाइट उत्तर प्रदेश सरकार की आधिकारिक वेबसाइट नहीं है। यह आउटसोर्स और संविदा कर्मचारियों के हित में संचालित एक स्वतंत्र सूचना व समाचार मंच है। सभी जानकारी सार्वजनिक स्रोतों, समाचार पत्रों व जारी शासनादेशों पर आधारित है।
+      </div>
+
+      <div class='uposn-footer-grid'>
+        <div class='uposn-footer-brand'>
+          <h4>UP Outsource Seva Nigam</h4>
+          <p>उत्तर प्रदेश राज्य सरकार के विभिन्न विभागों, निदेशालयों, परिषदों एवं निगमों में सेवा प्रदाता (मैनपावर एजेंसी) के माध्यम से कार्यरत समस्त आउटसोर्स कार्मिकों के लिए समर्पित स्वतंत्र समाचार व सेवा सूचना मंच।</p>
+        </div>
+
+        <div class='uposn-footer-col'>
+          <h5>त्वरित लिंक्स</h5>
+          <ul class='uposn-footer-links'>
+            <li><a expr:href='data:blog.homepageUrl'>होमपेज</a></li>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/ताज़ा खबरें"'>ताज़ा खबरें</a></li>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/शासनादेश"'>शासनादेश</a></li>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/विभाग"'>विभाग निर्देशिका</a></li>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/कर्मचारी-केंद्र"'>कर्मचारी केंद्र</a></li>
+          </ul>
+        </div>
+
+        <div class='uposn-footer-col'>
+          <h5>विभागीय श्रेणियां</h5>
+          <ul class='uposn-footer-links'>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/स्वास्थ्य-विभाग"'>चिकित्सा एवं स्वास्थ्य</a></li>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/ऊर्जा-विभाग"'>ऊर्जा विभाग (UPPCL)</a></li>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/बेसिक-शिक्षा"'>बेसिक व माध्यमिक शिक्षा</a></li>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/पंचायती-राज"'>पंचायती राज</a></li>
+            <li><a expr:href='data:blog.homepageUrl + "search/label/नगर-विकास"'>नगर विकास निकाय</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class='uposn-footer-bottom'>
+        <p>&copy; <data:blog.copyrightClass/> UP Outsource Seva Nigam Information Portal. All Rights Reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Mobile Menu Toggle Script -->
+  <script type='text/javascript'>
+    //<![CDATA[
+    document.addEventListener('DOMContentLoaded', function() {
+      var mobileBtn = document.getElementById('uposnMobileBtn');
+      var navLinks = document.getElementById('uposnNavLinks');
+      if (mobileBtn && navLinks) {
+        mobileBtn.addEventListener('click', function() {
+          navLinks.classList.toggle('open');
+        });
+      }
+    });
+    //]]>
+  </script>
+</body>
+</html>`;
+}
