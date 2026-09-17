@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { PageView, NewsItem, GovernmentOrder, Department } from './types';
+import { PageView, NewsItem, GovernmentOrder, Department, FAQItem } from './types';
 import { contentStore } from './data/contentStore';
 import { DEPARTMENTS_DATA } from './data/mockData';
 
@@ -12,12 +12,9 @@ import { DEPARTMENTS_DATA } from './data/mockData';
 import { Header } from './components/Header';
 import { BreakingNewsTicker } from './components/BreakingNewsTicker';
 import { HomeHero } from './components/HomeHero';
-import { LatestNewsGrid } from './components/LatestNewsGrid';
-import { ImportantUpdatesGrid } from './components/ImportantUpdatesGrid';
 import { GovOrdersSection } from './components/GovOrdersSection';
 import { DepartmentsSection } from './components/DepartmentsSection';
 import { EmployeeHubSection } from './components/EmployeeHubSection';
-import { GovDevelopments } from './components/GovDevelopments';
 import { SourceReferenceBox } from './components/SourceReferenceBox';
 import { Footer } from './components/Footer';
 
@@ -45,11 +42,16 @@ export default function App() {
   // Load data from contentStore (localStorage enabled)
   const [news, setNews] = useState<NewsItem[]>(() => contentStore.getNews());
   const [orders, setOrders] = useState<GovernmentOrder[]>(() => contentStore.getOrders());
-  const departments: Department[] = DEPARTMENTS_DATA;
+  const [departments, setDepartments] = useState<Department[]>(() => contentStore.getDepartments());
+  const [tickerItems, setTickerItems] = useState<string[]>(() => contentStore.getTickerItems());
+  const [faqs, setFaqs] = useState<FAQItem[]>(() => contentStore.getFaqs());
 
   const refreshData = () => {
     setNews(contentStore.getNews());
     setOrders(contentStore.getOrders());
+    setDepartments(contentStore.getDepartments());
+    setTickerItems(contentStore.getTickerItems());
+    setFaqs(contentStore.getFaqs());
   };
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function App() {
 
       {/* Breaking News Ticker (visible on all pages for immediate alerts) */}
       <BreakingNewsTicker
-        items={breakingTickers}
+        items={tickerItems}
         onNavigate={handleNavigate}
       />
 
@@ -105,42 +107,17 @@ export default function App() {
               onNavigate={handleNavigate}
             />
 
-            {/* Latest News Grid */}
-            <LatestNewsGrid
-              news={(news || []).slice(0, 6)}
-              onNavigate={handleNavigate}
-              title="ताज़ा खबरें"
-              showViewAll={true}
-              onOpenSewayojanSync={() => setIsSewayojanModalOpen(true)}
-            />
-
-            {/* Important Updates Hub (Salary, PF, ESI, Renewal, etc.) */}
-            <ImportantUpdatesGrid
-              onNavigate={handleNavigate}
-            />
-
-            {/* Government Orders Section with Search/Filter */}
-            <GovOrdersSection
-              orders={orders}
-              onNavigate={handleNavigate}
-              limit={4}
-              showFilters={false}
-            />
-
             {/* Department-wise Information */}
             <DepartmentsSection
               onNavigate={handleNavigate}
+              departments={departments}
               showAll={false}
             />
 
             {/* Employee Information Hub with Interactive In-Hand Estimator & FAQs */}
             <EmployeeHubSection
               onNavigate={handleNavigate}
-            />
-
-            {/* Government Decisions & Initiatives */}
-            <GovDevelopments
-              onNavigate={handleNavigate}
+              faqs={faqs}
             />
 
             {/* Sources & Official Reference Box (UPCOS reference & compliance) */}
@@ -199,6 +176,7 @@ export default function App() {
           <div className="py-6 bg-white min-h-screen">
             <DepartmentsSection
               onNavigate={handleNavigate}
+              departments={departments}
               showAll={true}
             />
           </div>
@@ -234,6 +212,7 @@ export default function App() {
             <EmployeeHubSection
               onNavigate={handleNavigate}
               defaultActiveCategory={currentView.tab || 'वेतन'}
+              faqs={faqs}
             />
           </div>
         )}
@@ -265,6 +244,9 @@ export default function App() {
           <AdminCMS
             news={news}
             orders={orders}
+            departments={departments}
+            tickerItems={tickerItems}
+            faqs={faqs}
             onRefresh={refreshData}
             onNavigate={handleNavigate}
             onOpenBloggerExport={() => setIsBloggerModalOpen(true)}

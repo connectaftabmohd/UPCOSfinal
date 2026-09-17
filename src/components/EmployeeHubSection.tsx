@@ -16,11 +16,13 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { EMPLOYEE_GUIDES_DATA, FAQS_DATA } from '../data/mockData';
-import { PageView } from '../types';
+import { contentStore } from '../data/contentStore';
+import { PageView, FAQItem } from '../types';
 
 interface EmployeeHubSectionProps {
   onNavigate: (view: PageView) => void;
   defaultActiveCategory?: string;
+  faqs?: FAQItem[];
 }
 
 const guideIcons: Record<string, React.ElementType> = {
@@ -35,9 +37,12 @@ const guideIcons: Record<string, React.ElementType> = {
 export const EmployeeHubSection: React.FC<EmployeeHubSectionProps> = ({
   onNavigate,
   defaultActiveCategory = 'वेतन',
+  faqs,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState(defaultActiveCategory);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const faqList = faqs && faqs.length > 0 ? faqs : contentStore.getFaqs() || FAQS_DATA;
 
   // Quick salary calculator interactive widget for employees!
   const [basicPay, setBasicPay] = useState<number>(12500);
@@ -296,7 +301,7 @@ export const EmployeeHubSection: React.FC<EmployeeHubSectionProps> = ({
           </div>
 
           <div className="divide-y divide-slate-100 space-y-1">
-            {FAQS_DATA.map((faq, index) => {
+            {faqList.map((faq, index) => {
               const isOpen = openFaqIndex === index;
               return (
                 <div key={index} className="pt-3 first:pt-0">

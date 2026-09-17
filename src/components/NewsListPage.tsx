@@ -2,17 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { 
   Newspaper, 
   Calendar, 
-  Search, 
-  Filter, 
-  ArrowRight, 
-  Clock, 
   ChevronRight,
   ArrowUpRight
 } from 'lucide-react';
 import { NewsItem, PageView } from '../types';
-import { SewayojanSyncBanner } from './SewayojanSyncBanner';
-import { SewayojanSyncModal } from './SewayojanSyncModal';
-import { SyncResult } from '../services/sewayojanSyncService';
 
 interface NewsListPageProps {
   news: NewsItem[];
@@ -27,40 +20,22 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
   initialCategory,
   initialDepartment,
   onNavigate,
-  onRefresh,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'ALL');
-  const [selectedDept, setSelectedDept] = useState(initialDepartment || 'ALL');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory] = useState(initialCategory || 'ALL');
+  const [selectedDept] = useState(initialDepartment || 'ALL');
   const [currentPage, setCurrentPage] = useState(1);
-  const [isSewayojanModalOpen, setIsSewayojanModalOpen] = useState(false);
   const itemsPerPage = 9;
 
   const safeNews = news || [];
-
-  // Extract unique categories and departments
-  const categories = useMemo(() => {
-    return Array.from(new Set(safeNews.map((n) => n.category)));
-  }, [safeNews]);
-
-  const departments = useMemo(() => {
-    return Array.from(new Set(safeNews.map((n) => n.department)));
-  }, [safeNews]);
 
   // Filtered list
   const filtered = useMemo(() => {
     return safeNews.filter((item) => {
       const matchCat = selectedCategory === 'ALL' || item.category === selectedCategory;
       const matchDept = selectedDept === 'ALL' || item.department === selectedDept;
-      const matchQuery =
-        !searchQuery.trim() ||
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.department.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchCat && matchDept && matchQuery;
+      return matchCat && matchDept;
     });
-  }, [news, selectedCategory, selectedDept, searchQuery]);
+  }, [safeNews, selectedCategory, selectedDept]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -83,7 +58,7 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
         </nav>
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-900 text-white flex items-center justify-center">
               <Newspaper className="w-5 h-5" />
@@ -95,87 +70,6 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
               <p className="text-xs text-slate-500 font-medium">
                 कुल {filtered.length} समाचार उपलब्ध
               </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Sewayojan Portal Auto-Sync Module */}
-        <SewayojanSyncBanner
-          onOpenModal={() => setIsSewayojanModalOpen(true)}
-          onSyncComplete={() => {
-            if (onRefresh) onRefresh();
-          }}
-        />
-
-        {/* Filter Controls Bar */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-8 shadow-2xs space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="समाचार खोजें..."
-                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-900"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full py-2 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-900 text-slate-700"
-              >
-                <option value="ALL">सभी श्रेणियां (All Categories)</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Department Filter */}
-            <div>
-              <select
-                value={selectedDept}
-                onChange={(e) => {
-                  setSelectedDept(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full py-2 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-900 text-slate-700"
-              >
-                <option value="ALL">सभी विभाग (All Departments)</option>
-                {departments.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Reset Button */}
-            <div className="flex items-center">
-              <button
-                onClick={() => {
-                  setSelectedCategory('ALL');
-                  setSelectedDept('ALL');
-                  setSearchQuery('');
-                  setCurrentPage(1);
-                }}
-                className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
-              >
-                फिल्टर हटाएं (Reset)
-              </button>
             </div>
           </div>
         </div>
@@ -278,15 +172,6 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
             </button>
           </div>
         )}
-
-        {/* Sewayojan Jobs Modal */}
-        <SewayojanSyncModal
-          isOpen={isSewayojanModalOpen}
-          onClose={() => setIsSewayojanModalOpen(false)}
-          onSyncSuccess={() => {
-            if (onRefresh) onRefresh();
-          }}
-        />
       </div>
     </div>
   );

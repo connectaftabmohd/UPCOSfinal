@@ -9,7 +9,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  Download,
   Facebook,
   Youtube,
   Twitter,
@@ -186,17 +185,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenBloggerExport 
                   <span>UPCOS संदर्भ पोर्टल (upcos.org)</span>
                 </a>
               </li>
-              {onOpenBloggerExport && (
-                <li className="pt-1">
-                  <button
-                    onClick={onOpenBloggerExport}
-                    className="text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 font-bold cursor-pointer bg-amber-500/10 px-2 py-1 rounded border border-amber-500/30 text-[11px]"
-                  >
-                    <Download className="w-3 h-3 text-amber-400" />
-                    <span>ब्लॉगर थीम डाउनलोड (.XML Theme)</span>
-                  </button>
-                </li>
-              )}
             </ul>
           </div>
 

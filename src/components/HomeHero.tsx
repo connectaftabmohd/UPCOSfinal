@@ -112,7 +112,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             </div>
 
             {/* Featured Content Body */}
-            <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+            <div className="p-5 sm:p-6 flex-1">
               <div>
                 <h3
                   onClick={() => onNavigate({ type: 'news-detail', id: activeFeatured.id })}
@@ -120,36 +120,9 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                 >
                   {activeFeatured.title}
                 </h3>
-                <p className="text-slate-600 text-sm sm:text-base leading-relaxed line-clamp-3 mb-4">
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed line-clamp-3">
                   {activeFeatured.shortDescription}
                 </p>
-
-                {/* Key Highlights Snippet */}
-                {activeFeatured.keyHighlights && activeFeatured.keyHighlights.length > 0 && (
-                  <div className="bg-blue-50/70 border-l-4 border-blue-800 p-3 rounded-r-lg mb-5 text-xs sm:text-sm text-slate-700">
-                    <span className="font-bold text-blue-950 block mb-1">
-                      मुख्य बिंदु:
-                    </span>
-                    <ul className="list-disc list-inside space-y-0.5 text-slate-700">
-                      {(activeFeatured.keyHighlights || []).slice(0, 2).map((item, i) => (
-                        <li key={i} className="truncate">{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                <span className="text-xs text-slate-500 font-medium truncate max-w-[200px]">
-                  स्रोत: {activeFeatured.source}
-                </span>
-                <button
-                  onClick={() => onNavigate({ type: 'news-detail', id: activeFeatured.id })}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition"
-                >
-                  <span>पूरा पढ़ें</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
               </div>
             </div>
           </div>

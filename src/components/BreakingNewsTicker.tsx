@@ -1,30 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Megaphone, ChevronRight, ChevronLeft, Pause, Play, Sparkles } from 'lucide-react';
 import { BREAKING_NEWS_ITEMS } from '../data/mockData';
+import { contentStore } from '../data/contentStore';
 import { PageView } from '../types';
 
 interface BreakingNewsTickerProps {
   onNavigate: (view: PageView) => void;
+  items?: string[];
 }
 
-export const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({ onNavigate }) => {
+export const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({ onNavigate, items }) => {
+  const tickerList = items && items.length > 0 ? items : contentStore.getTickerItems() || BREAKING_NEWS_ITEMS;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || tickerList.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % BREAKING_NEWS_ITEMS.length);
+      setCurrentIndex((prev) => (prev + 1) % tickerList.length);
     }, 4500);
     return () => clearInterval(timer);
-  }, [isPlaying]);
+  }, [isPlaying, tickerList.length]);
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % BREAKING_NEWS_ITEMS.length);
+    if (tickerList.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % tickerList.length);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + BREAKING_NEWS_ITEMS.length) % BREAKING_NEWS_ITEMS.length);
+    if (tickerList.length === 0) return;
+    setCurrentIndex((prev) => (prev - 1 + tickerList.length) % tickerList.length);
   };
 
   return (
@@ -45,7 +50,7 @@ export const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({ onNaviga
         >
           <Sparkles className="w-3 h-3 text-amber-400 shrink-0 hidden sm:inline" />
           <span className="font-medium text-slate-100 truncate">
-            {BREAKING_NEWS_ITEMS[currentIndex]}
+            {tickerList[currentIndex] || 'उत्तर प्रदेश आउटसोर्सिंग सेवा निगम पोर्टल'}
           </span>
         </div>
 
@@ -68,7 +73,7 @@ export const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({ onNaviga
             <ChevronLeft className="w-3.5 h-3.5" />
           </button>
           <span className="text-[10px] text-slate-500 font-mono px-1">
-            {currentIndex + 1}/{BREAKING_NEWS_ITEMS.length}
+            {tickerList.length > 0 ? `${currentIndex + 1}/${tickerList.length}` : '0/0'}
           </span>
           <button
             onClick={handleNext}

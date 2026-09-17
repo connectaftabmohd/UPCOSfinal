@@ -15,11 +15,13 @@ import {
   Users
 } from 'lucide-react';
 import { DEPARTMENTS_DATA } from '../data/mockData';
-import { PageView } from '../types';
+import { contentStore } from '../data/contentStore';
+import { PageView, Department } from '../types';
 
 interface DepartmentsSectionProps {
   onNavigate: (view: PageView) => void;
   showAll?: boolean;
+  departments?: Department[];
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -38,11 +40,14 @@ const iconMap: Record<string, React.ElementType> = {
 export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
   onNavigate,
   showAll = false,
+  departments,
 }) => {
   const [deptSearch, setDeptSearch] = useState('');
   const [isExpanded, setIsExpanded] = useState(showAll);
 
-  const filtered = DEPARTMENTS_DATA.filter(
+  const deptList = departments && departments.length > 0 ? departments : contentStore.getDepartments() || DEPARTMENTS_DATA;
+
+  const filtered = deptList.filter(
     (d) =>
       d.name.toLowerCase().includes(deptSearch.toLowerCase()) ||
       d.englishName.toLowerCase().includes(deptSearch.toLowerCase()) ||

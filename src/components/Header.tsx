@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { 
-  Search, 
   Menu, 
   X, 
   Globe, 
   Settings, 
-  FileText, 
   Building, 
   HelpCircle, 
   Newspaper, 
   Home, 
-  ShieldCheck, 
   MessageSquareQuote,
-  Download,
-  Zap
+  ShieldCheck
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { PageView } from '../types';
@@ -21,7 +17,7 @@ import { PageView } from '../types';
 interface HeaderProps {
   currentView: PageView;
   onNavigate: (view: PageView) => void;
-  onOpenSearch: () => void;
+  onOpenSearch?: () => void;
   onOpenBloggerExport?: () => void;
   onOpenSewayojanSync?: () => void;
   lang?: 'hi' | 'en';
@@ -43,11 +39,11 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const currentLang = language ? (language.toLowerCase() as 'hi' | 'en') : lang;
+  const handleToggle = onToggleLanguage || onToggleLang;
 
   const navLinks = [
     { label: currentLang === 'hi' ? 'होम' : 'Home', view: { type: 'home' } as PageView, icon: Home },
     { label: currentLang === 'hi' ? 'ताज़ा खबरें' : 'Latest News', view: { type: 'news-list' } as PageView, icon: Newspaper },
-    { label: currentLang === 'hi' ? 'शासनादेश' : 'Gov Orders', view: { type: 'gov-orders' } as PageView, icon: FileText },
     { label: currentLang === 'hi' ? 'विभाग' : 'Departments', view: { type: 'departments' } as PageView, icon: Building },
     { label: currentLang === 'hi' ? 'कर्मचारी केंद्र' : 'Employee Hub', view: { type: 'employee-hub' } as PageView, icon: HelpCircle },
     { label: currentLang === 'hi' ? 'टॉक कॉर्नर' : 'Talk Corner', view: { type: 'talk-corner' } as PageView, icon: MessageSquareQuote },
@@ -72,66 +68,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs transition-all">
-      {/* Top micro-bar: Non-Gov disclaimer & quick portal badge */}
-      <div className="bg-slate-100 text-slate-600 text-[11px] border-b border-slate-200/80 px-3 sm:px-6 py-1">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 truncate">
-            <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
-              <span>स्वतंत्र सूचना मंच:</span>
-            </span>
-            <span className="truncate text-slate-500">
-              उत्तर प्रदेश शासन के आउटसोर्स कर्मचारियों हेतु समाचार एवं शासनादेश निर्देशिका
-            </span>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <a
-              href="https://upcos.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-700 hover:text-blue-900 font-medium hover:underline hidden sm:inline"
-            >
-              UPCOS संदर्भ
-            </a>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            {onOpenSewayojanSync && (
-              <>
-                <button
-                  onClick={onOpenSewayojanSync}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white font-black text-[11px] shadow-2xs transition cursor-pointer"
-                  title="उत्तर प्रदेश सेवायोजन पोर्टल ऑटो-सिंक (sewayojan.up.nic.in/jobs.aspx)"
-                >
-                  <Zap className="w-3 h-3 text-amber-300" />
-                  <span>सेवायोजन ऑटो-सिंक</span>
-                </button>
-                <span className="text-slate-300 hidden sm:inline">|</span>
-              </>
-            )}
-            {onOpenBloggerExport && (
-              <>
-                <button
-                  onClick={onOpenBloggerExport}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-[11px] shadow-2xs transition cursor-pointer"
-                  title="ब्लॉगर.कॉम (Blogger/Blogspot) थीम XML डाउनलोड करें"
-                >
-                  <Download className="w-3 h-3 text-slate-950" />
-                  <span>ब्लॉगर थीम (.XML)</span>
-                </button>
-                <span className="text-slate-300 hidden sm:inline">|</span>
-              </>
-            )}
-            <button
-              onClick={() => handleNavClick({ type: 'admin' })}
-              className="flex items-center gap-1 text-slate-600 hover:text-blue-700 font-medium cursor-pointer"
-              title="संपादक / एडमिन पैनल"
-            >
-              <Settings className="w-3 h-3" />
-              <span className="hidden md:inline">कंटेंट प्रबंधन</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-4">
         {/* Brand Logo & Name */}
@@ -162,30 +98,38 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Right Action Icons: Search & Lang Switcher */}
+        {/* Right Action Icons: Lang Switcher, Admin Portal & Mobile Menu */}
         <div className="flex items-center gap-2">
-          {/* Quick Search Button */}
+          {/* Admin Portal Quick Link */}
           <button
-            onClick={onOpenSearch}
-            className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 text-slate-600 text-xs sm:text-sm font-medium border border-slate-200 transition"
-            title="खोजें (Search)"
-            aria-label="Search"
+            onClick={() => handleNavClick({ type: 'admin' })}
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition border cursor-pointer shadow-2xs select-none ${
+              isActive({ type: 'admin' })
+                ? 'bg-blue-900 text-white border-blue-900'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+            }`}
+            title="प्रशासनिक पोर्टल (Backend Admin Portal)"
+            aria-label="Admin Portal"
           >
-            <Search className="w-4 h-4 text-slate-500" />
-            <span className="hidden md:inline text-slate-500">खोजें...</span>
-            <kbd className="hidden md:inline-block text-[10px] bg-white text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs font-mono">
-              /
-            </kbd>
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+            <span>एडमिन पोर्टल</span>
           </button>
 
           {/* Hindi / English Switcher */}
           <button
-            onClick={onToggleLang}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 text-xs font-bold transition border border-blue-200"
-            title="भाषा बदलें (Switch Language)"
+            onClick={handleToggle}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-900 text-xs font-bold transition border border-blue-200 cursor-pointer shadow-2xs select-none"
+            title={currentLang === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}
+            aria-label="Switch Language"
           >
-            <Globe className="w-3.5 h-3.5 text-blue-700" />
-            <span>{lang === 'hi' ? 'HI / EN' : 'EN / HI'}</span>
+            <Globe className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+            <span className="font-extrabold tracking-wide">
+              {currentLang === 'hi' ? 'HI' : 'EN'}
+            </span>
+            <span className="text-blue-300 text-[10px]">/</span>
+            <span className="text-blue-600/75 font-semibold text-[11px]">
+              {currentLang === 'hi' ? 'EN' : 'HI'}
+            </span>
           </button>
 
           {/* Mobile Hamburger Toggle */}
@@ -222,18 +166,22 @@ export const Header: React.FC<HeaderProps> = ({
               );
             })}
 
-            {onOpenBloggerExport && (
+            <div className="pt-2">
               <button
                 onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onOpenBloggerExport();
+                  if (handleToggle) handleToggle();
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-xs transition cursor-pointer mb-2"
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 font-bold text-sm border border-blue-200 transition cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                <span>ब्लॉगर थीम (.XML) डाउनलोड करें</span>
+                <span className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-blue-700" />
+                  <span>भाषा (Language): {currentLang === 'hi' ? 'हिन्दी (Hindi)' : 'English'}</span>
+                </span>
+                <span className="text-xs bg-blue-900 text-white px-2 py-0.5 rounded-md font-extrabold">
+                  {currentLang === 'hi' ? 'Switch to EN' : 'Switch to HI'}
+                </span>
               </button>
-            )}
+            </div>
 
             <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 px-1">
               <button
