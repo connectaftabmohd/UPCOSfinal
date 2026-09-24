@@ -66,8 +66,8 @@ export const EmployeeHubSection: React.FC<EmployeeHubSectionProps> = ({
   ];
 
   return (
-    <section className="py-8 sm:py-12 bg-slate-50/70 border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+    <section className="w-full py-8 sm:py-12 bg-slate-50/70 border-b border-slate-200">
+      <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold mb-2.5">

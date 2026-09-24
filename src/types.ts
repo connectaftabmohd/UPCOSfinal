@@ -109,9 +109,28 @@ export interface TalkPost {
   isMyPost?: boolean;
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  mobile?: string;
+  email?: string;
+  password?: string;
+  district: string;
+  department: string;
+  designation: string;
+  avatar: string;
+  isVerified?: boolean;
+  isAdmin?: boolean;
+  role?: 'admin' | 'user';
+  joinedDate?: string;
+  savedPostIds?: string[];
+  savedOrderIds?: string[];
+  savedNewsIds?: string[];
+}
+
 export type PageView = 
   | { type: 'home' }
-  | { type: 'news-list'; category?: string }
+  | { type: 'news-list'; category?: string; department?: string }
   | { type: 'news-detail'; id: string }
   | { type: 'gov-orders'; department?: string; year?: number }
   | { type: 'gov-order-detail'; id: string }
@@ -119,6 +138,7 @@ export type PageView =
   | { type: 'department-detail'; id: string }
   | { type: 'talk-corner'; category?: string; postId?: string }
   | { type: 'employee-hub'; tab?: string }
+  | { type: 'profile' }
   | { type: 'search'; query: string }
   | { type: 'about' }
   | { type: 'contact' }

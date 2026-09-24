@@ -27,8 +27,8 @@ export const DepartmentDetailPage: React.FC<DepartmentDetailPageProps> = ({
   onNavigate,
 }) => {
   return (
-    <div className="py-6 sm:py-8 bg-slate-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+    <div className="w-full py-6 sm:py-8 bg-slate-50 min-h-screen">
+      <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Back navigation */}
         <button
           onClick={() => onNavigate({ type: 'departments' })}

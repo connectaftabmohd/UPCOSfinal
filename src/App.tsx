@@ -11,12 +11,15 @@ import { DEPARTMENTS_DATA } from './data/mockData';
 // Core UI Components
 import { Header } from './components/Header';
 import { BreakingNewsTicker } from './components/BreakingNewsTicker';
+import { StatewideCommunityHero } from './components/StatewideCommunityHero';
+import { WhyJoinSection } from './components/WhyJoinSection';
 import { HomeHero } from './components/HomeHero';
 import { GovOrdersSection } from './components/GovOrdersSection';
 import { DepartmentsSection } from './components/DepartmentsSection';
 import { EmployeeHubSection } from './components/EmployeeHubSection';
 import { SourceReferenceBox } from './components/SourceReferenceBox';
 import { Footer } from './components/Footer';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 // Pages & Modals
 import { SearchModal } from './components/SearchModal';
@@ -27,17 +30,26 @@ import { NewsListPage } from './components/NewsListPage';
 import { SearchResultsPage } from './components/SearchResultsPage';
 import { StaticPages } from './components/StaticPages';
 import { AdminCMS } from './components/AdminCMS';
-import { TalkCornerPage } from './components/TalkCornerPage';
+import { CommunityFeedPage } from './components/CommunityFeedPage';
 import { BloggerThemeExportModal } from './components/BloggerThemeExportModal';
 import { SewayojanSyncModal } from './components/SewayojanSyncModal';
+import { AuthModal } from './components/AuthModal';
+import { UserProfileModal } from './components/UserProfileModal';
+import { AdminAccessModal } from './components/AdminAccessModal';
 import { initializeAutoSyncEngine } from './services/sewayojanSyncService';
+import { authService } from './services/authService';
+import { UserProfile } from './types';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<PageView>({ type: 'home' });
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isBloggerModalOpen, setIsBloggerModalOpen] = useState(false);
   const [isSewayojanModalOpen, setIsSewayojanModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isAdminAccessModalOpen, setIsAdminAccessModalOpen] = useState(false);
   const [language, setLanguage] = useState<'HI' | 'EN'>('HI');
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => authService.getCurrentUser());
 
   // Load data from contentStore (localStorage enabled)
   const [news, setNews] = useState<NewsItem[]>(() => contentStore.getNews());
@@ -54,6 +66,11 @@ export default function App() {
     setFaqs(contentStore.getFaqs());
   };
 
+  const handleNavigate = (view: PageView) => {
+    setCurrentView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     refreshData();
 
@@ -62,44 +79,103 @@ export default function App() {
       refreshData();
     });
 
+    // Listen to user authentication changes
+    const unsubAuth = authService.subscribe((u) => {
+      setCurrentUser(u);
+    });
+
+    // Keyboard shortcut for Admin Access: Ctrl+Shift+A or Cmd+Shift+A or Alt+A
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+      if (
+        (isCmdOrCtrl && e.shiftKey && (e.key === 'a' || e.key === 'A')) ||
+        (e.altKey && (e.key === 'a' || e.key === 'A'))
+      ) {
+        e.preventDefault();
+        if (authService.isAdminUser(currentUser)) {
+          handleNavigate({ type: 'admin' });
+        } else {
+          setIsAdminAccessModalOpen(true);
+        }
+      }
+    };
+
+    // URL Hash listener for #admin or ?admin=true
+    const checkAdminHash = () => {
+      if (window.location.hash === '#admin' || window.location.search.includes('admin=true')) {
+        if (authService.isAdminUser(currentUser)) {
+          handleNavigate({ type: 'admin' });
+        } else {
+          setIsAdminAccessModalOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('hashchange', checkAdminHash);
+    checkAdminHash();
+
     return () => {
       cleanup();
+      unsubAuth();
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('hashchange', checkAdminHash);
     };
-  }, []);
-
-  const handleNavigate = (view: PageView) => {
-    setCurrentView(view);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [currentUser]);
 
   const breakingTickers = contentStore.getBreakingTickerNews();
   const featuredNews = contentStore.getFeaturedNews() || news[0];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100/60 font-['Noto_Sans_Devanagari','Plus_Jakarta_Sans',sans-serif] text-slate-900 selection:bg-amber-200 selection:text-slate-900">
-      {/* Global Header */}
+    <div className="w-full min-h-screen flex flex-col bg-slate-100/60 font-['Noto_Sans_Devanagari','Plus_Jakarta_Sans',sans-serif] text-slate-900 selection:bg-amber-200 selection:text-slate-900 overflow-x-hidden">
+      {/* 1. Urgent Notice / Breaking News Ticker (at the very top, matching image.png) */}
+      <BreakingNewsTicker
+        items={tickerItems}
+        onNavigate={handleNavigate}
+      />
+
+      {/* 2. Global Header & Sub-Bar */}
       <Header
         currentView={currentView}
         onNavigate={handleNavigate}
         onOpenSearch={() => setIsSearchModalOpen(true)}
         onOpenBloggerExport={() => setIsBloggerModalOpen(true)}
         onOpenSewayojanSync={() => setIsSewayojanModalOpen(true)}
+        onOpenDigitalId={() => {
+          if (currentUser) {
+            setIsProfileModalOpen(true);
+          } else {
+            setIsAuthModalOpen(true);
+          }
+        }}
         language={language}
         onToggleLanguage={() => setLanguage((l) => (l === 'HI' ? 'EN' : 'HI'))}
-      />
-
-      {/* Breaking News Ticker (visible on all pages for immediate alerts) */}
-      <BreakingNewsTicker
-        items={tickerItems}
-        onNavigate={handleNavigate}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
+        onLogout={() => authService.logout()}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1">
+      <main className="w-full flex-1 overflow-x-hidden pb-16 lg:pb-0">
         {/* 1. HOME VIEW */}
         {currentView.type === 'home' && (
           <div>
-            {/* Hero Section */}
+            {/* Statewide Community Hero Banner */}
+            <div id="statewide-community-hero-wrapper" className="w-full">
+              <StatewideCommunityHero
+                onNavigate={handleNavigate}
+                onOpenDigitalId={() => {
+                  if (currentUser) {
+                    setIsProfileModalOpen(true);
+                  } else {
+                    setIsAuthModalOpen(true);
+                  }
+                }}
+              />
+            </div>
+
+            {/* Daily Bulletins & Featured News Section */}
             <HomeHero
               featuredNews={featuredNews}
               sidebarNews={(news || []).filter((n) => n.id !== featuredNews?.id)}
@@ -198,12 +274,16 @@ export default function App() {
           );
         })()}
 
-        {/* 8. TALK CORNER VIEW (Community Forum) */}
+        {/* 8. COMMUNITY FEED / TALK CORNER VIEW */}
         {currentView.type === 'talk-corner' && (
-          <TalkCornerPage
-            onNavigate={handleNavigate}
-            initialCategory={currentView.category}
-          />
+          <div className="w-full">
+            <CommunityFeedPage
+              onNavigate={handleNavigate}
+              initialCategory={currentView.category}
+              currentUser={currentUser}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            />
+          </div>
         )}
 
         {/* 9. EMPLOYEE INFORMATION HUB VIEW */}
@@ -255,10 +335,34 @@ export default function App() {
         )}
       </main>
 
+      {/* Why Join UP Outsource Seva Nigam Section - Positioned right above Footer */}
+      <WhyJoinSection
+        onNavigate={handleNavigate}
+        onOpenDigitalId={() => {
+          if (currentUser) {
+            setIsProfileModalOpen(true);
+          } else {
+            setIsAuthModalOpen(true);
+          }
+        }}
+      />
+
       {/* Global Footer */}
       <Footer 
         onNavigate={handleNavigate} 
         onOpenBloggerExport={() => setIsBloggerModalOpen(true)}
+        onOpenAdminAccess={() => setIsAdminAccessModalOpen(true)}
+        currentUser={currentUser}
+      />
+
+      {/* Admin Access Modal (alternative secure way to access admin portal) */}
+      <AdminAccessModal
+        isOpen={isAdminAccessModalOpen}
+        onClose={() => setIsAdminAccessModalOpen(false)}
+        onSuccess={(adminUser) => {
+          setCurrentUser(adminUser);
+        }}
+        onNavigate={handleNavigate}
       />
 
       {/* Quick Search Modal */}
@@ -282,6 +386,42 @@ export default function App() {
         isOpen={isSewayojanModalOpen}
         onClose={() => setIsSewayojanModalOpen(false)}
         onSyncSuccess={refreshData}
+      />
+
+      {/* Employee Login & Registration Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(user) => {
+          setCurrentUser(user);
+        }}
+      />
+
+      {/* Employee Profile & Saved Items Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        user={currentUser}
+        onLogout={() => {
+          authService.logout();
+        }}
+        onNavigate={handleNavigate}
+      />
+
+      {/* Fixed Mobile Bottom Navigation Bar (Feed, Districts, Post, ID Card, Profile - matching image.png) */}
+      <MobileBottomNav
+        currentView={currentView}
+        onNavigate={handleNavigate}
+        onOpenDigitalId={() => {
+          if (currentUser) {
+            setIsProfileModalOpen(true);
+          } else {
+            setIsAuthModalOpen(true);
+          }
+        }}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        currentUser={currentUser}
       />
     </div>
   );

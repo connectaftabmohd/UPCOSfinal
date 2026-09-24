@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { 
   Sparkles, Image, FileText, BarChart2, Plus, 
-  MapPin, Bookmark, 
-  ShieldCheck, ArrowRight, Flame, AlertCircle,
-  Heart, ThumbsUp, 
-  MessageSquare, CheckCircle2, Download, 
-  Pin, X, Send, ChevronRight, UserCheck, Lock, User
+  MapPin, Building2, CreditCard, Bookmark, Users, 
+  ShieldCheck, ArrowRight, Flame, HelpCircle, UserCheck, AlertCircle,
+  User, LogIn, Heart, ThumbsUp, Share2, Flag, MoreHorizontal, 
+  MessageSquare, CheckCircle2, Download, CornerDownRight, 
+  Trash2, Copy, Check, Pin, X, Send
 } from 'lucide-react';
 import { PageView, UserProfile } from '../types';
 
@@ -125,21 +125,31 @@ const INITIAL_POSTS: Post[] = [
   }
 ];
 
-interface TalkCornerPageProps {
-  onNavigate?: (view: PageView) => void;
-  initialCategory?: string;
+export interface CommunityFeedPageProps {
   currentUser?: UserProfile | null;
   onOpenAuthModal?: () => void;
+  onNavigate?: (view: PageView) => void;
+  initialCategory?: string;
 }
 
 // ================= MAIN COMPONENT =================
-export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({ 
-  onNavigate, 
+export const CommunityFeedPage: React.FC<CommunityFeedPageProps> = ({
   currentUser: propUser,
-  onOpenAuthModal 
+  onOpenAuthModal,
+  onNavigate,
+  initialCategory
 }) => {
-  // Use propUser if provided, fallback to default INITIAL_USER for standalone compatibility
-  const currentUser = propUser !== undefined ? propUser : INITIAL_USER;
+  const [currentUser, setCurrentUser] = useState<typeof INITIAL_USER | UserProfile | null>(
+    propUser !== undefined ? propUser : INITIAL_USER
+  );
+
+  // Sync if propUser changes
+  React.useEffect(() => {
+    if (propUser !== undefined) {
+      setCurrentUser(propUser);
+    }
+  }, [propUser]);
+
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
   const [activeTab, setActiveTab] = useState<'all' | 'district' | 'department' | 'official' | 'trending'>('all');
   
@@ -175,12 +185,14 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
     return true;
   });
 
-  const requireAuth = (callback: () => void) => {
+  const checkAuthOrExecute = (action: () => void) => {
     if (!currentUser) {
-      if (onOpenAuthModal) onOpenAuthModal();
-      return;
+      if (onOpenAuthModal) {
+        onOpenAuthModal();
+        return;
+      }
     }
-    callback();
+    action();
   };
 
   // Reactions Handler
@@ -204,9 +216,9 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
         // Increment new, decrement old if existed
         setPosts(pList => pList.map(p => {
           if (p.id !== postId) return p;
-          const updatedReactions = { ...p.reactions, [type]: (p.reactions[type] || 0) + 1 };
+          const updatedReactions = { ...p.reactions, [type]: p.reactions[type] + 1 };
           if (existing) {
-            updatedReactions[existing] = Math.max(0, (updatedReactions[existing] || 0) - 1);
+            updatedReactions[existing] = Math.max(0, updatedReactions[existing] - 1);
           }
           return { ...p, reactions: updatedReactions };
         }));
@@ -244,29 +256,6 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
     setSavedPostIds(prev => prev.includes(postId) ? prev.filter(id => id !== postId) : [...prev, postId]);
   };
 
-  // Poll Vote Handler
-  const handleVotePoll = (postId: string, optionId: string) => {
-    if (!currentUser) {
-      if (onOpenAuthModal) onOpenAuthModal();
-      return;
-    }
-    setPosts(prev => prev.map(p => {
-      if (p.id !== postId || !p.poll || p.poll.userVotedOptionId) return p;
-      const updatedOptions = p.poll.options.map(opt => 
-        opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt
-      );
-      return {
-        ...p,
-        poll: {
-          ...p.poll,
-          options: updatedOptions,
-          totalVotes: p.poll.totalVotes + 1,
-          userVotedOptionId: optionId
-        }
-      };
-    }));
-  };
-
   // Create Post
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -300,27 +289,349 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[1440px] mx-auto px-2 sm:px-4 lg:px-6 py-4">
+    <div id="community-feed-section" className="w-full max-w-[1440px] mx-auto px-2 sm:px-4 lg:px-6 py-4">
       
-      {/* Navigation Breadcrumb */}
-      {onNavigate && (
-        <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-3 px-1">
-          <button
-            onClick={() => onNavigate({ type: 'home' })}
-            className="hover:text-blue-900 font-medium"
-          >
-            होम
-          </button>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-slate-800 font-bold">
-            कम्युनिटी फोरम (Community Forum)
-          </span>
-        </nav>
-      )}
+      {/* Grid: Left Sidebar + Center Feed + Right Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        
+        {/* Left Sidebar */}
+        <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20">
+          {currentUser && (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div className="text-center pb-3 border-b border-slate-100 dark:border-slate-700">
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name}
+                  className="w-16 h-16 rounded-full object-cover mx-auto mb-2 border-2 border-amber-500 shadow-xs"
+                />
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {currentUser.name}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                  {currentUser.designation}
+                </p>
+                <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300">
+                  <MapPin className="w-3 h-3" />
+                  <span>{currentUser.district}</span>
+                </div>
+              </div>
 
-      {/* Greeting Header (Logged in or Logged out) */}
+              <div className="pt-3 space-y-2 text-xs font-medium">
+                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-700/40 flex items-center justify-between text-slate-600 dark:text-slate-300">
+                  <span>मेरी कुल पोस्ट्स</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{posts.filter(p => p.authorId === currentUser.id).length}</span>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-700/40 flex items-center justify-between text-slate-600 dark:text-slate-300">
+                  <span>सहेजी गई पोस्ट्स</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{savedPostIds.length}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 text-xs space-y-2">
+            <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>कम्युनिटी दिशानिर्देश</span>
+            </h4>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              यह मंच कर्मचारियों के आपसी सहयोग व मार्गदर्शन हेतु है। किसी भी प्रकार की भ्रामक या असत्यापित सूचना साझा करना प्रतिबंधित है।
+            </p>
+          </div>
+        </aside>
+
+        {/* Center Feed */}
+        <main className="lg:col-span-6 space-y-4">
+          
+          {/* Create Post Prompt Box */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
+            <div className="flex items-center gap-3">
+              <img
+                src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                alt="Avatar"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-amber-500/30 shrink-0"
+              />
+              <button
+                onClick={() => checkAuthOrExecute(() => setIsCreateModalOpen(true))}
+                className="flex-1 text-left px-4 py-2.5 rounded-full bg-slate-100 dark:bg-slate-700 text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+              >
+                सहकर्मियों से कुछ साझा करें या सवाल पूछें...
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1 pt-3 mt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+              <button
+                onClick={() => checkAuthOrExecute(() => setIsCreateModalOpen(true))}
+                className="flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-amber-600 font-semibold py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                <Image className="w-4 h-4 text-emerald-600" />
+                <span>फोटो</span>
+              </button>
+              <button
+                onClick={() => checkAuthOrExecute(() => setIsCreateModalOpen(true))}
+                className="flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-amber-600 font-semibold py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                <FileText className="w-4 h-4 text-red-600" />
+                <span>दस्तावेज़</span>
+              </button>
+              <button
+                onClick={() => checkAuthOrExecute(() => setIsCreateModalOpen(true))}
+                className="flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-amber-600 font-semibold py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                <BarChart2 className="w-4 h-4 text-blue-600" />
+                <span>पोल / राय</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-none">
+            {[
+              { id: 'all', label: 'सभी अपडेट' },
+              { id: 'district', label: 'मेरा जिला' },
+              { id: 'department', label: 'मेरा विभाग' },
+              { id: 'official', label: 'शासनादेश (Official)' },
+              { id: 'trending', label: 'ट्रेंडिंग 🔥' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Posts List */}
+          <div className="space-y-4">
+            {filteredPosts.length > 0 ? (
+              filteredPosts.map(post => {
+                const totalReactions = (Object.values(post.reactions) as number[]).reduce((a, b) => a + b, 0);
+                const currentReaction = userReactions[post.id];
+                const isSaved = savedPostIds.includes(post.id);
+                const isCommentsOpen = activeCommentPostId === post.id;
+
+                return (
+                  <article key={post.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-xs overflow-hidden">
+                    
+                    {/* Official Banner */}
+                    {post.isOfficial && (
+                      <div className="bg-amber-500/10 dark:bg-amber-500/20 border-b border-amber-200 dark:border-amber-800/60 px-4 py-1.5 flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300">
+                        <div className="flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                          <span>आधिकारिक सूचना / शासनादेश</span>
+                        </div>
+                        {post.isPinned && (
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                            <Pin className="w-3 h-3" />
+                            <span>पिन किया गया</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="p-4 sm:p-5">
+                      {/* Author Header */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={post.authorAvatar}
+                            alt={post.authorName}
+                            className="w-10 h-10 rounded-full object-cover border border-amber-500/30"
+                          />
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                                {post.authorName}
+                              </h4>
+                              {post.isVerified && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500">
+                              {post.authorDistrict} • {post.authorDepartment}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleToggleSave(post.id)}
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            isSaved ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/40' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                          }`}
+                          title="Save Post"
+                        >
+                          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-amber-600' : ''}`} />
+                        </button>
+                      </div>
+
+                      {/* Post Content */}
+                      <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line mb-3">
+                        {post.content}
+                      </p>
+
+                      {/* Image Attachment */}
+                      {post.imageUrl && (
+                        <div className="mb-3 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-96">
+                          <img src={post.imageUrl} alt="Post Attachment" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+
+                      {/* Document Attachment */}
+                      {post.documentName && (
+                        <div className="mb-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <FileText className="w-5 h-5 text-red-600 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{post.documentName}</p>
+                              <p className="text-[10px] text-slate-500">{post.documentSize || 'PDF Document'}</p>
+                            </div>
+                          </div>
+                          <button className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 cursor-pointer">
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Poll Section */}
+                      {post.poll && (
+                        <div className="mb-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 space-y-2">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white mb-2">{post.poll.question}</p>
+                          {post.poll.options.map(opt => {
+                            const pct = post.poll!.totalVotes > 0 ? Math.round((opt.votes / post.poll!.totalVotes) * 100) : 0;
+                            return (
+                              <div key={opt.id} className="relative overflow-hidden border border-slate-200 dark:border-slate-600 rounded-lg p-2 text-xs">
+                                <div className="absolute inset-0 bg-amber-500/15" style={{ width: `${pct}%` }} />
+                                <div className="relative flex justify-between font-semibold">
+                                  <span>{opt.text}</span>
+                                  <span>{pct}% ({opt.votes})</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <p className="text-[10px] text-slate-400 text-right">कुल मत: {post.poll.totalVotes}</p>
+                        </div>
+                      )}
+
+                      {/* Reaction and Comments Bar */}
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleReaction(post.id, 'like')}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                              currentReaction === 'like' ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                            }`}
+                          >
+                            <ThumbsUp className={`w-4 h-4 ${currentReaction === 'like' ? 'fill-amber-600' : ''}`} />
+                            <span>{post.reactions.like}</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleReaction(post.id, 'support')}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                              currentReaction === 'support' ? 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                            }`}
+                          >
+                            <Heart className={`w-4 h-4 ${currentReaction === 'support' ? 'fill-rose-600' : ''}`} />
+                            <span>{post.reactions.support}</span>
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => setActiveCommentPostId(isCommentsOpen ? null : post.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          <span>{post.comments.length} टिप्पणियां</span>
+                        </button>
+                      </div>
+
+                      {/* Comments Dropdown */}
+                      {isCommentsOpen && (
+                        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-3">
+                          <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                            {post.comments.map(c => (
+                              <div key={c.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 text-xs">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="font-bold text-slate-900 dark:text-white">{c.authorName}</span>
+                                  <span className="text-[10px] text-slate-400">{c.createdAt}</span>
+                                </div>
+                                <p className="text-slate-700 dark:text-slate-300">{c.content}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={commentInput}
+                              onChange={e => setCommentInput(e.target.value)}
+                              placeholder="अपनी टिप्पणी लिखें..."
+                              className="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
+                              onKeyDown={e => e.key === 'Enter' && handleAddComment(post.id)}
+                            />
+                            <button
+                              onClick={() => handleAddComment(post.id)}
+                              className="p-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors cursor-pointer"
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+                  </article>
+                );
+              })
+            ) : (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center border border-slate-200 dark:border-slate-700">
+                <AlertCircle className="w-10 h-10 text-amber-500 mx-auto mb-2 opacity-80" />
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-1">
+                  इस श्रेणी में अभी कोई पोस्ट नहीं है
+                </h4>
+                <p className="text-xs text-slate-500 mb-4">आप पहली पोस्ट बनाकर चर्चा शुरू कर सकते हैं।</p>
+                <button
+                  onClick={() => checkAuthOrExecute(() => setIsCreateModalOpen(true))}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer"
+                >
+                  नई पोस्ट बनाएं
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
+
+        {/* Right Sidebar */}
+        <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
+            <h4 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Flame className="w-4 h-4 text-orange-500" />
+              <span>ट्रेंडिंग चर्चाएं</span>
+            </h4>
+            <div className="space-y-2.5 text-xs">
+              <div className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/60 cursor-pointer">
+                <p className="font-semibold text-slate-800 dark:text-slate-200">#वेतन_विलंब_समस्या</p>
+                <p className="text-[10px] text-slate-400">142 चर्चाएं • समस्त 75 जिले</p>
+              </div>
+              <div className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/60 cursor-pointer">
+                <p className="font-semibold text-slate-800 dark:text-slate-200">#ईपीएफ_पासबुक_वेरिफिकेशन</p>
+                <p className="text-[10px] text-slate-400">89 चर्चाएं • शासनादेश</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+
+      {/* Personalized Greeting / Forum Welcome Banner - Shifted to Bottom above Footer */}
       {currentUser ? (
-        <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="mt-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200 dark:border-amber-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="relative">
               <img
@@ -335,17 +646,17 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
               )}
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                 नमस्ते, {currentUser.name.split(' ')[0]} 👋
               </h2>
-              <p className="text-xs text-slate-600 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                 {currentUser.designation} • {currentUser.district}
               </p>
             </div>
           </div>
 
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => checkAuthOrExecute(() => setIsCreateModalOpen(true))}
             className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -353,7 +664,7 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
           </button>
         </div>
       ) : (
-        <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-blue-800/60">
+        <div className="mt-8 p-4 rounded-2xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-blue-800/60">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0">
               <ShieldCheck className="w-6 h-6" />
@@ -380,377 +691,24 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
         </div>
       )}
 
-      {/* Grid: Left Sidebar + Center Feed + Right Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        
-        {/* Left Sidebar */}
-        <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20">
-          {currentUser && (
-            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-              <div className="text-center pb-3 border-b border-slate-100">
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-16 h-16 rounded-full object-cover mx-auto mb-2 border-2 border-amber-500 shadow-xs"
-                />
-                <h3 className="font-bold text-sm text-slate-900">
-                  {currentUser.name}
-                </h3>
-                <p className="text-xs text-slate-500 truncate">
-                  {currentUser.designation}
-                </p>
-                <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                  <MapPin className="w-3 h-3" />
-                  <span>{currentUser.district}</span>
-                </div>
-              </div>
-
-              <div className="pt-3 space-y-2 text-xs font-medium">
-                <div className="p-2 rounded-lg bg-slate-50 flex items-center justify-between text-slate-600">
-                  <span>मेरी कुल पोस्ट्स</span>
-                  <span className="font-bold text-slate-900">{posts.filter(p => p.authorId === currentUser.id).length}</span>
-                </div>
-                <div className="p-2 rounded-lg bg-slate-50 flex items-center justify-between text-slate-600">
-                  <span>सहेजी गई पोस्ट्स</span>
-                  <span className="font-bold text-slate-900">{savedPostIds.length}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs space-y-2">
-            <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>कम्युनिटी दिशानिर्देश</span>
-            </h4>
-            <p className="text-[11px] text-slate-600 leading-relaxed">
-              यह मंच कर्मचारियों के आपसी सहयोग व मार्गदर्शन हेतु है। किसी भी प्रकार की भ्रामक या असत्यापित सूचना साझा करना प्रतिबंधित है।
-            </p>
-          </div>
-        </aside>
-
-        {/* Center Feed */}
-        <main className="lg:col-span-6 space-y-4">
-          
-          {/* Create Post Prompt Box */}
-          <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-xs">
-            <div className="flex items-center gap-3">
-              <img
-                src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
-                alt="Avatar"
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-amber-500/30 shrink-0"
-              />
-              <button
-                onClick={() => requireAuth(() => setIsCreateModalOpen(true))}
-                className="flex-1 text-left px-4 py-2.5 rounded-full bg-slate-100 text-xs sm:text-sm text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                सहकर्मियों से कुछ साझा करें या सवाल पूछें...
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-1 pt-3 mt-3 border-t border-slate-100 text-xs">
-              <button
-                onClick={() => requireAuth(() => setIsCreateModalOpen(true))}
-                className="flex items-center justify-center gap-1.5 text-slate-600 hover:text-amber-600 font-semibold py-1.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <Image className="w-4 h-4 text-emerald-600" />
-                <span>फोटो</span>
-              </button>
-              <button
-                onClick={() => requireAuth(() => setIsCreateModalOpen(true))}
-                className="flex items-center justify-center gap-1.5 text-slate-600 hover:text-amber-600 font-semibold py-1.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <FileText className="w-4 h-4 text-red-600" />
-                <span>दस्तावेज़</span>
-              </button>
-              <button
-                onClick={() => requireAuth(() => setIsCreateModalOpen(true))}
-                className="flex items-center justify-center gap-1.5 text-slate-600 hover:text-amber-600 font-semibold py-1.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <BarChart2 className="w-4 h-4 text-blue-600" />
-                <span>पोल / राय</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold">
-            {[
-              { id: 'all', label: 'सभी अपडेट' },
-              { id: 'district', label: 'मेरा जिला' },
-              { id: 'department', label: 'मेरा विभाग' },
-              { id: 'official', label: 'शासनादेश (Official)' },
-              { id: 'trending', label: 'ट्रेंडिंग 🔥' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
-                  activeTab === tab.id
-                    ? 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Posts List */}
-          <div className="space-y-4">
-            {filteredPosts.length > 0 ? (
-              filteredPosts.map(post => {
-                const currentReaction = userReactions[post.id];
-                const isSaved = savedPostIds.includes(post.id);
-                const isCommentsOpen = activeCommentPostId === post.id;
-
-                return (
-                  <article key={post.id} className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-                    
-                    {/* Official Banner */}
-                    {post.isOfficial && (
-                      <div className="bg-amber-500/10 border-b border-amber-200 px-4 py-1.5 flex items-center justify-between text-xs font-bold text-amber-800">
-                        <div className="flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                          <span>आधिकारिक सूचना / शासनादेश</span>
-                        </div>
-                        {post.isPinned && (
-                          <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700">
-                            <Pin className="w-3 h-3" />
-                            <span>पिन किया गया</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="p-4 sm:p-5">
-                      {/* Author Header */}
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={post.authorAvatar}
-                            alt={post.authorName}
-                            className="w-10 h-10 rounded-full object-cover border border-amber-500/30"
-                          />
-                          <div>
-                            <div className="flex items-center gap-1">
-                              <h4 className="font-bold text-sm text-slate-900">
-                                {post.authorName}
-                              </h4>
-                              {post.isVerified && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                              )}
-                            </div>
-                            <p className="text-[11px] text-slate-500">
-                              {post.authorDistrict} • {post.authorDepartment}
-                            </p>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleToggleSave(post.id)}
-                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                            isSaved ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:bg-slate-100'
-                          }`}
-                          title="Save Post"
-                        >
-                          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-amber-600' : ''}`} />
-                        </button>
-                      </div>
-
-                      {/* Post Content */}
-                      <p className="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line mb-3">
-                        {post.content}
-                      </p>
-
-                      {/* Image Attachment */}
-                      {post.imageUrl && (
-                        <div className="mb-3 rounded-xl overflow-hidden border border-slate-200 max-h-96">
-                          <img src={post.imageUrl} alt="Post Attachment" className="w-full h-full object-cover" />
-                        </div>
-                      )}
-
-                      {/* Document Attachment */}
-                      {post.documentName && (
-                        <div className="mb-3 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <FileText className="w-5 h-5 text-red-600 shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold text-slate-900 truncate">{post.documentName}</p>
-                              <p className="text-[10px] text-slate-500">{post.documentSize || 'PDF Document'}</p>
-                            </div>
-                          </div>
-                          <button className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 cursor-pointer">
-                            <Download className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Poll Section */}
-                      {post.poll && (
-                        <div className="mb-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                          <p className="text-xs font-bold text-slate-900 mb-2">{post.poll.question}</p>
-                          {post.poll.options.map(opt => {
-                            const pct = post.poll!.totalVotes > 0 ? Math.round((opt.votes / post.poll!.totalVotes) * 100) : 0;
-                            const isVoted = post.poll?.userVotedOptionId === opt.id;
-                            return (
-                              <div 
-                                key={opt.id} 
-                                onClick={() => handleVotePoll(post.id, opt.id)}
-                                className={`relative overflow-hidden border rounded-lg p-2 text-xs transition-all ${
-                                  isVoted ? 'border-amber-500 ring-1 ring-amber-500' : 'border-slate-200'
-                                } ${!post.poll?.userVotedOptionId ? 'cursor-pointer hover:border-amber-400' : ''}`}
-                              >
-                                <div className="absolute inset-0 bg-amber-500/15" style={{ width: `${pct}%` }} />
-                                <div className="relative flex justify-between font-semibold">
-                                  <span className="flex items-center gap-1.5">
-                                    {opt.text}
-                                    {isVoted && <span className="text-[10px] text-amber-700 font-bold">(आपका मत)</span>}
-                                  </span>
-                                  <span>{pct}% ({opt.votes})</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          <p className="text-[10px] text-slate-400 text-right">कुल मत: {post.poll.totalVotes}</p>
-                        </div>
-                      )}
-
-                      {/* Reaction and Comments Bar */}
-                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleReaction(post.id, 'like')}
-                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                              currentReaction === 'like' ? 'text-amber-600 bg-amber-50 font-bold' : 'hover:bg-slate-100'
-                            }`}
-                          >
-                            <ThumbsUp className={`w-4 h-4 ${currentReaction === 'like' ? 'fill-amber-600' : ''}`} />
-                            <span>{post.reactions.like}</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleReaction(post.id, 'support')}
-                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                              currentReaction === 'support' ? 'text-rose-600 bg-rose-50 font-bold' : 'hover:bg-slate-100'
-                            }`}
-                          >
-                            <Heart className={`w-4 h-4 ${currentReaction === 'support' ? 'fill-rose-600' : ''}`} />
-                            <span>{post.reactions.support}</span>
-                          </button>
-                        </div>
-
-                        <button
-                          onClick={() => setActiveCommentPostId(isCommentsOpen ? null : post.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                          <span>{post.comments.length} टिप्पणियां</span>
-                        </button>
-                      </div>
-
-                      {/* Comments Dropdown */}
-                      {isCommentsOpen && (
-                        <div className="mt-3 pt-3 border-t border-slate-100 space-y-3">
-                          <div className="space-y-2.5 max-h-60 overflow-y-auto">
-                            {post.comments.map(c => (
-                              <div key={c.id} className="p-2.5 rounded-xl bg-slate-50 text-xs">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="font-bold text-slate-900">{c.authorName}</span>
-                                  <span className="text-[10px] text-slate-400">{c.createdAt}</span>
-                                </div>
-                                <p className="text-slate-700">{c.content}</p>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={commentInput}
-                              onChange={e => setCommentInput(e.target.value)}
-                              placeholder="अपनी टिप्पणी लिखें..."
-                              className="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-100 border-none focus:ring-2 focus:ring-amber-500 text-slate-900"
-                              onKeyDown={e => e.key === 'Enter' && handleAddComment(post.id)}
-                            />
-                            <button
-                              onClick={() => handleAddComment(post.id)}
-                              className="p-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors cursor-pointer"
-                            >
-                              <Send className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-                  </article>
-                );
-              })
-            ) : (
-              <div className="bg-white rounded-2xl p-8 text-center border border-slate-200">
-                <AlertCircle className="w-10 h-10 text-amber-500 mx-auto mb-2 opacity-80" />
-                <h4 className="font-bold text-sm text-slate-900 mb-1">
-                  इस श्रेणी में अभी कोई पोस्ट नहीं है
-                </h4>
-                <p className="text-xs text-slate-500 mb-4">आप पहली पोस्ट बनाकर चर्चा शुरू कर सकते हैं।</p>
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer"
-                >
-                  नई पोस्ट बनाएं
-                </button>
-              </div>
-            )}
-          </div>
-        </main>
-
-        {/* Right Sidebar */}
-        <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20">
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-            <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Flame className="w-4 h-4 text-orange-500" />
-              <span>ट्रेंडिंग चर्चाएं</span>
-            </h4>
-            <div className="space-y-2.5 text-xs">
-              <div 
-                onClick={() => setActiveTab('trending')}
-                className="p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
-              >
-                <p className="font-semibold text-slate-800">#वेतन_विलंब_समस्या</p>
-                <p className="text-[10px] text-slate-400">142 चर्चाएं • समस्त 75 जिले</p>
-              </div>
-              <div 
-                onClick={() => setActiveTab('official')}
-                className="p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
-              >
-                <p className="font-semibold text-slate-800">#ईपीएफ_पासबुक_वेरिफिकेशन</p>
-                <p className="text-[10px] text-slate-400">89 चर्चाएं • शासनादेश</p>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-      </div>
-
       {/* Create Post Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-4 sm:p-6 border border-slate-200 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-base">कम्युनिटी में पोस्ट साझा करें</h3>
-              <button onClick={() => setIsCreateModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 cursor-pointer">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">कम्युनिटी में पोस्ट साझा करें</h3>
+              <button onClick={() => setIsCreateModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreatePost} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">श्रेणी चुनें</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">श्रेणी चुनें</label>
                 <select
                   value={newPostCategory}
                   onChange={e => setNewPostCategory(e.target.value as any)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200"
                 >
                   <option value="general">सामान्य चर्चा (General Discussion)</option>
                   <option value="issue">समस्या व शिकायत (Issue / Grievance)</option>
@@ -760,33 +718,33 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">संदेश / विवरण</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">संदेश / विवरण</label>
                 <textarea
                   rows={4}
                   value={newPostContent}
                   onChange={e => setNewPostContent(e.target.value)}
                   placeholder="अपने विचार, समस्या या जानकारी यहाँ लिखें..."
-                  className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 focus:ring-2 focus:ring-amber-500"
+                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">फोटो लिंक (वैकल्पिक Image URL)</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">फोटो लिंक (वैकल्पिक Image URL)</label>
                 <input
                   type="url"
                   value={newPostImage}
                   onChange={e => setNewPostImage(e.target.value)}
                   placeholder="https://images.unsplash.com/..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 cursor-pointer"
                 >
                   रद्द करें
                 </button>
@@ -805,5 +763,3 @@ export const TalkCornerPage: React.FC<TalkCornerPageProps> = ({
     </div>
   );
 };
-
-export const CommunityFeedPage = TalkCornerPage;

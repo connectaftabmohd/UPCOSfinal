@@ -13,21 +13,32 @@ import {
   Youtube,
   Twitter,
   Instagram,
-  MessageCircle
+  MessageCircle,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { Newsletter } from './Newsletter';
-import { PageView } from '../types';
+import { PageView, UserProfile } from '../types';
+import { authService } from '../services/authService';
 
 interface FooterProps {
   onNavigate: (view: PageView) => void;
   onOpenBloggerExport?: () => void;
+  onOpenAdminAccess?: () => void;
+  currentUser?: UserProfile | null;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenBloggerExport }) => {
+export const Footer: React.FC<FooterProps> = ({ 
+  onNavigate, 
+  onOpenBloggerExport, 
+  onOpenAdminAccess,
+  currentUser 
+}) => {
+  const isAdmin = authService.isAdminUser(currentUser);
   return (
-    <footer className="bg-slate-950 text-slate-300 pt-12 pb-8 border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+    <footer className="w-full bg-slate-950 text-slate-300 pt-12 pb-8 border-t border-slate-800">
+      <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Weekly Newsletter Section */}
         <Newsletter className="mb-10" />
 
@@ -171,7 +182,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenBloggerExport 
                   className="hover:text-amber-400 transition flex items-center gap-1.5 font-bold text-amber-300/95"
                 >
                   <ChevronRight className="w-3 h-3 text-amber-400" />
-                  <span>टॉक कॉर्नर (Talk Corner - संवाद मंच)</span>
+                  <span>कम्युनिटी फोरम (Community Forum)</span>
                 </button>
               </li>
               <li>
@@ -230,15 +241,27 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenBloggerExport 
                   <span>गोपनीयता नीति (Privacy Policy)</span>
                 </button>
               </li>
-              <li>
-                <button
-                  onClick={() => onNavigate({ type: 'admin' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5 text-slate-400"
-                >
-                  <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>संपादकीय सीएमएस (Editorial CMS)</span>
-                </button>
-              </li>
+              {isAdmin ? (
+                <li>
+                  <button
+                    onClick={() => onNavigate({ type: 'admin' })}
+                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-amber-400 font-semibold"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                    <span>संपादकीय सीएमएस (Admin)</span>
+                  </button>
+                </li>
+              ) : (
+                <li>
+                  <button
+                    onClick={() => onNavigate({ type: 'employee-hub' })}
+                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-slate-400"
+                  >
+                    <ChevronRight className="w-3 h-3 text-slate-600" />
+                    <span>कर्मचारी सहायता केंद्र (Help Desk)</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -282,7 +305,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenBloggerExport 
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <span>डिजिटल सशक्तिकरण • निष्पक्ष सूचना</span>
-            <span>Made for UP Outsourced Employees</span>
+            <button
+              onClick={onOpenAdminAccess}
+              title="व्यवस्थापक प्रवेश (Admin Access - शॉर्टकट: Ctrl+Shift+A)"
+              className="flex items-center gap-1.5 text-slate-500 hover:text-amber-400 transition-colors text-xs select-none cursor-pointer group px-2 py-1 rounded hover:bg-slate-900 border border-transparent hover:border-slate-800"
+            >
+              <Lock className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+              <span className="text-[11px] font-medium">प्रशासक प्रवेश</span>
+            </button>
           </div>
         </div>
       </div>

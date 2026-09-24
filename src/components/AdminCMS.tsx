@@ -96,7 +96,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       setAuthError('');
       showNotification('प्रशासक पोर्टल में स्वागत है! आप सभी अनुभागों को संपादित कर सकते हैं।');
     } else {
-      setAuthError('अमान्य ऑथराइजेशन कोड। कृपया मान्य पासकी (उदा. 1076, admin, या uposn2026) दर्ज करें।');
+      setAuthError('गलत पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड दर्ज करें।');
     }
   };
 
@@ -561,13 +561,13 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <KeyRound className="w-4 h-4 text-blue-700" />
-                <span>संपादक / एडमिन सुरक्षा पासकी</span>
+                <span>व्यवस्थापक पासवर्ड (Admin Password)</span>
               </label>
               <input
                 type="password"
                 value={passkeyInput}
                 onChange={(e) => setPasskeyInput(e.target.value)}
-                placeholder="सुरक्षा पासकी दर्ज करें (उदा. 1076 या admin)"
+                placeholder="प्रशासक पासवर्ड दर्ज करें"
                 className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-900 focus:outline-hidden font-mono tracking-widest text-center"
                 autoFocus
               />
@@ -587,16 +587,6 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
               <ShieldCheck className="w-4 h-4 text-amber-400" />
               <span>प्रशासनिक पोर्टल में प्रवेश करें</span>
             </button>
-
-            <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 text-[11px] text-amber-900">
-              <p className="font-bold flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span>त्वरित परीक्षण पासकी (Quick Passkey):</span>
-              </p>
-              <p className="mt-1 text-slate-700 font-mono">
-                कोड: <span className="font-extrabold text-blue-900 bg-white px-1.5 py-0.5 rounded border border-amber-300">1076</span> या <span className="font-extrabold text-blue-900 bg-white px-1.5 py-0.5 rounded border border-amber-300">admin</span>
-              </p>
-            </div>
 
             <div className="pt-2 text-center">
               <button

@@ -41,8 +41,8 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
   const paginatedItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="py-8 bg-slate-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+    <div className="w-full py-8 bg-slate-50 min-h-screen">
+      <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-5">
           <button

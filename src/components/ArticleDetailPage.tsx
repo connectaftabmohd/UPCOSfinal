@@ -60,8 +60,8 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
   const currentUrl = encodeURIComponent(window.location.href);
 
   return (
-    <div className="py-6 sm:py-8 bg-slate-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+    <div className="w-full py-6 sm:py-8 bg-slate-50 min-h-screen">
+      <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-5 overflow-x-auto whitespace-nowrap pb-1">
           <button

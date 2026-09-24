@@ -31,22 +31,22 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       </div>
 
       {showText && (
-        <div className="flex flex-col leading-tight select-none">
-          <div className="flex items-center flex-wrap gap-x-1.5 gap-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-slate-900 tracking-tight text-lg md:text-xl font-['Plus_Jakarta_Sans']">
+        <div className="flex flex-col leading-tight select-none min-w-0">
+          <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+            <div className="flex items-center gap-1">
+              <span className="font-extrabold text-slate-900 tracking-tight text-base sm:text-lg md:text-xl font-['Plus_Jakarta_Sans'] whitespace-nowrap">
                 UP Outsource
               </span>
-              <span className="font-extrabold text-red-600 tracking-tight text-lg md:text-xl font-['Plus_Jakarta_Sans']">
+              <span className="font-extrabold text-red-600 tracking-tight text-base sm:text-lg md:text-xl font-['Plus_Jakarta_Sans'] whitespace-nowrap">
                 Seva Nigam
               </span>
             </div>
-            <span className="inline-flex items-center text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-slate-900 text-white px-1.5 sm:px-2 py-0.5 rounded-md font-['Plus_Jakarta_Sans']">
+            <span className="inline-flex items-center text-[9px] sm:text-[11px] font-bold uppercase tracking-wider bg-slate-900 text-white px-1.5 sm:px-2 py-0.5 rounded font-['Plus_Jakarta_Sans'] shrink-0">
               News &amp; Information
             </span>
           </div>
           {subtitle && (
-            <span className="text-[11px] md:text-xs text-slate-600 font-medium tracking-wide mt-0.5">
+            <span className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 font-medium tracking-wide mt-0.5 truncate max-w-[210px] sm:max-w-none">
               आउटसोर्स कर्मचारियों की हर जरूरी खबर, एक जगह
             </span>
           )}

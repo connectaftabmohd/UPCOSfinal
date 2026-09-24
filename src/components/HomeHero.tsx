@@ -22,8 +22,8 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
     return null;
   }
   return (
-    <section className="py-6 sm:py-8 bg-slate-50/50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+    <section className="w-full py-6 sm:py-8 bg-slate-50/50">
+      <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Section Header with subtle styling */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">

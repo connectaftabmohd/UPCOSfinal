@@ -37,8 +37,8 @@ export const SourceReferenceBox: React.FC = () => {
   ];
 
   return (
-    <section className="py-8 bg-slate-100/80 border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+    <section className="w-full py-8 bg-slate-100/80 border-b border-slate-200">
+      <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 shadow-xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 mb-5">
             <div className="flex items-center gap-3">

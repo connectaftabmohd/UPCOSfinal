@@ -113,8 +113,8 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
   };
 
   return (
-    <section className="py-8 sm:py-10 bg-slate-50/60 border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+    <section className="w-full py-8 sm:py-10 bg-slate-50/60 border-b border-slate-200">
+      <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2.5">
