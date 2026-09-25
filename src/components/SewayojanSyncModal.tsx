@@ -281,8 +281,13 @@ export const SewayojanSyncModal: React.FC<SewayojanSyncModalProps> = ({
                         <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>अंतिम तिथि: <strong>{job.lastDate}</strong></span>
                       </div>
-                      <div className="text-[11px] text-slate-500 bg-slate-100 p-1.5 rounded-md">
-                        <strong>मानदेय:</strong> {job.monthlySalary} | <strong>सेवाप्रदाता:</strong> {job.agencyName}
+                      <div className="text-[11px] text-slate-500 bg-slate-100 p-1.5 rounded-md space-y-0.5">
+                        <div><strong>मानदेय:</strong> {job.monthlySalary} | <strong>सेवाप्रदाता:</strong> {job.agencyName}</div>
+                        {job.appliedCount !== undefined && (
+                          <div className="text-blue-700 font-bold">
+                            अब तक प्राप्त आवेदन: {job.appliedCount}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

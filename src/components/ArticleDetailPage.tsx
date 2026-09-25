@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -12,7 +12,12 @@ import {
   ArrowLeft,
   ExternalLink,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  Printer,
+  Table as TableIcon,
+  AlertTriangle,
+  FileText,
+  BadgeCheck
 } from 'lucide-react';
 import { NewsItem, GovernmentOrder, PageView } from '../types';
 import { NewsSidebar } from './NewsSidebar';
@@ -24,6 +29,157 @@ interface ArticleDetailPageProps {
   onNavigate: (view: PageView) => void;
 }
 
+// Helper to format inline markdown like **bold** and [link](url)
+function renderFormattedInline(text: string): React.ReactNode {
+  if (!text) return null;
+
+  // Split by bold (**bold**) and links [text](url)
+  const parts: React.ReactNode[] = [];
+  const regex = /(\*\*.*?\*\*|\[.*?\]\(.*?\))/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    const token = match[0];
+    if (token.startsWith('**') && token.endsWith('**')) {
+      const boldText = token.slice(2, -2);
+      parts.push(
+        <strong key={match.index} className="font-bold text-slate-900">
+          {boldText}
+        </strong>
+      );
+    } else if (token.startsWith('[') && token.includes('](') && token.endsWith(')')) {
+      const closeBracket = token.indexOf('](');
+      const linkLabel = token.slice(1, closeBracket);
+      const linkUrl = token.slice(closeBracket + 2, -1);
+      parts.push(
+        <a
+          key={match.index}
+          href={linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 font-bold text-blue-700 hover:text-blue-900 hover:underline"
+        >
+          {linkLabel}
+          <ExternalLink className="w-3 h-3 inline shrink-0" />
+        </a>
+      );
+    }
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+interface ParsedBlock {
+  type: 'table' | 'heading2' | 'heading3' | 'callout' | 'paragraph';
+  content?: string;
+  tableData?: {
+    headers: string[];
+    alignments: ('left' | 'center' | 'right')[];
+    rows: string[][];
+  };
+}
+
+// Content parser that turns raw markdown lines into structured blocks
+function parseArticleBlocks(fullContent: string[]): ParsedBlock[] {
+  const blocks: ParsedBlock[] = [];
+  let currentTableLines: string[] = [];
+
+  const flushTable = () => {
+    if (currentTableLines.length < 2) {
+      currentTableLines.forEach((line) => {
+        blocks.push({ type: 'paragraph', content: line });
+      });
+      currentTableLines = [];
+      return;
+    }
+
+    // Process table
+    const headerLine = currentTableLines[0];
+    const rawHeaders = headerLine
+      .split('|')
+      .map((c) => c.trim())
+      .filter((c, i, arr) => (i === 0 && c === '' ? false : i === arr.length - 1 && c === '' ? false : true));
+
+    // Alignments line
+    const alignLine = currentTableLines[1] || '';
+    const rawAligns = alignLine
+      .split('|')
+      .map((c) => c.trim())
+      .filter((c, i, arr) => (i === 0 && c === '' ? false : i === arr.length - 1 && c === '' ? false : true));
+
+    const alignments: ('left' | 'center' | 'right')[] = rawAligns.map((a) => {
+      if (a.startsWith(':') && a.endsWith(':')) return 'center';
+      if (a.endsWith(':')) return 'right';
+      return 'left';
+    });
+
+    // Rows
+    const rows: string[][] = [];
+    for (let i = 2; i < currentTableLines.length; i++) {
+      const line = currentTableLines[i];
+      if (!line.trim()) continue;
+      const cells = line
+        .split('|')
+        .map((c) => c.trim())
+        .filter((c, idx, arr) => (idx === 0 && c === '' ? false : idx === arr.length - 1 && c === '' ? false : true));
+      rows.push(cells);
+    }
+
+    blocks.push({
+      type: 'table',
+      tableData: {
+        headers: rawHeaders,
+        alignments,
+        rows
+      }
+    });
+
+    currentTableLines = [];
+  };
+
+  for (const line of fullContent) {
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('|')) {
+      currentTableLines.push(trimmed);
+      continue;
+    }
+
+    if (currentTableLines.length > 0) {
+      flushTable();
+    }
+
+    if (!trimmed) {
+      continue;
+    }
+
+    if (trimmed.startsWith('### ')) {
+      blocks.push({ type: 'heading3', content: trimmed.replace(/^###\s+/, '') });
+    } else if (trimmed.startsWith('## ')) {
+      blocks.push({ type: 'heading2', content: trimmed.replace(/^##\s+/, '') });
+    } else if (trimmed.startsWith('> ')) {
+      blocks.push({ type: 'callout', content: trimmed.replace(/^>\s+/, '') });
+    } else {
+      blocks.push({ type: 'paragraph', content: trimmed });
+    }
+  }
+
+  if (currentTableLines.length > 0) {
+    flushTable();
+  }
+
+  return blocks;
+}
+
 export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
   article,
   allNews,
@@ -31,6 +187,132 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
   onNavigate,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [tableCopied, setTableCopied] = useState(false);
+
+  // SEO & Social Tags Integration (applet-seo skill)
+  useEffect(() => {
+    if (!article) return;
+
+    // Document title
+    const prevTitle = document.title;
+    document.title = `${article.title} | UP Outsource Seva Nigam`;
+
+    // Meta description
+    let metaDesc = document.querySelector('meta[name="description"]');
+    const prevDesc = metaDesc ? metaDesc.getAttribute('content') : null;
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', article.shortDescription);
+
+    // Helper for Meta tags
+    const setMetaTag = (attrName: string, attrVal: string, contentVal: string) => {
+      let tag = document.querySelector(`meta[${attrName}="${attrVal}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute(attrName, attrVal);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', contentVal);
+    };
+
+    // OpenGraph
+    setMetaTag('property', 'og:title', article.title);
+    setMetaTag('property', 'og:description', article.shortDescription);
+    setMetaTag('property', 'og:image', article.featuredImage);
+    setMetaTag('property', 'og:type', 'article');
+    setMetaTag('property', 'og:site_name', 'UP Outsource Seva Nigam');
+    setMetaTag('property', 'og:url', window.location.href);
+
+    // Twitter Card
+    setMetaTag('name', 'twitter:card', 'summary_large_image');
+    setMetaTag('name', 'twitter:title', article.title);
+    setMetaTag('name', 'twitter:description', article.shortDescription);
+    setMetaTag('name', 'twitter:image', article.featuredImage);
+
+    // Canonical Link
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', window.location.origin + window.location.pathname);
+
+    // Schema.org Structured Data
+    const isRecruitment = article.category === 'भर्ती एवं तैनाती' || article.tags?.some(t => t.includes('भर्ती') || t.includes('Nurse'));
+    const schemaData = isRecruitment
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'JobPosting',
+          title: article.title,
+          description: article.shortDescription,
+          identifier: {
+            '@type': 'PropertyValue',
+            name: 'UP Sewayojan Outsource',
+            value: article.id
+          },
+          datePosted: article.publicationDate,
+          validThrough: '2026-09-27T23:59:59+05:30',
+          employmentType: 'CONTRACTOR',
+          hiringOrganization: {
+            '@type': 'Organization',
+            name: 'महिला कल्याण विभाग (उत्तर प्रदेश शासन) / SB ENTERPRISES',
+            sameAs: 'https://sewayojan.up.nic.in'
+          },
+          jobLocation: {
+            '@type': 'Place',
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: 'Prayagraj',
+              addressRegion: 'Uttar Pradesh',
+              addressCountry: 'IN'
+            }
+          },
+          baseSalary: {
+            '@type': 'MonetaryAmount',
+            currency: 'INR',
+            value: {
+              '@type': 'QuantitativeValue',
+              value: 27000,
+              unitText: 'MONTH'
+            }
+          }
+        }
+      : {
+          '@context': 'https://schema.org',
+          '@type': 'NewsArticle',
+          headline: article.title,
+          image: [article.featuredImage],
+          datePublished: article.publicationDate,
+          dateModified: article.publicationDate,
+          author: [{ '@type': 'Person', name: article.author }],
+          publisher: {
+            '@type': 'Organization',
+            name: 'UP Outsource Seva Nigam',
+            logo: { '@type': 'ImageObject', url: window.location.origin + '/logo.png' }
+          },
+          description: article.shortDescription
+        };
+
+    let scriptTag = document.getElementById('jsonld-article-schema');
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.id = 'jsonld-article-schema';
+      scriptTag.setAttribute('type', 'application/ld+json');
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = JSON.stringify(schemaData);
+
+    return () => {
+      document.title = prevTitle;
+      if (prevDesc && metaDesc) metaDesc.setAttribute('content', prevDesc);
+      const tag = document.getElementById('jsonld-article-schema');
+      if (tag) tag.remove();
+    };
+  }, [article]);
 
   if (!article) {
     return null;
@@ -56,8 +338,24 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const shareText = encodeURIComponent(`${article.title}\n\nUP Outsource Seva Nigam News & Information पर पढ़ें:\n`);
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCopyAllTables = () => {
+    const textToCopy = article.fullContent
+      .filter(l => l.startsWith('|') || l.startsWith('###'))
+      .join('\n');
+    navigator.clipboard.writeText(textToCopy || article.fullContent.join('\n\n'));
+    setTableCopied(true);
+    setTimeout(() => setTableCopied(false), 2500);
+  };
+
+  const shareText = encodeURIComponent(`${article.title}\n\nUP Outsource Seva Nigam पोर्टल पर संपूर्ण विवरण पढ़ें:\n`);
   const currentUrl = encodeURIComponent(window.location.href);
+
+  // Parse markdown content into structured blocks (tables, headings, callouts, paragraphs)
+  const contentBlocks = parseArticleBlocks(article.fullContent);
 
   return (
     <div className="w-full py-6 sm:py-8 bg-slate-50 min-h-screen">
@@ -90,14 +388,45 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
           </span>
         </nav>
 
-        {/* Back Button */}
-        <button
-          onClick={() => onNavigate({ type: 'news-list' })}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-900 hover:text-blue-950 mb-4 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-2xs transition"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>समाचार सूची पर वापस जाएं</span>
-        </button>
+        {/* Top Control Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <button
+            onClick={() => onNavigate({ type: 'news-list' })}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-900 hover:text-blue-950 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-2xs transition"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>समाचार सूची पर वापस जाएं</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrint}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 px-3 py-1.5 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 shadow-2xs transition"
+              title="पोस्ट प्रिंट अथवा PDF सेव करें"
+            >
+              <Printer className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">प्रिंट / PDF</span>
+            </button>
+
+            <button
+              onClick={handleCopyAllTables}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 px-3 py-1.5 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 shadow-2xs transition"
+              title="रिक्ति विवरण तालिका कॉपी करें"
+            >
+              {tableCopied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-700 font-bold">तालिका कॉपी हुई!</span>
+                </>
+              ) : (
+                <>
+                  <TableIcon className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="hidden sm:inline">तालिका डेटा कॉपी करें</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
         {/* Main 2-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -111,9 +440,15 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
               <span className="bg-blue-50 text-blue-900 text-xs font-semibold px-3 py-1 rounded-md border border-blue-200">
                 {article.department}
               </span>
+              {article.isBreaking && (
+                <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-600" />
+                  नवीनतम विज्ञप्ति
+                </span>
+              )}
             </div>
 
-            {/* Headline */}
+            {/* Headline (SEO Optimized, Clean and High-CTR) */}
             <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-4 tracking-tight">
               {article.title}
             </h1>
@@ -140,8 +475,8 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
               </div>
             </div>
 
-            {/* Share Bar */}
-            <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200/80 mb-6 text-xs">
+            {/* Share & Action Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200/80 mb-6 text-xs">
               <span className="font-bold text-slate-700 flex items-center gap-1.5">
                 <Share2 className="w-4 h-4 text-blue-900" />
                 <span>खबर साझा करें:</span>
@@ -197,14 +532,14 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                 alt={article.title}
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80';
                 }}
                 className="w-full h-full object-cover"
               />
             </div>
 
             {/* Short Lead Summary */}
-            <div className="text-base sm:text-lg font-semibold text-slate-800 leading-relaxed mb-6 pl-4 border-l-4 border-blue-900 italic">
+            <div className="text-base sm:text-lg font-semibold text-slate-800 leading-relaxed mb-6 pl-4 border-l-4 border-blue-900 italic bg-blue-50/30 p-3 rounded-r-xl">
               {article.shortDescription}
             </div>
 
@@ -214,25 +549,155 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="w-4 h-4 text-blue-900" />
                   <h3 className="font-bold text-sm sm:text-base text-blue-950">
-                    खबर के मुख्य बिंदु (Key Highlights):
+                    रिक्ति के मुख्य बिंदु व त्वरित सारांश (Key Highlights):
                   </h3>
                 </div>
-                <ul className="space-y-2 text-xs sm:text-sm text-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm text-slate-800">
                   {article.keyHighlights.map((point, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-700 mt-2 shrink-0" />
-                      <span className="leading-relaxed font-medium">{point}</span>
-                    </li>
+                    <div key={idx} className="flex items-start gap-2 bg-white/70 p-2.5 rounded-lg border border-blue-100 shadow-3xs">
+                      <BadgeCheck className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+                      <span className="leading-snug font-medium text-slate-800">{point}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
-            {/* Full Article Content */}
-            <div className="space-y-4 text-sm sm:text-base text-slate-700 leading-relaxed mb-8">
-              {article.fullContent.map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
+            {/* Direct Portal Application Callout Banner */}
+            {article.sourceUrl && (
+              <div className="mb-8 p-4 bg-gradient-to-r from-blue-900 via-blue-950 to-slate-900 rounded-xl text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                <div>
+                  <h4 className="font-bold text-sm sm:text-base mb-1 flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-amber-400" />
+                    <span>उत्तर प्रदेश सेवायोजन आधिकारिक पोर्टल लिंक</span>
+                  </h4>
+                  <p className="text-xs text-blue-100 leading-relaxed">
+                    यह भर्ती आधिकारिक पोर्टल पर लाइव है। पात्रता अनुसार अपना ऑनलाइन आवेदन सीधे दर्ज करें।
+                  </p>
+                </div>
+                <a
+                  href={article.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shrink-0 shadow-sm"
+                >
+                  <span>पोर्टल पर आवेदन करें</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            )}
+
+            {/* Structured Content & Rich Tabular Presentation */}
+            <div className="space-y-6 text-sm sm:text-base text-slate-700 leading-relaxed mb-8">
+              {contentBlocks.map((block, bIdx) => {
+                if (block.type === 'heading2') {
+                  return (
+                    <h2
+                      key={bIdx}
+                      className="text-lg sm:text-xl font-black text-slate-900 mt-8 mb-4 pb-2 border-b border-blue-200 flex items-center gap-2"
+                    >
+                      <span className="w-1.5 h-6 bg-blue-900 rounded-sm" />
+                      <span>{renderFormattedInline(block.content || '')}</span>
+                    </h2>
+                  );
+                }
+
+                if (block.type === 'heading3') {
+                  return (
+                    <div
+                      key={bIdx}
+                      className="mt-8 mb-3 flex items-center gap-2.5 pt-4 border-t border-slate-100"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-700 shrink-0" />
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                        {renderFormattedInline(block.content || '')}
+                      </h3>
+                    </div>
+                  );
+                }
+
+                if (block.type === 'callout') {
+                  return (
+                    <div
+                      key={bIdx}
+                      className="my-5 p-4 rounded-xl bg-amber-50 border-l-4 border-amber-500 text-amber-950 text-xs sm:text-sm flex items-start gap-3 shadow-2xs"
+                    >
+                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="leading-relaxed font-medium">
+                        {renderFormattedInline(block.content || '')}
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (block.type === 'table' && block.tableData) {
+                  const { headers, alignments, rows } = block.tableData;
+                  return (
+                    <div
+                      key={bIdx}
+                      className="my-6 overflow-hidden rounded-xl border border-slate-200 shadow-2xs bg-white"
+                    >
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[500px]">
+                          <thead>
+                            <tr className="bg-slate-100/90 text-slate-900 border-b-2 border-slate-300">
+                              {headers.map((h, hIdx) => {
+                                const align = alignments[hIdx] || 'left';
+                                const alignClass =
+                                  align === 'center'
+                                    ? 'text-center'
+                                    : align === 'right'
+                                    ? 'text-right'
+                                    : 'text-left';
+                                return (
+                                  <th
+                                    key={hIdx}
+                                    className={`px-3.5 py-3 font-bold tracking-tight text-slate-800 ${alignClass}`}
+                                  >
+                                    {renderFormattedInline(h)}
+                                  </th>
+                                );
+                              })}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {rows.map((row, rIdx) => (
+                              <tr
+                                key={rIdx}
+                                className="hover:bg-blue-50/40 even:bg-slate-50/50 transition-colors"
+                              >
+                                {row.map((cell, cIdx) => {
+                                  const align = alignments[cIdx] || 'left';
+                                  const alignClass =
+                                    align === 'center'
+                                      ? 'text-center'
+                                      : align === 'right'
+                                      ? 'text-right'
+                                      : 'text-left';
+                                  return (
+                                    <td
+                                      key={cIdx}
+                                      className={`px-3.5 py-3 text-slate-700 leading-relaxed font-normal ${alignClass}`}
+                                    >
+                                      {renderFormattedInline(cell)}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <p key={bIdx} className="leading-relaxed">
+                    {renderFormattedInline(block.content || '')}
+                  </p>
+                );
+              })}
             </div>
 
             {/* Source / Official Reference Verification Note */}

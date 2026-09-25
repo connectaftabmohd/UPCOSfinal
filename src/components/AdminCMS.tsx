@@ -38,6 +38,7 @@ import { NewsItem, GovernmentOrder, Department, FAQItem, PageView, Category } fr
 import { contentStore } from '../data/contentStore';
 import { DEPARTMENTS_DATA } from '../data/mockData';
 import { syncSewayojanJobsToNewsBlog } from '../services/sewayojanSyncService';
+import { authService } from '../services/authService';
 
 interface AdminCMSProps {
   news: NewsItem[];
@@ -86,11 +87,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
 
   const handleAuthorize = (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      passkeyInput.trim() === '1076' || 
-      passkeyInput.trim() === 'admin' || 
-      passkeyInput.trim().toLowerCase() === 'uposn2026'
-    ) {
+    if (authService.checkAdminPassword(passkeyInput)) {
       sessionStorage.setItem('uposn_editor_auth', 'true');
       setIsAuthorized(true);
       setAuthError('');

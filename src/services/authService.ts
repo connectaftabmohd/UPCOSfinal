@@ -175,7 +175,21 @@ function notifyListeners(user: UserProfile | null) {
   });
 }
 
+export const PRIMARY_ADMIN_PASSWORD = '7905@Aftab';
+
 export const authService = {
+  checkAdminPassword(password?: string): boolean {
+    const clean = (password || '').trim();
+    if (!clean) return false;
+    const custom = localStorage.getItem('uposn_admin_custom_password');
+    if (custom && clean === custom.trim()) return true;
+    if (clean === PRIMARY_ADMIN_PASSWORD || clean.toLowerCase() === PRIMARY_ADMIN_PASSWORD.toLowerCase()) {
+      return true;
+    }
+    const validPasswords = ['1076', 'admin', 'uposn2026', 'aftab.mohd9@gmail.com'];
+    return validPasswords.includes(clean.toLowerCase());
+  },
+
   getDistricts(): string[] {
     return UP_DISTRICTS;
   },
@@ -218,7 +232,7 @@ export const authService = {
     }
 
     const cleanPass = (password || '').trim();
-    const isAdminIdentifier = cleanId === 'aftab.mohd9@gmail.com' || cleanId === 'admin';
+    const isAdminIdentifier = cleanId === 'aftab.mohd9@gmail.com' || cleanId === 'admin' || cleanId === '9876500000';
 
     // If identifier is Admin, password is strictly mandatory!
     if (isAdminIdentifier) {
@@ -228,8 +242,7 @@ export const authService = {
           error: 'प्रशासक लॉगिन हेतु पासवर्ड दर्ज करना अनिवार्य है।' 
         };
       }
-      const validPasswords = ['1076', 'admin', 'uposn2026'];
-      if (!validPasswords.includes(cleanPass.toLowerCase())) {
+      if (!this.checkAdminPassword(cleanPass)) {
         return { 
           success: false, 
           error: 'अमान्य पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड दर्ज करें।' 
@@ -260,7 +273,7 @@ export const authService = {
         if (!cleanPass) {
           return { success: false, error: 'प्रशासक लॉगिन हेतु पासवर्ड दर्ज करना अनिवार्य है।' };
         }
-        if (!['1076', 'admin', 'uposn2026'].includes(cleanPass.toLowerCase())) {
+        if (!this.checkAdminPassword(cleanPass)) {
           return { success: false, error: 'अमान्य पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड दर्ज करें।' };
         }
         found.isAdmin = true;
@@ -309,8 +322,7 @@ export const authService = {
   },
 
   verifyAdminPasskey(passkey: string): { success: boolean; user?: UserProfile; error?: string } {
-    const clean = passkey.trim().toLowerCase();
-    if (clean === '1076' || clean === 'admin' || clean === 'uposn2026' || clean === 'aftab.mohd9@gmail.com') {
+    if (this.checkAdminPassword(passkey)) {
       const admin = this.loginAsAdmin();
       return { success: true, user: admin };
     }
@@ -326,6 +338,7 @@ export const authService = {
       name: 'आफताब मोहम्मद (Admin/Me)',
       mobile: '9876500000',
       email: 'aftab.mohd9@gmail.com',
+      password: localStorage.getItem('uposn_admin_custom_password') || PRIMARY_ADMIN_PASSWORD,
       district: 'लखनऊ (Lucknow)',
       department: 'प्रशासनिक व संपादकीय सेल (UPOSN)',
       designation: 'मुख्य प्रशासक (Super Admin)',
@@ -435,6 +448,9 @@ export const authService = {
     const cleanId = identifier.trim().toLowerCase();
     if (!cleanId) return null;
     const cleanMobile = cleanId.replace(/\D/g, '');
+    if (cleanId === 'aftab.mohd9@gmail.com' || cleanId === 'admin' || (cleanMobile.length === 10 && cleanMobile === '9876500000')) {
+      return this.getAdminUser();
+    }
     const allUsers = this.getAllUsers();
     return allUsers.find(u => {
       const userMobile = (u.mobile || '').replace(/\D/g, '');
@@ -449,6 +465,19 @@ export const authService = {
     const cleanPass = newPassword.trim();
     if (!cleanPass || cleanPass.length < 4) {
       return { success: false, error: 'पासवर्ड में कम से कम 4 अक्षर या अंक होने चाहिए।' };
+    }
+
+    const cleanMobile = cleanId.replace(/\D/g, '');
+    const isAdminId = cleanId === 'aftab.mohd9@gmail.com' || cleanId === 'admin' || (cleanMobile.length === 10 && cleanMobile === '9876500000');
+    if (isAdminId) {
+      localStorage.setItem('uposn_admin_custom_password', cleanPass);
+      const admin = this.getAdminUser();
+      const current = this.getCurrentUser();
+      if (current && (current.id === admin.id || current.isAdmin)) {
+        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(admin));
+        notifyListeners(admin);
+      }
+      return { success: true };
     }
 
     const user = this.findUserByIdentifier(cleanId);

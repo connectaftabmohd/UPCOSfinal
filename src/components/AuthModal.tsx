@@ -102,7 +102,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isAdminSelected = loginId.trim().toLowerCase() === 'aftab.mohd9@gmail.com' || loginId.trim().toLowerCase() === 'admin';
+  const isAdminSelected = 
+    loginId.trim().toLowerCase() === 'aftab.mohd9@gmail.com' || 
+    loginId.trim().toLowerCase() === 'admin' || 
+    loginId.trim().replace(/\D/g, '') === '9876500000';
 
   const switchToRegisterWithId = () => {
     const clean = loginId.trim();

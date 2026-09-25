@@ -2,20 +2,32 @@ import { useState, useEffect } from 'react';
 import { NewsItem, GovernmentOrder, Department, FAQItem } from '../types';
 import { NEWS_DATA, GOV_ORDERS_DATA, DEPARTMENTS_DATA, BREAKING_NEWS_ITEMS, FAQS_DATA } from './mockData';
 
-const NEWS_STORAGE_KEY = 'uposn_news_data_v2';
+const NEWS_STORAGE_KEY = 'uposn_news_data_v6';
 const GOV_ORDERS_STORAGE_KEY = 'uposn_gov_orders_v1';
 const DEPARTMENTS_STORAGE_KEY = 'uposn_departments_v1';
-const TICKER_STORAGE_KEY = 'uposn_ticker_v1';
+const TICKER_STORAGE_KEY = 'uposn_ticker_v3';
 const FAQS_STORAGE_KEY = 'uposn_faqs_v1';
 
 export function getStoredNews(): NewsItem[] {
   try {
-    const raw = localStorage.getItem(NEWS_STORAGE_KEY) || localStorage.getItem('uposn_news_data_v1');
+    const raw = localStorage.getItem(NEWS_STORAGE_KEY) || localStorage.getItem('uposn_news_data_v5') || localStorage.getItem('uposn_news_data_v4') || localStorage.getItem('uposn_news_data_v3') || localStorage.getItem('uposn_news_data_v2') || localStorage.getItem('uposn_news_data_v1');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        // Ensure all new official posts from NEWS_DATA exist in the array or update modified posts
+        const freshMap = new Map(NEWS_DATA.map((item: NewsItem) => [item.id, item]));
+        const updatedParsed = parsed.map((item: NewsItem) => {
+          if (freshMap.has(item.id)) {
+            return freshMap.get(item.id)!;
+          }
+          return item;
+        });
+        const existingIds = new Set(updatedParsed.map((item: NewsItem) => item.id));
+        const missingNewItems = NEWS_DATA.filter(n => !existingIds.has(n.id));
+        const combined = [...missingNewItems, ...updatedParsed];
+
         // Automatically replace any outdated or mismatched photo with the relevant secretariat meeting photo
-        const sanitized = parsed.map((item: NewsItem) => {
+        const sanitized = combined.map((item: NewsItem) => {
           if (item.featuredImage && (item.featuredImage.includes('photo-1541872703-74c5e44368f9') || item.id === 'news-1' && item.featuredImage.includes('photo-1541872703'))) {
             return {
               ...item,
