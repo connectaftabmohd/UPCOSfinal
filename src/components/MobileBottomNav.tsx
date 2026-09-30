@@ -1,6 +1,7 @@
 import React from 'react';
-import { Home, MapPin, Plus, CreditCard, User } from 'lucide-react';
+import { Home, MapPin, Plus, CreditCard, User, Building } from 'lucide-react';
 import { PageView, UserProfile } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MobileBottomNavProps {
   currentView: PageView;
@@ -19,6 +20,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onOpenAuthModal,
   currentUser
 }) => {
+  let isEnglish = false;
+  let t = (k: string, fb?: string) => fb || k;
+  try {
+    const langCtx = useLanguage();
+    isEnglish = langCtx.isEnglish;
+    t = langCtx.t;
+  } catch {}
+
   const isFeedActive = currentView.type === 'home' || currentView.type === 'talk-corner';
   const isDistrictsActive = currentView.type === 'departments' || currentView.type === 'department-detail';
 
@@ -29,7 +38,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-3 py-1.5"
     >
       <div className="max-w-md mx-auto flex items-center justify-between relative">
-        {/* 1. Feed */}
+        {/* 1. Feed / Home */}
         <button
           onClick={() => {
             onNavigate({ type: 'home' });
@@ -47,11 +56,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <span className={`text-[11px] font-bold mt-0.5 ${
             isFeedActive ? 'text-[#ea580c]' : 'text-slate-500'
           }`}>
-            Feed
+            {isEnglish ? 'Feed' : 'होम'}
           </span>
         </button>
 
-        {/* 2. Districts */}
+        {/* 2. Departments */}
         <button
           onClick={() => {
             onNavigate({ type: 'departments' });
@@ -62,12 +71,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <div className={`p-1 transition-colors ${
             isDistrictsActive ? 'text-[#ea580c]' : 'text-slate-600 hover:text-slate-900'
           }`}>
-            <MapPin className="w-5 h-5 stroke-[2]" />
+            <Building className="w-5 h-5 stroke-[2]" />
           </div>
           <span className={`text-[11px] font-medium mt-0.5 ${
             isDistrictsActive ? 'text-[#ea580c] font-bold' : 'text-slate-600'
           }`}>
-            Districts
+            {isEnglish ? 'Depts' : 'विभाग'}
           </span>
         </button>
 
@@ -76,7 +85,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <button
             onClick={() => {
               onNavigate({ type: 'talk-corner' });
-              // Scroll to talk corner post creator
               setTimeout(() => {
                 const composer = document.getElementById('post-creator-box') || document.getElementById('community-feed-page');
                 if (composer) {
@@ -90,7 +98,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             <Plus className="w-6 h-6 stroke-[3]" />
           </button>
           <span className="text-[11px] font-bold text-[#ea580c] mt-1">
-            Post
+            {isEnglish ? 'Post' : 'पोस्ट'}
           </span>
         </div>
 
@@ -106,7 +114,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             </span>
           </div>
           <span className="text-[11px] font-medium text-slate-600 mt-0.5">
-            ID Card
+            {isEnglish ? 'ID Card' : 'आईडी'}
           </span>
         </button>
 
@@ -140,7 +148,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             </div>
           )}
           <span className="text-[11px] font-medium text-slate-600 mt-0.5">
-            {currentUser ? 'Profile' : 'Login'}
+            {currentUser ? (isEnglish ? 'Profile' : 'प्रोफाइल') : (isEnglish ? 'Login' : 'लॉगिन')}
           </span>
         </button>
       </div>

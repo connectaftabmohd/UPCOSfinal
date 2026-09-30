@@ -12,6 +12,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { GovernmentOrder, PageView } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface GovOrdersSectionProps {
   orders: GovernmentOrder[];
@@ -31,6 +32,14 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
   const [selectedYear, setSelectedYear] = useState('ALL');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [sortOrder, setSortOrder] = useState<'LATEST' | 'OLDEST'>('LATEST');
+
+  let isEnglish = false;
+  let t = (k: string, fb?: string) => fb || k;
+  try {
+    const langCtx = useLanguage();
+    isEnglish = langCtx.isEnglish;
+    t = langCtx.t;
+  } catch {}
 
   const safeOrders = orders || [];
 
@@ -85,11 +94,11 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
     }
 
     return result;
-  }, [orders, searchQuery, selectedDept, selectedYear, selectedCategory, sortOrder, limit]);
+  }, [safeOrders, searchQuery, selectedDept, selectedYear, selectedCategory, sortOrder, limit]);
 
   const handleDownload = (order: GovernmentOrder, e: React.MouseEvent) => {
     e.stopPropagation();
-    // Simulate authentic PDF download
+    // Simulate authentic text download
     const blob = new Blob(
       [
         `उत्तर प्रदेश शासन - शासनादेश संदर्भ\n\n` +
@@ -123,10 +132,10 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                शासनादेश एवं महत्वपूर्ण सूचनाएं
+                {t('orders.sectionTitle', isEnglish ? 'Government Orders & Circulars' : 'शासनादेश एवं महत्वपूर्ण सूचनाएं')}
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                उत्तर प्रदेश शासन एवं विभागों द्वारा निर्गत आधिकारिक शासनादेश व अधिसूचनाएं
+                {t('orders.sectionSub', isEnglish ? 'Official government orders and notifications issued by UP departments' : 'उत्तर प्रदेश शासन एवं विभागों द्वारा निर्गत आधिकारिक शासनादेश व अधिसूचनाएं')}
               </p>
             </div>
           </div>
@@ -134,14 +143,14 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
           <div className="flex items-center gap-3">
             <span className="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-semibold flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              आधिकारिक स्रोत से सत्यापित
+              {isEnglish ? 'Verified from Official Sources' : 'आधिकारिक स्रोत से सत्यापित'}
             </span>
             {limit && orders.length > limit && (
               <button
                 onClick={() => onNavigate({ type: 'gov-orders' })}
-                className="text-xs font-bold text-blue-800 hover:text-blue-950 flex items-center gap-1 group"
+                className="text-xs font-bold text-blue-800 hover:text-blue-950 flex items-center gap-1 group cursor-pointer"
               >
-                <span>सभी {orders.length} शासनादेश देखें</span>
+                <span>{isEnglish ? `View All ${orders.length} Orders` : `सभी ${orders.length} शासनादेश देखें`}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition" />
               </button>
             )}
@@ -159,7 +168,7 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="शासनादेश सं. या विषय खोजें..."
+                  placeholder={t('orders.searchPlaceholder', isEnglish ? 'Search by order number or subject...' : 'शासनादेश सं. या विषय खोजें...')}
                   className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-700 focus:bg-white transition"
                 />
               </div>
@@ -171,7 +180,7 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
                   onChange={(e) => setSelectedDept(e.target.value)}
                   className="w-full py-2 px-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-700 text-slate-700"
                 >
-                  <option value="ALL">सभी विभाग (All)</option>
+                  <option value="ALL">{isEnglish ? 'All Departments' : 'सभी विभाग'}</option>
                   {departments.map((dept) => (
                     <option key={dept} value={dept}>
                       {dept}
@@ -187,10 +196,10 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
                   onChange={(e) => setSelectedYear(e.target.value)}
                   className="w-full py-2 px-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-700 text-slate-700"
                 >
-                  <option value="ALL">सभी वर्ष (All Years)</option>
+                  <option value="ALL">{isEnglish ? 'All Years' : 'सभी वर्ष'}</option>
                   {years.map((y) => (
                     <option key={y} value={y}>
-                      वर्ष {y}
+                      {isEnglish ? `Year ${y}` : `वर्ष ${y}`}
                     </option>
                   ))}
                 </select>
@@ -203,8 +212,8 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
                   onChange={(e) => setSortOrder(e.target.value as 'LATEST' | 'OLDEST')}
                   className="w-full py-2 px-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-700 text-slate-700"
                 >
-                  <option value="LATEST">नवीनतम पहले (Latest)</option>
-                  <option value="OLDEST">पुराने पहले (Oldest)</option>
+                  <option value="LATEST">{isEnglish ? 'Latest First' : 'नवीनतम पहले'}</option>
+                  <option value="OLDEST">{isEnglish ? 'Oldest First' : 'पुराने पहले'}</option>
                 </select>
               </div>
             </div>
@@ -213,7 +222,8 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
             {(selectedDept !== 'ALL' || selectedYear !== 'ALL' || searchQuery) && (
               <div className="flex items-center justify-between pt-2 text-xs text-slate-500 border-t border-slate-100">
                 <span>
-                  परिणाम मिले: <strong>{filteredOrders.length}</strong> शासनादेश
+                  {isEnglish ? 'Orders found: ' : 'परिणाम मिले: '}
+                  <strong>{filteredOrders.length}</strong> {isEnglish ? 'orders' : 'शासनादेश'}
                 </span>
                 <button
                   onClick={() => {
@@ -221,97 +231,88 @@ export const GovOrdersSection: React.FC<GovOrdersSectionProps> = ({
                     setSelectedYear('ALL');
                     setSearchQuery('');
                   }}
-                  className="text-blue-700 hover:underline font-semibold"
+                  className="text-blue-700 hover:underline font-semibold cursor-pointer"
                 >
-                  फिल्टर हटाएं (Reset)
+                  {isEnglish ? 'Clear Filters' : 'फिल्टर हटाएं'}
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Document Cards List */}
-        {filteredOrders.length === 0 ? (
-          <div className="bg-white rounded-xl p-8 text-center border border-slate-200 text-slate-500">
-            <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="font-semibold text-sm">चयनित मापदंडों के अनुसार कोई शासनादेश नहीं मिला।</p>
-            <p className="text-xs text-slate-400 mt-1">कृपया सर्च कीवर्ड या विभाग फिल्टर बदलकर पुनः प्रयास करें।</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredOrders.map((order) => (
+        {/* Orders List Grid */}
+        <div className="space-y-4">
+          {filteredOrders.length === 0 ? (
+            <div className="bg-white rounded-xl p-8 text-center border border-slate-200">
+              <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-slate-600 font-medium">
+                {isEnglish ? 'No government orders found matching your search criteria.' : 'आपके खोजे गए मापदंडों के अनुसार कोई शासनादेश नहीं मिला।'}
+              </p>
+            </div>
+          ) : (
+            filteredOrders.map((order) => (
               <div
                 key={order.id}
                 onClick={() => onNavigate({ type: 'gov-order-detail', id: order.id })}
-                className="bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all duration-200 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer group"
+                className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 hover:border-blue-400 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 group"
               >
-                {/* Left Document Details */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="bg-blue-50 text-blue-900 border border-blue-200 font-mono text-[11px] font-bold px-2.5 py-0.5 rounded">
+                    <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200">
                       {order.orderNumber}
                     </span>
-                    <span className="bg-slate-100 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded">
-                      {order.category}
+                    <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded flex items-center gap-1 font-medium">
+                      <Building2 className="w-3 h-3 text-slate-500" />
+                      {order.department}
                     </span>
-                    {order.isImportant && (
-                      <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-600" />
-                        महत्वपूर्ण
-                      </span>
-                    )}
+                    <span className="text-xs text-slate-500 flex items-center gap-1 ml-auto md:ml-0">
+                      <Calendar className="w-3 h-3" />
+                      {order.date}
+                    </span>
                   </div>
 
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-900 transition leading-snug mb-1.5">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-900 transition leading-snug mb-1.5">
                     {order.title}
                   </h3>
 
-                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
+                  <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed mb-3">
                     {order.summary}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-[11px] text-slate-500 font-medium">
-                    <span className="flex items-center gap-1">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                      {order.department}
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                    <span className="bg-amber-50 text-amber-900 font-medium px-2 py-0.5 rounded">
+                      {order.category}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      दिनांक: {order.date}
+                    <span>
+                      {isEnglish ? 'Source:' : 'स्रोत:'} <strong className="text-slate-700">{order.officialSource}</strong>
                     </span>
-                    <span className="text-slate-400">
-                      साइज: {order.fileSize}
-                    </span>
+                    <span>{order.fileSize}</span>
                   </div>
                 </div>
 
-                {/* Right Actions: View & Download Buttons */}
-                <div className="flex items-center gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                {/* Right Action Buttons */}
+                <div className="flex items-center gap-2 self-end md:self-center shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 w-full md:w-auto justify-end">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigate({ type: 'gov-order-detail', id: order.id });
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-900 text-xs font-bold rounded-lg transition border border-blue-200"
-                    title="शासनादेश विस्तार से देखें"
+                    onClick={(e) => handleDownload(order, e)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition border border-slate-300 cursor-pointer"
+                    title={isEnglish ? 'Download Summary Text' : 'शासनादेश विवरण डाउनलोड करें'}
                   >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>विवरण देखें</span>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{isEnglish ? 'Download' : 'डाउनलोड'}</span>
                   </button>
 
                   <button
-                    onClick={(e) => handleDownload(order, e)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition shadow-2xs"
-                    title="शासनादेश डाउनलोड करें"
+                    onClick={() => onNavigate({ type: 'gov-order-detail', id: order.id })}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold transition shadow-2xs cursor-pointer group-hover:translate-x-0.5"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>डाउनलोड (PDF)</span>
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>{isEnglish ? 'View Order' : 'आदेश देखें'}</span>
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </section>
   );

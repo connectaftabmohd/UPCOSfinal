@@ -166,6 +166,13 @@ export const CommunityFeedPage: React.FC<CommunityFeedPageProps> = ({
   // Bookmarks & Reactions
   const [savedPostIds, setSavedPostIds] = useState<string[]>([]);
   const [userReactions, setUserReactions] = useState<Record<string, ReactionType>>({});
+  const [selectedColleague, setSelectedColleague] = useState<{
+    id: string;
+    name: string;
+    district: string;
+    department: string;
+    avatar: string;
+  } | null>(null);
 
   // Filter Logic
   const filteredPosts = posts.filter(post => {
@@ -607,24 +614,175 @@ export const CommunityFeedPage: React.FC<CommunityFeedPageProps> = ({
           </div>
         </main>
 
-        {/* Right Sidebar */}
+        {/* Right Sidebar - Matching image.png */}
         <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
-            <h4 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Flame className="w-4 h-4 text-orange-500" />
-              <span>ट्रेंडिंग चर्चाएं</span>
+          
+          {/* 1. SUGGESTED COLLEAGUES (Matching image.png) */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-xs">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-extrabold text-xs tracking-wider text-slate-900 dark:text-white uppercase font-['Plus_Jakarta_Sans']">
+                SUGGESTED COLLEAGUES
+              </h4>
+              <Users className="w-4 h-4 text-[#ea580c]" />
+            </div>
+
+            <div className="space-y-3.5">
+              {[
+                {
+                  id: 'colleague-1',
+                  name: 'Rahul Kumar',
+                  district: 'Lucknow',
+                  department: 'Medical,',
+                  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+                },
+                {
+                  id: 'colleague-2',
+                  name: 'Amit Singh',
+                  district: 'Kanpur Nagar',
+                  department: 'Basic',
+                  avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+                },
+                {
+                  id: 'colleague-3',
+                  name: 'Pooja Verma',
+                  district: 'Prayagraj (Allahabad)',
+                  department: 'Urban',
+                  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
+                },
+                {
+                  id: 'colleague-4',
+                  name: 'Sandeep Yadav',
+                  district: 'Agra',
+                  department: 'Development',
+                  avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80'
+                }
+              ].map((c) => (
+                <div key={c.id} className="flex items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <img
+                      src={c.avatar}
+                      alt={c.name}
+                      className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200"
+                    />
+                    <div className="min-w-0">
+                      <h5 className="font-bold text-xs text-slate-900 dark:text-white truncate leading-tight">
+                        {c.name}
+                      </h5>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {c.district} • {c.department}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedColleague(c)}
+                    className="px-3 py-1 rounded-lg bg-[#fffbeb] hover:bg-amber-100 text-[#b45309] font-bold text-xs transition cursor-pointer shrink-0 border border-amber-200/60 shadow-2xs active:scale-95"
+                  >
+                    View
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Explore Full Directory link matching image.png */}
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-center">
+              <button
+                onClick={() => {
+                  if (onNavigate) onNavigate({ type: 'departments' });
+                }}
+                className="text-xs font-bold text-[#b45309] hover:text-[#9a3412] hover:underline cursor-pointer"
+              >
+                Explore Full Directory →
+              </button>
+            </div>
+          </div>
+
+          {/* 2. TRENDING TOPICS (Matching image.png) */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-xs">
+            <h4 className="font-extrabold text-xs tracking-wider text-slate-900 dark:text-white uppercase font-['Plus_Jakarta_Sans'] mb-3 flex items-center gap-1.5">
+              <Flame className="w-4 h-4 text-[#ea580c]" />
+              <span>TRENDING TOPICS</span>
             </h4>
-            <div className="space-y-2.5 text-xs">
-              <div className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/60 cursor-pointer">
-                <p className="font-semibold text-slate-800 dark:text-slate-200">#वेतन_विलंब_समस्या</p>
-                <p className="text-[10px] text-slate-400">142 चर्चाएं • समस्त 75 जिले</p>
+
+            <div className="space-y-3 text-xs">
+              <div 
+                onClick={() => {
+                  setActiveTab('all');
+                  setPosts(prev => prev.filter(p => p.content.includes('वेतन') || p.category === 'salary'));
+                }}
+                className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition cursor-pointer group"
+              >
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white group-hover:text-[#ea580c] transition">
+                    #वेतन_विलंब_समस्या
+                  </p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    142 चर्चाएं • स्वास्थ्य व शिक्षा
+                  </p>
+                </div>
+                <span className="text-base select-none" role="img" aria-label="fire">🔥</span>
               </div>
-              <div className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/60 cursor-pointer">
-                <p className="font-semibold text-slate-800 dark:text-slate-200">#ईपीएफ_पासबुक_वेरिफिकेशन</p>
-                <p className="text-[10px] text-slate-400">89 चर्चाएं • शासनादेश</p>
+
+              <div 
+                onClick={() => {
+                  setActiveTab('official');
+                }}
+                className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition cursor-pointer group"
+              >
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white group-hover:text-[#ea580c] transition">
+                    #न्यूनतम_वेतन_शासनादेश
+                  </p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    89 चर्चाएं • समस्त 75 जिले
+                  </p>
+                </div>
+                <span className="text-base select-none" role="img" aria-label="scroll">📜</span>
+              </div>
+
+              <div 
+                onClick={() => {
+                  setActiveTab('all');
+                  setPosts(prev => prev.filter(p => p.content.includes('ईपीएफ') || p.content.includes('PF') || p.category === 'guidance'));
+                }}
+                className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition cursor-pointer group"
+              >
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white group-hover:text-[#ea580c] transition">
+                    #EPF_पासबुक_पोर्टल
+                  </p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    67 सवाल व जवाब
+                  </p>
+                </div>
+                <span className="text-base select-none" role="img" aria-label="bulb">💡</span>
               </div>
             </div>
           </div>
+
+          {/* 3. Need Help or Guidance? Vibrant Orange Card (Matching image.png) */}
+          <div className="bg-[#ea580c] text-white rounded-2xl p-5 sm:p-6 shadow-sm space-y-3">
+            <h3 className="font-bold text-lg sm:text-xl text-white font-serif tracking-tight leading-snug">
+              Need Help or Guidance?
+            </h3>
+            <p className="text-xs text-white/95 leading-relaxed font-normal">
+              Ask questions in our Q&amp;A forum to get insights from verified colleagues and senior staff.
+            </p>
+            <div className="pt-1.5">
+              <button
+                onClick={() => {
+                  checkAuthOrExecute(() => {
+                    setNewPostCategory('issue');
+                    setIsCreateModalOpen(true);
+                  });
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-amber-50 active:scale-[0.98] text-[#9a3412] font-bold text-xs sm:text-sm text-center shadow-xs transition-all cursor-pointer"
+              >
+                Go to Q&amp;A Forum
+              </button>
+            </div>
+          </div>
+
         </aside>
 
       </div>
@@ -756,6 +914,71 @@ export const CommunityFeedPage: React.FC<CommunityFeedPageProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Colleague Profile Preview Modal (triggered by "View" in Suggested Colleagues) */}
+      {selectedColleague && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl relative text-center">
+            <button
+              onClick={() => setSelectedColleague(null)}
+              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="relative inline-block mb-3">
+              <img
+                src={selectedColleague.avatar}
+                alt={selectedColleague.name}
+                className="w-20 h-20 rounded-full object-cover border-4 border-amber-500 shadow-md mx-auto"
+              />
+              <span className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold ring-2 ring-white">
+                ✓
+              </span>
+            </div>
+
+            <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+              {selectedColleague.name}
+            </h3>
+            <p className="text-xs text-amber-700 font-semibold mt-0.5">
+              {selectedColleague.department}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              📍 {selectedColleague.district}, उत्तर प्रदेश
+            </p>
+
+            <div className="mt-5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300 font-medium">
+              सत्यापित आउटसोर्स कर्मचारी नेटवर्क सदस्य
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setSelectedColleague(null);
+                  setActiveTab('all');
+                  setPosts(prev => prev.filter(p => p.authorName.includes(selectedColleague.name.split(' ')[0])));
+                }}
+                className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition cursor-pointer"
+              >
+                पोस्ट देखें
+              </button>
+              <button
+                onClick={() => {
+                  const colleague = selectedColleague;
+                  setSelectedColleague(null);
+                  checkAuthOrExecute(() => {
+                    setIsCreateModalOpen(true);
+                    setNewPostContent(`@${colleague.name} `);
+                  });
+                }}
+                className="py-2.5 px-3 rounded-xl bg-[#ea580c] hover:bg-[#d97706] text-white font-bold text-xs shadow-xs transition cursor-pointer"
+              >
+                संवाद करें
+              </button>
+            </div>
           </div>
         </div>
       )}

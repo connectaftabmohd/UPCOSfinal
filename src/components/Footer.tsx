@@ -4,23 +4,25 @@ import {
   Heart, 
   Send, 
   Share2, 
-  ExternalLink,
-  ChevronRight,
-  Phone,
-  Mail,
-  MapPin,
-  Facebook,
-  Youtube,
-  Twitter,
-  Instagram,
-  MessageCircle,
-  Lock,
-  ShieldCheck
+  ExternalLink, 
+  ChevronRight, 
+  Phone, 
+  Mail, 
+  MapPin, 
+  Facebook, 
+  Youtube, 
+  Twitter, 
+  Instagram, 
+  MessageCircle, 
+  Lock, 
+  ShieldCheck,
+  Home
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { Newsletter } from './Newsletter';
 import { PageView, UserProfile } from '../types';
 import { authService } from '../services/authService';
+import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
   onNavigate: (view: PageView) => void;
@@ -32,10 +34,19 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ 
   onNavigate, 
   onOpenBloggerExport, 
-  onOpenAdminAccess,
+  onOpenAdminAccess, 
   currentUser 
 }) => {
   const isAdmin = authService.isAdminUser(currentUser);
+
+  let isEnglish = false;
+  let t = (k: string, fb?: string) => fb || k;
+  try {
+    const langCtx = useLanguage();
+    isEnglish = langCtx.isEnglish;
+    t = langCtx.t;
+  } catch {}
+
   return (
     <footer className="w-full bg-slate-950 text-slate-300 pt-12 pb-8 border-t border-slate-800">
       <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
@@ -54,19 +65,21 @@ export const Footer: React.FC<FooterProps> = ({
                   <span className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mt-0.5">News &amp; Information</span>
                 </div>
                 <div className="text-xs text-amber-400 font-medium">
-                  आउटसोर्स कर्मचारियों की हर जरूरी खबर, एक जगह
+                  {isEnglish ? 'Every vital update for UP outsource employees in one place' : 'आउटसोर्स कर्मचारियों की हर जरूरी खबर, एक जगह'}
                 </div>
               </div>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed">
-              उत्तर प्रदेश राज्य सरकार के विभिन्न विभागों, निदेशालयों, परिषदों एवं निगमों में सेवा प्रदाता (मैनपावर एजेंसी) के माध्यम से कार्यरत समस्त आउटसोर्स कार्मिकों के लिए समर्पित स्वतंत्र समाचार, शासनादेश एवं सेवा सूचना मंच।
+              {isEnglish
+                ? 'An independent news and information network for outsourced and contractual workers across Uttar Pradesh government departments, directorates, and corporations.'
+                : 'उत्तर प्रदेश राज्य सरकार के विभिन्न विभागों, निदेशालयों, परिषदों एवं निगमों में सेवा प्रदाता (मैनपावर एजेंसी) के माध्यम से कार्यरत समस्त आउटसोर्स कार्मिकों के लिए समर्पित स्वतंत्र समाचार, शासनादेश एवं सेवा सूचना मंच।'}
             </p>
 
             {/* Social Media Links */}
             <div className="pt-2">
               <span className="text-xs font-semibold text-slate-400 block mb-2.5">
-                सोशल मीडिया पर जुड़ें (Follow Us):
+                {isEnglish ? 'Follow Us on Social Media:' : 'सोशल मीडिया पर जुड़ें (Follow Us):'}
               </span>
               <div className="flex items-center gap-2">
                 {[
@@ -82,28 +95,28 @@ export const Footer: React.FC<FooterProps> = ({
                     icon: MessageCircle, 
                     color: 'hover:bg-[#25D366] hover:border-[#25D366] text-slate-300 hover:text-white', 
                     url: 'https://whatsapp.com',
-                    ariaLabel: 'WhatsApp चैनल व कम्युनिटी'
+                    ariaLabel: 'WhatsApp'
                   },
                   { 
                     name: 'YouTube', 
                     icon: Youtube, 
                     color: 'hover:bg-[#FF0000] hover:border-[#FF0000] text-slate-300 hover:text-white', 
                     url: 'https://youtube.com',
-                    ariaLabel: 'YouTube आधिकारिक चैनल'
+                    ariaLabel: 'YouTube'
                   },
                   { 
                     name: 'X (Twitter)', 
                     icon: Twitter, 
                     color: 'hover:bg-slate-700 hover:border-slate-600 text-slate-300 hover:text-white', 
                     url: 'https://x.com',
-                    ariaLabel: 'X (Twitter) आधिकारिक हैंडल'
+                    ariaLabel: 'X (Twitter)'
                   },
                   { 
                     name: 'Instagram', 
                     icon: Instagram, 
                     color: 'hover:bg-pink-600 hover:border-pink-500 text-slate-300 hover:text-white', 
                     url: 'https://instagram.com',
-                    ariaLabel: 'Instagram आधिकारिक पेज'
+                    ariaLabel: 'Instagram'
                   },
                 ].map((s) => {
                   const Icon = s.icon;
@@ -128,61 +141,61 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Quick Navigation Links (Col 5-7) */}
           <div className="lg:col-span-3 space-y-3">
             <h4 className="text-white font-bold text-sm tracking-wide uppercase">
-              त्वरित लिंक (Quick Links)
+              {isEnglish ? 'Quick Links' : 'त्वरित लिंक (Quick Links)'}
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'home' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-300 text-amber-400 font-semibold transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>मुख्य पृष्ठ (Home)</span>
+                  <Home className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>{isEnglish ? 'Home Page' : 'मुख्य पृष्ठ (Home)'}</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'news-list' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>ताज़ा समाचार (Latest News)</span>
+                  <span>{isEnglish ? 'Latest News' : 'ताज़ा समाचार (Latest News)'}</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'gov-orders' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>शासनादेश व परिपत्र (Gov Orders)</span>
+                  <span>{isEnglish ? 'Gov Orders & Circulars' : 'शासनादेश व परिपत्र (Gov Orders)'}</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'departments' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>विभागवार सूची (Departments)</span>
+                  <span>{isEnglish ? 'Departments List' : 'विभागवार सूची (Departments)'}</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'employee-hub' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>कर्मचारी जानकारी केंद्र (Employee Hub)</span>
+                  <span>{isEnglish ? 'Employee Hub & Salary Tool' : 'कर्मचारी जानकारी केंद्र (Employee Hub)'}</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'talk-corner' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5 font-bold text-amber-300/95"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 font-bold text-amber-300/95 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-amber-400" />
-                  <span>कम्युनिटी फोरम (Community Forum)</span>
+                  <span>{isEnglish ? 'Community Forum' : 'कम्युनिटी फोरम (Community Forum)'}</span>
                 </button>
               </li>
               <li>
@@ -193,7 +206,7 @@ export const Footer: React.FC<FooterProps> = ({
                   className="hover:text-amber-400 transition flex items-center gap-1.5"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>UPCOS संदर्भ पोर्टल (upcos.org)</span>
+                  <span>UPCOS Portal (upcos.org)</span>
                 </a>
               </li>
             </ul>
@@ -202,63 +215,63 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Legal, Policy & About (Col 8-10) */}
           <div className="lg:col-span-3 space-y-3">
             <h4 className="text-white font-bold text-sm tracking-wide uppercase">
-              नीति एवं सूचना (Legal & Info)
+              {isEnglish ? 'Legal & Info' : 'नीति एवं सूचना (Legal & Info)'}
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'about' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>हमारे बारे में (About Us)</span>
+                  <span>{isEnglish ? 'About Us' : 'हमारे बारे में (About Us)'}</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'contact' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>संपर्क एवं सुझाव (Contact Us)</span>
+                  <span>{isEnglish ? 'Contact Us' : 'संपर्क एवं सुझाव (Contact Us)'}</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'disclaimer' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>अस्वीकरण (Disclaimer)</span>
+                  <span>{isEnglish ? 'Disclaimer' : 'अस्वीकरण (Disclaimer)'}</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'privacy' })}
-                  className="hover:text-amber-400 transition flex items-center gap-1.5"
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>गोपनीयता नीति (Privacy Policy)</span>
+                  <span>{isEnglish ? 'Privacy Policy' : 'गोपनीयता नीति (Privacy Policy)'}</span>
                 </button>
               </li>
               {isAdmin ? (
                 <li>
                   <button
                     onClick={() => onNavigate({ type: 'admin' })}
-                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-amber-400 font-semibold"
+                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-amber-400 font-semibold cursor-pointer"
                   >
                     <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                    <span>संपादकीय सीएमएस (Admin)</span>
+                    <span>{isEnglish ? 'Editorial CMS (Admin)' : 'संपादकीय सीएमएस (Admin)'}</span>
                   </button>
                 </li>
               ) : (
                 <li>
                   <button
                     onClick={() => onNavigate({ type: 'employee-hub' })}
-                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-slate-400"
+                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-slate-400 cursor-pointer"
                   >
                     <ChevronRight className="w-3 h-3 text-slate-600" />
-                    <span>कर्मचारी सहायता केंद्र (Help Desk)</span>
+                    <span>{isEnglish ? 'Help Desk' : 'कर्मचारी सहायता केंद्र (Help Desk)'}</span>
                   </button>
                 </li>
               )}
@@ -268,12 +281,12 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Quick Helpline Contact Box (Col 11-12) */}
           <div className="lg:col-span-2 space-y-3">
             <h4 className="text-white font-bold text-sm tracking-wide uppercase">
-              हेल्पलाइन सहायता
+              {isEnglish ? 'Helpline Support' : 'हेल्पलाइन सहायता'}
             </h4>
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs space-y-2">
               <div className="flex items-center gap-2 text-slate-300">
                 <Phone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>सीएम हेल्पलाइन: 1076</span>
+                <span>{isEnglish ? 'CM Helpline: 1076' : 'सीएम हेल्पलाइन: 1076'}</span>
               </div>
               <div className="flex items-center gap-2 text-slate-300">
                 <Mail className="w-3.5 h-3.5 text-blue-400 shrink-0" />
@@ -281,20 +294,82 @@ export const Footer: React.FC<FooterProps> = ({
               </div>
               <div className="flex items-start gap-2 text-slate-400 text-[11px] pt-1 border-t border-slate-800">
                 <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-                <span>लखनऊ, उत्तर प्रदेश (स्वतंत्र सूचना मंच)</span>
+                <span>{isEnglish ? 'Lucknow, Uttar Pradesh' : 'लखनऊ, उत्तर प्रदेश (स्वतंत्र सूचना मंच)'}</span>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Horizontal Footer Menu Bar */}
+        <nav aria-label="Footer Menu" className="my-6 py-3 px-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold">
+          <button
+            onClick={() => onNavigate({ type: 'home' })}
+            className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+          >
+            <Home className="w-3.5 h-3.5 text-amber-400" />
+            <span>{isEnglish ? 'Home' : 'मुख्य पृष्ठ (Home)'}</span>
+          </button>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <button
+            onClick={() => onNavigate({ type: 'news-list' })}
+            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+          >
+            {isEnglish ? 'Latest News' : 'ताज़ा खबरें'}
+          </button>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <button
+            onClick={() => onNavigate({ type: 'departments' })}
+            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+          >
+            {isEnglish ? 'Departments' : 'विभाग'}
+          </button>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <button
+            onClick={() => onNavigate({ type: 'gov-orders' })}
+            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+          >
+            {isEnglish ? 'Gov Orders' : 'शासनादेश'}
+          </button>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <button
+            onClick={() => onNavigate({ type: 'employee-hub' })}
+            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+          >
+            {isEnglish ? 'Employee Hub' : 'कर्मचारी केंद्र'}
+          </button>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <button
+            onClick={() => onNavigate({ type: 'talk-corner' })}
+            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+          >
+            {isEnglish ? 'Community Forum' : 'कम्युनिटी फोरम'}
+          </button>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <button
+            onClick={() => onNavigate({ type: 'about' })}
+            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+          >
+            {isEnglish ? 'About Us' : 'हमारे बारे में'}
+          </button>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <button
+            onClick={() => onNavigate({ type: 'contact' })}
+            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+          >
+            {isEnglish ? 'Contact' : 'संपर्क'}
+          </button>
+        </nav>
+
         {/* Mandatory Prominent Non-Government Disclaimer */}
         <div className="my-6 p-4 rounded-xl bg-slate-900/90 border border-amber-900/40 text-xs text-slate-300 space-y-1.5">
           <div className="flex items-center gap-2 font-bold text-amber-400">
             <ShieldAlert className="w-4 h-4" />
-            <span>महत्वपूर्ण अस्वीकरण (Mandatory Non-Government Disclaimer):</span>
+            <span>{isEnglish ? 'Mandatory Non-Government Disclaimer:' : 'महत्वपूर्ण अस्वीकरण (Mandatory Non-Government Disclaimer):'}</span>
           </div>
           <p className="leading-relaxed text-slate-300">
-            “UP Outsource Seva Nigam News & Information एक स्वतंत्र समाचार एवं सूचना मंच है। यह उत्तर प्रदेश सरकार अथवा किसी सरकारी विभाग की आधिकारिक वेबसाइट नहीं है। यहाँ प्रकाशित सामग्री केवल जन-जागरूकता, कर्मचारियों के कल्याण एवं विधिक जानकारी के उद्देश्य से उपलब्ध कराई जाती है। इस पोर्टल पर किसी भी प्रकार की अनधिकृत, अपुष्ट अथवा गोपनीय सूचना का प्रकाशन पूर्णतः वर्जित है। किसी भी आधिकारिक निर्णय या विधिक कार्यवाही से पूर्व कृपया संबंधित विभाग के मूल शासनादेश (shasanadesh.up.gov.in) अथवा आधिकारिक पोर्टल का अवलोकन अवश्य करें।”
+            {isEnglish
+              ? '“UP Outsource Seva Nigam News & Information is an independent information and news portal. It is not an official website of the Government of Uttar Pradesh or any specific department. Published content is provided for employee public awareness, welfare, and legal information. For all official administrative decisions, please verify the original government orders at shasanadesh.up.gov.in or sewayojan.up.nic.in.”'
+              : '“UP Outsource Seva Nigam News & Information एक स्वतंत्र समाचार एवं सूचना मंच है। यह उत्तर प्रदेश सरकार अथवा किसी सरकारी विभाग की आधिकारिक वेबसाइट नहीं है। यहाँ प्रकाशित सामग्री केवल जन-जागरूकता, कर्मचारियों के कल्याण एवं विधिक जानकारी के उद्देश्य से उपलब्ध कराई जाती है। इस पोर्टल पर किसी भी प्रकार की अनधिकृत, अपुष्ट अथवा गोपनीय सूचना का प्रकाशन पूर्णतः वर्जित है। किसी भी आधिकारिक निर्णय या विधिक कार्यवाही से पूर्व कृपया संबंधित विभाग के मूल शासनादेश (shasanadesh.up.gov.in) अथवा आधिकारिक पोर्टल का अवलोकन अवश्य करें।”'}
           </p>
         </div>
 
@@ -304,14 +379,14 @@ export const Footer: React.FC<FooterProps> = ({
             © 2026 UP Outsource Seva Nigam News &amp; Information. All Rights Reserved.
           </div>
           <div className="flex items-center gap-4 text-slate-400">
-            <span>डिजिटल सशक्तिकरण • निष्पक्ष सूचना</span>
+            <span>{isEnglish ? 'Digital Empowerment • Objective Information' : 'डिजिटल सशक्तिकरण • निष्पक्ष सूचना'}</span>
             <button
               onClick={onOpenAdminAccess}
-              title="व्यवस्थापक प्रवेश (Admin Access - शॉर्टकट: Ctrl+Shift+A)"
+              title={isEnglish ? 'Admin Access (Shortcut: Ctrl+Shift+A)' : 'व्यवस्थापक प्रवेश (Admin Access - शॉर्टकट: Ctrl+Shift+A)'}
               className="flex items-center gap-1.5 text-slate-500 hover:text-amber-400 transition-colors text-xs select-none cursor-pointer group px-2 py-1 rounded hover:bg-slate-900 border border-transparent hover:border-slate-800"
             >
               <Lock className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 transition-colors" />
-              <span className="text-[11px] font-medium">प्रशासक प्रवेश</span>
+              <span className="text-[11px] font-medium">{isEnglish ? 'Admin Access' : 'प्रशासक प्रवेश'}</span>
             </button>
           </div>
         </div>

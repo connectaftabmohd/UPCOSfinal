@@ -17,6 +17,7 @@ import {
 import { DEPARTMENTS_DATA } from '../data/mockData';
 import { contentStore } from '../data/contentStore';
 import { PageView, Department } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface DepartmentsSectionProps {
   onNavigate: (view: PageView) => void;
@@ -45,6 +46,14 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
   const [deptSearch, setDeptSearch] = useState('');
   const [isExpanded, setIsExpanded] = useState(showAll);
 
+  let isEnglish = false;
+  let t = (k: string, fb?: string) => fb || k;
+  try {
+    const langCtx = useLanguage();
+    isEnglish = langCtx.isEnglish;
+    t = langCtx.t;
+  } catch {}
+
   const deptList = departments && departments.length > 0 ? departments : contentStore.getDepartments() || DEPARTMENTS_DATA;
 
   const filtered = deptList.filter(
@@ -67,10 +76,10 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                विभागवार जानकारी
+                {t('dept.sectionTitle', isEnglish ? 'Department-Wise Orders & Information' : 'विभागवार जानकारी')}
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                उत्तर प्रदेश शासन के प्रमुख विभागों में आउटसोर्सिंग कार्मिकों की स्थिति व आदेश
+                {t('dept.sectionSub', isEnglish ? 'Status & orders of outsource personnel across UP departments' : 'उत्तर प्रदेश शासन के प्रमुख विभागों में आउटसोर्सिंग कार्मिकों की स्थिति व आदेश')}
               </p>
             </div>
           </div>
@@ -82,7 +91,7 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
               type="text"
               value={deptSearch}
               onChange={(e) => setDeptSearch(e.target.value)}
-              placeholder="विभाग का नाम खोजें..."
+              placeholder={isEnglish ? 'Search department name...' : 'विभाग का नाम खोजें...'}
               className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-700"
             />
           </div>
@@ -92,6 +101,9 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {displayList.map((dept) => {
             const Icon = iconMap[dept.iconName] || Building2;
+            const primaryName = isEnglish ? dept.englishName : dept.name;
+            const secondaryName = isEnglish ? dept.name : dept.englishName;
+
             return (
               <div
                 key={dept.id}
@@ -110,10 +122,10 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
                   </div>
 
                   <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-900 transition leading-snug mb-1">
-                    {dept.name}
+                    {primaryName}
                   </h3>
                   <p className="text-xs text-slate-500 font-medium mb-2.5">
-                    {dept.englishName}
+                    {secondaryName}
                   </p>
                   <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                     {dept.description}
@@ -123,14 +135,14 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
                 <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-slate-500 text-[11px]">
                     <span className="bg-white px-2 py-0.5 rounded border border-slate-200 font-medium">
-                      {dept.orderCount} शासनादेश
+                      {dept.orderCount} {isEnglish ? 'Orders' : 'शासनादेश'}
                     </span>
                     <span className="bg-white px-2 py-0.5 rounded border border-slate-200 font-medium">
-                      {dept.newsCount} समाचार
+                      {dept.newsCount} {isEnglish ? 'Articles' : 'समाचार'}
                     </span>
                   </div>
                   <span className="font-bold text-blue-700 group-hover:text-blue-900 flex items-center gap-1">
-                    देखें <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition" />
+                    {isEnglish ? 'View' : 'देखें'} <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition" />
                   </span>
                 </div>
               </div>
@@ -138,14 +150,14 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
           })}
         </div>
 
-        {/* Expand/Collapse or View All departments */}
+        {/* Expand / Collapse Button if not showAll */}
         {!showAll && filtered.length > 6 && (
-          <div className="mt-6 text-center">
+          <div className="text-center mt-8">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm rounded-xl transition shadow-2xs inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 font-bold text-xs sm:text-sm text-slate-800 transition cursor-pointer shadow-2xs"
             >
-              <span>{isExpanded ? 'कम विभाग दिखाएं' : `सभी ${filtered.length} विभाग देखें`}</span>
+              <span>{isExpanded ? (isEnglish ? 'Show Fewer' : 'कम विभाग दिखाएं') : (isEnglish ? 'View All Departments' : 'सभी विभाग देखें')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

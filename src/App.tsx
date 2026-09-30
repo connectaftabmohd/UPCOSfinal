@@ -39,8 +39,10 @@ import { AdminAccessModal } from './components/AdminAccessModal';
 import { initializeAutoSyncEngine } from './services/sewayojanSyncService';
 import { authService } from './services/authService';
 import { UserProfile } from './types';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { updatePageSEO } from './utils/seo';
 
-export default function App() {
+function MainApp() {
   const [currentView, setCurrentView] = useState<PageView>({ type: 'home' });
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isBloggerModalOpen, setIsBloggerModalOpen] = useState(false);
@@ -48,7 +50,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAdminAccessModalOpen, setIsAdminAccessModalOpen] = useState(false);
-  const [language, setLanguage] = useState<'HI' | 'EN'>('HI');
+  const { language, toggleLanguage } = useLanguage();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => authService.getCurrentUser());
 
   // Load data from contentStore (localStorage enabled)
@@ -123,6 +125,61 @@ export default function App() {
     };
   }, [currentUser]);
 
+  // Dynamic Route SEO Management
+  useEffect(() => {
+    const isEn = language === 'EN';
+    switch (currentView.type) {
+      case 'home':
+        updatePageSEO({
+          title: isEn
+            ? 'UP Outsource Seva Nigam Portal – News, Shasanadesh & Jobs'
+            : 'UP Outsource Seva Nigam Portal – News, Shasanadesh & Bharti for UP Outsource Employees',
+          description: isEn
+            ? 'Official portal and news updates for outsource and contractual employees across Uttar Pradesh government departments.'
+            : 'उत्तर प्रदेश राज्य सरकार के विभिन्न विभागों में कार्यरत आउटसोर्स एवं संविदा कर्मचारियों के लिए आधिकारिक समाचार, सेवायोजन भर्ती, शासनादेश, न्यूनतम वेतन और सेवा संबंधी जानकारी का प्रमुख स्वतंत्र मंच।',
+          canonicalUrl: window.location.origin + '/'
+        });
+        break;
+      case 'news-list':
+        updatePageSEO({
+          title: currentView.category ? `${currentView.category} | ${isEn ? 'Outsource News' : 'आउटसोर्स समाचार'}` : (isEn ? 'Latest Outsource News & Updates' : 'ताज़ा समाचार एवं आउटसोर्स अपडेट्स'),
+          description: 'उत्तर प्रदेश के समस्त विभागों में आउटसोर्स कर्मचारियों से संबंधित नवीनतम समाचार, विज्ञप्तियां व विभागीय सूचनाएं।',
+          canonicalUrl: window.location.origin + '/?view=news'
+        });
+        break;
+      case 'gov-orders':
+        updatePageSEO({
+          title: isEn ? 'Official Government Orders & Circulars' : 'आधिकारिक शासनादेश एवं परिपत्र संग्रह (Government Orders)',
+          description: 'उत्तर प्रदेश शासन द्वारा जारी सत्यापित आउटसोर्सिंग व संविदा संबंधी शासनादेश, मानदेय नियम एवं परिपत्र।',
+          canonicalUrl: window.location.origin + '/?view=gov-orders'
+        });
+        break;
+      case 'departments':
+        updatePageSEO({
+          title: isEn ? 'UP Department-Wise Outsource Posts & Orders' : 'उत्तर प्रदेश विभागवार आउटसोर्स सूचना एवं पद (Departments)',
+          description: 'चिकित्सा, शिक्षा, पंचायती राज, नगर विकास, ऊर्जा सहित सभी प्रमुख सरकारी विभागों के आउटसोर्स पद, नियम व शासनादेश।',
+          canonicalUrl: window.location.origin + '/?view=departments'
+        });
+        break;
+      case 'employee-hub':
+        updatePageSEO({
+          title: isEn ? 'Outsource Employee Service Hub – Salary Calculator & EPF/ESIC' : 'आउटसोर्स कर्मचारी सेवा केंद्र (Employee Hub) – वेतन, ईपीएफ, ईएसआई व नियम',
+          description: 'मासिक इन-हैंड मानदेय कैलकुलेटर, ईपीएफ-ईएसआई नियम, अवकाश अधिकार और कानूनी शिकायत निवारण प्रक्रिया।',
+          canonicalUrl: window.location.origin + '/?view=employee-hub'
+        });
+        break;
+      case 'talk-corner':
+        updatePageSEO({
+          title: isEn ? 'Statewide Outsource Community Forum (Talk Corner)' : 'कम्युनिटी संवाद फोरम – उत्तर प्रदेश आउटसोर्स कर्मचारी मंच (Talk Corner)',
+          description: 'प्रदेश भर के आउटसोर्स साथियों से जुड़ें, समस्याएं साझा करें और पारदर्शी चर्चा में भाग लें।',
+          canonicalUrl: window.location.origin + '/?view=talk-corner'
+        });
+        break;
+      default:
+        break;
+    }
+  }, [currentView, language]);
+
   const breakingTickers = contentStore.getBreakingTickerNews();
   const featuredNews = contentStore.getFeaturedNews() || news[0];
 
@@ -149,7 +206,7 @@ export default function App() {
           }
         }}
         language={language}
-        onToggleLanguage={() => setLanguage((l) => (l === 'HI' ? 'EN' : 'HI'))}
+        onToggleLanguage={toggleLanguage}
         currentUser={currentUser}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
@@ -426,3 +483,12 @@ export default function App() {
     </div>
   );
 }
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <MainApp />
+    </LanguageProvider>
+  );
+}
+

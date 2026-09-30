@@ -1,6 +1,7 @@
 import React from 'react';
 import { Calendar, Clock, ArrowRight, TrendingUp, Sparkles, ShieldAlert, MessageSquareQuote } from 'lucide-react';
 import { NewsItem, PageView } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HomeHeroProps {
   featuredNews?: NewsItem;
@@ -18,9 +19,20 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
   const activeFeatured = featuredNews || (allNews && allNews[0]);
   const feedItems = sidebarNews || (allNews ? allNews.filter((n) => n.id !== activeFeatured?.id) : []);
 
+  let isEnglish = false;
+  let t = (k: string, fb?: string) => fb || k;
+  try {
+    const langCtx = useLanguage();
+    isEnglish = langCtx.isEnglish;
+    t = langCtx.t;
+  } catch {}
+
   if (!activeFeatured) {
     return null;
   }
+
+  const featuredTitle = isEnglish && activeFeatured.englishTitle ? activeFeatured.englishTitle : activeFeatured.title;
+
   return (
     <section className="w-full py-6 sm:py-8 bg-slate-50/50">
       <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
@@ -29,12 +41,12 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-6 bg-blue-900 rounded-full" />
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              प्रमुख समाचार एवं मुख्य अपडेट
+              {t('home.featuredTitle', isEnglish ? 'Featured News & Vital Updates' : 'प्रमुख समाचार एवं मुख्य अपडेट')}
             </h2>
           </div>
           <span className="text-xs font-semibold text-slate-500 hidden sm:inline-flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            दैनिक प्रामाणिक बुलेटिन
+            {t('home.bulletin', isEnglish ? 'Daily Verified Bulletin' : 'दैनिक प्रामाणिक बुलेटिन')}
           </span>
         </div>
 
@@ -50,20 +62,20 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  खुला संवाद मंच
+                  {isEnglish ? 'OPEN FORUM' : 'खुला संवाद मंच'}
                 </span>
                 <h3 className="font-bold text-xs sm:text-sm text-white">
-                  टॉक कॉर्नर (Talk Corner) में प्रदेश भर के आउटसोर्स साथियों से जुड़ें
+                  {t('home.talkCornerBannerTitle', isEnglish ? 'Connect with Outsource Colleagues in Talk Corner' : 'टॉक कॉर्नर (Talk Corner) में प्रदेश भर के आउटसोर्स साथियों से जुड़ें')}
                 </h3>
               </div>
               <p className="text-[11px] sm:text-xs text-blue-200 mt-0.5">
-                मानदेय, पीएफ, अनुबंध और विभागीय समस्याओं पर विचार रखें, सवाल पूछें, लाइक व कमेंट करें।
+                {t('home.talkCornerBannerSub', isEnglish ? 'Discuss wages, EPF, contracts, and departmental policies. Ask questions and share advice.' : 'मानदेय, पीएफ, अनुबंध और विभागीय समस्याओं पर विचार रखें, सवाल पूछें, लाइक व कमेंट करें।')}
               </p>
             </div>
           </div>
 
           <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-300 group-hover:translate-x-1 transition self-end sm:self-auto shrink-0 bg-white/10 px-3 py-1.5 rounded-xl">
-            <span>संवाद शुरू करें</span>
+            <span>{isEnglish ? 'Join Conversation' : 'संवाद शुरू करें'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>
@@ -78,7 +90,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             >
               <img
                 src={activeFeatured.featuredImage}
-                alt={activeFeatured.title}
+                alt={featuredTitle}
                 loading="lazy"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
@@ -118,7 +130,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                   onClick={() => onNavigate({ type: 'news-detail', id: activeFeatured.id })}
                   className="text-lg sm:text-2xl font-bold text-slate-900 group-hover:text-blue-900 transition-colors leading-snug cursor-pointer mb-3"
                 >
-                  {activeFeatured.title}
+                  {featuredTitle}
                 </h3>
                 <p className="text-slate-600 text-sm sm:text-base leading-relaxed line-clamp-3">
                   {activeFeatured.shortDescription}
@@ -133,60 +145,67 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-red-600" />
                 <h3 className="font-bold text-slate-900 text-base">
-                  महत्वपूर्ण शीर्ष समाचार
+                  {isEnglish ? 'Top Important News' : 'महत्वपूर्ण शीर्ष समाचार'}
                 </h3>
               </div>
               <button
                 onClick={() => onNavigate({ type: 'news-list' })}
-                className="text-xs font-semibold text-blue-700 hover:underline"
+                className="text-xs font-semibold text-blue-700 hover:underline cursor-pointer"
               >
-                सभी देखें →
+                {isEnglish ? 'View All →' : 'सभी देखें →'}
               </button>
             </div>
 
             <div className="divide-y divide-slate-100 space-y-3 pt-1">
-              {(feedItems || []).slice(0, 4).map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
-                  className="pt-3 first:pt-0 cursor-pointer group flex items-start gap-3.5 hover:bg-slate-50/60 p-2 rounded-xl transition"
-                >
-                  <img
-                    src={item.featuredImage}
-                    alt={item.title}
-                    loading="lazy"
-                    className="w-20 h-20 rounded-lg object-cover shrink-0 border border-slate-200"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800">
-                        {item.category}
-                      </span>
-                      <span className="text-[10px] text-slate-500">
-                        {item.publicationDate}
-                      </span>
+              {(feedItems || []).slice(0, 4).map((item) => {
+                const itemTitle = isEnglish && item.englishTitle ? item.englishTitle : item.title;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
+                    className="pt-3 first:pt-0 cursor-pointer group flex items-start gap-3.5 hover:bg-slate-50/60 p-2 rounded-xl transition"
+                  >
+                    <img
+                      src={item.featuredImage}
+                      alt={itemTitle}
+                      loading="lazy"
+                      className="w-20 h-20 rounded-lg object-cover shrink-0 border border-slate-200"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800">
+                          {item.category}
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          {item.publicationDate}
+                        </span>
+                      </div>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-blue-800 transition line-clamp-2 leading-snug">
+                        {itemTitle}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+                        <span className="truncate">{item.department}</span>
+                        <span className="text-blue-600 font-semibold group-hover:translate-x-0.5 transition shrink-0 ml-1">
+                          →
+                        </span>
+                      </p>
                     </div>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-blue-800 transition line-clamp-2 leading-snug">
-                      {item.title}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                      <span className="truncate">{item.department}</span>
-                      <span className="text-blue-600 font-semibold group-hover:translate-x-0.5 transition shrink-0 ml-1">
-                        →
-                      </span>
-                    </p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* UPCOS reference banner at bottom of sidebar */}
             <div className="mt-4 pt-3 border-t border-slate-100 bg-amber-50/60 rounded-xl p-3 text-xs text-amber-950 border border-amber-200/60 flex items-start gap-2.5">
               <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold block">सत्यापित सूचना संदर्भ:</span>
+                <span className="font-bold block">
+                  {isEnglish ? 'Verified Information Source:' : 'सत्यापित सूचना संदर्भ:'}
+                </span>
                 <span>
-                  आउटसोर्सिंग संबंधी विभागीय आदेश उत्तर प्रदेश शासन के आधिकारिक पोर्टल (UPCOS / shasanadesh.up.gov.in) द्वारा सत्यापित होते हैं।
+                  {isEnglish
+                    ? 'Orders regarding outsourcing are verified via UP Government portals (UPCOS / shasanadesh.up.gov.in).'
+                    : 'आउटसोर्सिंग संबंधी विभागीय आदेश उत्तर प्रदेश शासन के आधिकारिक पोर्टल (UPCOS / shasanadesh.up.gov.in) द्वारा सत्यापित होते हैं।'}
                 </span>
               </div>
             </div>

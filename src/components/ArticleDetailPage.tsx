@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { NewsItem, GovernmentOrder, PageView } from '../types';
 import { NewsSidebar } from './NewsSidebar';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ArticleDetailPageProps {
   article: NewsItem;
@@ -318,7 +319,16 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     return null;
   }
 
+  let isEnglish = false;
+  let t = (k: string, fb?: string) => fb || k;
+  try {
+    const langCtx = useLanguage();
+    isEnglish = langCtx.isEnglish;
+    t = langCtx.t;
+  } catch {}
+
   const safeAllNews = allNews || [];
+  const displayTitle = isEnglish && article.englishTitle ? article.englishTitle : article.title;
 
   // Related articles (same category or department, excluding current)
   const relatedNews = safeAllNews
@@ -351,7 +361,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     setTimeout(() => setTableCopied(false), 2500);
   };
 
-  const shareText = encodeURIComponent(`${article.title}\n\nUP Outsource Seva Nigam पोर्टल पर संपूर्ण विवरण पढ़ें:\n`);
+  const shareText = encodeURIComponent(`${displayTitle}\n\nUP Outsource Seva Nigam पोर्टल पर संपूर्ण विवरण पढ़ें:\n`);
   const currentUrl = encodeURIComponent(window.location.href);
 
   // Parse markdown content into structured blocks (tables, headings, callouts, paragraphs)
@@ -364,27 +374,27 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
         <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-5 overflow-x-auto whitespace-nowrap pb-1">
           <button
             onClick={() => onNavigate({ type: 'home' })}
-            className="hover:text-blue-900 font-medium"
+            className="hover:text-blue-900 font-medium cursor-pointer"
           >
-            होम
+            {isEnglish ? 'Home' : 'होम'}
           </button>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <button
             onClick={() => onNavigate({ type: 'news-list' })}
-            className="hover:text-blue-900 font-medium"
+            className="hover:text-blue-900 font-medium cursor-pointer"
           >
-            ताज़ा खबरें
+            {isEnglish ? 'Latest News' : 'ताज़ा खबरें'}
           </button>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <button
             onClick={() => onNavigate({ type: 'news-list', category: article.category })}
-            className="hover:text-blue-900 font-medium"
+            className="hover:text-blue-900 font-medium cursor-pointer"
           >
             {article.category}
           </button>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="text-slate-800 font-bold truncate max-w-[220px] sm:max-w-md">
-            {article.title}
+            {displayTitle}
           </span>
         </nav>
 
@@ -392,36 +402,36 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <button
             onClick={() => onNavigate({ type: 'news-list' })}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-900 hover:text-blue-950 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-2xs transition"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-900 hover:text-blue-950 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-2xs transition cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>समाचार सूची पर वापस जाएं</span>
+            <span>{isEnglish ? 'Back to News List' : 'समाचार सूची पर वापस जाएं'}</span>
           </button>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 px-3 py-1.5 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 shadow-2xs transition"
-              title="पोस्ट प्रिंट अथवा PDF सेव करें"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 px-3 py-1.5 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 shadow-2xs transition cursor-pointer"
+              title={isEnglish ? 'Print or Save as PDF' : 'पोस्ट प्रिंट अथवा PDF सेव करें'}
             >
               <Printer className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">प्रिंट / PDF</span>
+              <span className="hidden sm:inline">{isEnglish ? 'Print / PDF' : 'प्रिंट / PDF'}</span>
             </button>
 
             <button
               onClick={handleCopyAllTables}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 px-3 py-1.5 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 shadow-2xs transition"
-              title="रिक्ति विवरण तालिका कॉपी करें"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 px-3 py-1.5 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 shadow-2xs transition cursor-pointer"
+              title={isEnglish ? 'Copy Table Data' : 'रिक्ति विवरण तालिका कॉपी करें'}
             >
               {tableCopied ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-emerald-700 font-bold">तालिका कॉपी हुई!</span>
+                  <span className="text-emerald-700 font-bold">{isEnglish ? 'Table Copied!' : 'तालिका कॉपी हुई!'}</span>
                 </>
               ) : (
                 <>
                   <TableIcon className="w-3.5 h-3.5 text-blue-600" />
-                  <span className="hidden sm:inline">तालिका डेटा कॉपी करें</span>
+                  <span className="hidden sm:inline">{isEnglish ? 'Copy Table Data' : 'तालिका डेटा कॉपी करें'}</span>
                 </>
               )}
             </button>
@@ -443,14 +453,14 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
               {article.isBreaking && (
                 <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-amber-600" />
-                  नवीनतम विज्ञप्ति
+                  {isEnglish ? 'Latest Release' : 'नवीनतम विज्ञप्ति'}
                 </span>
               )}
             </div>
 
             {/* Headline (SEO Optimized, Clean and High-CTR) */}
             <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-4 tracking-tight">
-              {article.title}
+              {displayTitle}
             </h1>
 
             {/* Author & Meta Line */}

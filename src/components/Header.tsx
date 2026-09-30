@@ -15,11 +15,13 @@ import {
   ChevronDown,
   UserCheck,
   Bookmark,
-  Bell
+  Bell,
+  FileText
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { PageView, UserProfile } from '../types';
 import { authService } from '../services/authService';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeaderProps {
   currentView: PageView;
@@ -56,14 +58,33 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const currentLang = language ? (language.toLowerCase() as 'hi' | 'en') : lang;
-  const handleToggle = onToggleLanguage || onToggleLang;
+  
+  let ctxLang: 'HI' | 'EN' = 'HI';
+  let ctxToggleLang = () => {};
+  let ctxSetLang = (_l: 'HI' | 'EN') => {};
+  let t = (key: string, fb?: string) => fb || key;
+  try {
+    const langCtx = useLanguage();
+    ctxLang = langCtx.language;
+    ctxToggleLang = langCtx.toggleLanguage;
+    ctxSetLang = langCtx.setLanguage;
+    t = langCtx.t;
+  } catch {
+    // fallback if outside provider
+  }
+
+  const currentLang = language ? (language.toLowerCase() as 'hi' | 'en') : (ctxLang.toLowerCase() as 'hi' | 'en');
+  const handleToggle = () => {
+    if (onToggleLanguage) onToggleLanguage();
+    else if (onToggleLang) onToggleLang();
+    else ctxToggleLang();
+  };
   const isAdmin = authService.isAdminUser(currentUser);
 
   const navLinks = [
-    { label: currentLang === 'hi' ? 'होम' : 'Home', view: { type: 'home' } as PageView, icon: Home },
     { label: currentLang === 'hi' ? 'ताज़ा खबरें' : 'Latest News', view: { type: 'news-list' } as PageView, icon: Newspaper },
     { label: currentLang === 'hi' ? 'विभाग' : 'Departments', view: { type: 'departments' } as PageView, icon: Building },
+    { label: currentLang === 'hi' ? 'शासनादेश' : 'Gov Orders', view: { type: 'gov-orders' } as PageView, icon: FileText },
     { label: currentLang === 'hi' ? 'कर्मचारी केंद्र' : 'Employee Hub', view: { type: 'employee-hub' } as PageView, icon: HelpCircle },
     { label: currentLang === 'hi' ? 'कम्युनिटी फोरम' : 'Community Forum', view: { type: 'talk-corner' } as PageView, icon: MessageSquareQuote },
   ];
@@ -97,20 +118,22 @@ export const Header: React.FC<HeaderProps> = ({
           <BrandLogo size={46} showText={true} />
         </div>
 
-        {/* Desktop Nav Links */}
+        {/* Desktop Nav Links with Icons */}
         <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
           {navLinks.map((item, idx) => {
             const active = isActive(item.view);
+            const Icon = item.icon;
             return (
               <button
                 key={idx}
                 onClick={() => handleNavClick(item.view)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+                className={`px-2.5 xl:px-3 py-1.5 rounded-xl text-xs xl:text-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none ${
                   active
                     ? 'bg-blue-900 text-white shadow-xs'
                     : 'text-slate-700 hover:text-blue-900 hover:bg-slate-100'
                 }`}
               >
+                <Icon className={`w-4 h-4 shrink-0 transition-transform ${active ? 'text-amber-400' : 'text-slate-500'}`} />
                 <span>{item.label}</span>
               </button>
             );
@@ -288,6 +311,7 @@ export const Header: React.FC<HeaderProps> = ({
               if (currentLang !== 'hi') {
                 if (onToggleLanguage) onToggleLanguage();
                 else if (onToggleLang) onToggleLang();
+                else ctxSetLang('HI');
               }
             }}
             className={`px-2.5 sm:px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
@@ -303,6 +327,7 @@ export const Header: React.FC<HeaderProps> = ({
               if (currentLang !== 'en') {
                 if (onToggleLanguage) onToggleLanguage();
                 else if (onToggleLang) onToggleLang();
+                else ctxSetLang('EN');
               }
             }}
             className={`px-2.5 sm:px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
