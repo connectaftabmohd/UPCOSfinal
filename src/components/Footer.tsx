@@ -300,66 +300,6 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
 
-        {/* Horizontal Footer Menu Bar */}
-        <nav aria-label="Footer Menu" className="my-6 py-3 px-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold">
-          <button
-            onClick={() => onNavigate({ type: 'home' })}
-            className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
-          >
-            <Home className="w-3.5 h-3.5 text-amber-400" />
-            <span>{isEnglish ? 'Home' : 'मुख्य पृष्ठ (Home)'}</span>
-          </button>
-          <span className="text-slate-700 hidden sm:inline">•</span>
-          <button
-            onClick={() => onNavigate({ type: 'news-list' })}
-            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            {isEnglish ? 'Latest News' : 'ताज़ा खबरें'}
-          </button>
-          <span className="text-slate-700 hidden sm:inline">•</span>
-          <button
-            onClick={() => onNavigate({ type: 'departments' })}
-            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            {isEnglish ? 'Departments' : 'विभाग'}
-          </button>
-          <span className="text-slate-700 hidden sm:inline">•</span>
-          <button
-            onClick={() => onNavigate({ type: 'gov-orders' })}
-            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            {isEnglish ? 'Gov Orders' : 'शासनादेश'}
-          </button>
-          <span className="text-slate-700 hidden sm:inline">•</span>
-          <button
-            onClick={() => onNavigate({ type: 'employee-hub' })}
-            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            {isEnglish ? 'Employee Hub' : 'कर्मचारी केंद्र'}
-          </button>
-          <span className="text-slate-700 hidden sm:inline">•</span>
-          <button
-            onClick={() => onNavigate({ type: 'talk-corner' })}
-            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            {isEnglish ? 'Community Forum' : 'कम्युनिटी फोरम'}
-          </button>
-          <span className="text-slate-700 hidden sm:inline">•</span>
-          <button
-            onClick={() => onNavigate({ type: 'about' })}
-            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            {isEnglish ? 'About Us' : 'हमारे बारे में'}
-          </button>
-          <span className="text-slate-700 hidden sm:inline">•</span>
-          <button
-            onClick={() => onNavigate({ type: 'contact' })}
-            className="text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            {isEnglish ? 'Contact' : 'संपर्क'}
-          </button>
-        </nav>
-
         {/* Mandatory Prominent Non-Government Disclaimer */}
         <div className="my-6 p-4 rounded-xl bg-slate-900/90 border border-amber-900/40 text-xs text-slate-300 space-y-1.5">
           <div className="flex items-center gap-2 font-bold text-amber-400">

@@ -16,6 +16,11 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  // Google Search Console Site Verification Endpoint
+  app.get("/google871fcd09be8827f9.html", (_req, res) => {
+    res.type("text/html").send("google-site-verification: google871fcd09be8827f9.html\n");
+  });
+
   // SMS Gateway Status Endpoint
   app.get("/api/sms-status", (req, res) => {
     const hasFast2sms = Boolean(process.env.FAST2SMS_API_KEY && process.env.FAST2SMS_API_KEY.trim() !== "");
