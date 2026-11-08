@@ -4,6 +4,15 @@
  * canonical links, and Schema.org JSON-LD structured data.
  */
 
+export const SITE_DOMAIN = (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+  ? window.location.origin 
+  : (((import.meta as any).env && (import.meta as any).env.VITE_SITE_URL) || 'https://upcos.netlify.app')).replace(/\/+$/, '');
+
+export function getCanonicalUrl(pathname: string): string {
+  const clean = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  return `${SITE_DOMAIN}${clean.split('?')[0].split('#')[0]}`;
+}
+
 export interface SEOConfig {
   title: string;
   description: string;
@@ -47,7 +56,7 @@ export function updatePageSEO(config: SEOConfig): void {
   if (config.image) {
     setMetaTag('property', 'og:image', config.image);
   }
-  const currentUrl = config.canonicalUrl || (window.location.origin + window.location.pathname + window.location.search);
+  const currentUrl = config.canonicalUrl || getCanonicalUrl(window.location.pathname);
   setMetaTag('property', 'og:url', currentUrl);
 
   // 5. Twitter Card Tags

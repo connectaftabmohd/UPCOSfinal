@@ -96,73 +96,8 @@ export const UP_DEPARTMENTS = [
   'खाद्य एवं रसद विभाग (Food & Civil Supplies)'
 ];
 
-export const DEMO_USERS: UserProfile[] = [
-  {
-    id: 'u1',
-    name: 'राजीव कुमार शर्मा',
-    mobile: '9876543210',
-    email: 'rajeev.sharma@up.gov.in',
-    district: 'लखनऊ (Lucknow)',
-    department: 'चिकित्सा स्वास्थ्य एवं परिवार कल्याण (Health Dept)',
-    designation: 'वरिष्ठ कंप्यूटर ऑपरेटर (Senior DEO)',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    joinedDate: 'जनवरी 2024',
-    savedPostIds: ['post-1'],
-    savedOrderIds: ['order-1', 'order-3'],
-    savedNewsIds: ['news-1']
-  },
-  {
-    id: 'u2',
-    name: 'प्रिया यादव',
-    mobile: '9811223344',
-    email: 'priya.yadav@up.gov.in',
-    district: 'वाराणसी (Varanasi)',
-    department: 'बेसिक शिक्षा परिषद (Basic Education)',
-    designation: 'डाटा एंट्री ऑपरेटर (DEO)',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    joinedDate: 'मार्च 2024',
-    savedPostIds: ['post-2'],
-    savedOrderIds: ['order-2'],
-    savedNewsIds: ['news-2']
-  },
-  {
-    id: 'u3',
-    name: 'मोहम्मद आरिफ सिद्दीकी',
-    mobile: '9722334455',
-    email: 'arif.siddiqui@up.gov.in',
-    district: 'कानपुर नगर (Kanpur Nagar)',
-    department: 'नगर विकास एवं स्थानीय निकाय (Urban Local Bodies)',
-    designation: 'जलकल सुपरवाइजर (Supervisor)',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    joinedDate: 'मई 2024',
-    savedPostIds: [],
-    savedOrderIds: ['order-4'],
-    savedNewsIds: []
-  },
-  {
-    id: 'u4',
-    name: 'सुरेश चंद्रा',
-    mobile: '9455667788',
-    email: 'suresh.chandra@up.gov.in',
-    district: 'गोरखपुर (Gorakhpur)',
-    department: 'राजस्व एवं चकबंदी विभाग (Revenue Dept)',
-    designation: 'कनिष्ठ सहायक (Junior Assistant)',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    isVerified: false,
-    joinedDate: 'अगस्त 2024',
-    savedPostIds: [],
-    savedOrderIds: [],
-    savedNewsIds: []
-  }
-];
-
 const STORAGE_KEY_USER = 'up_portal_current_user';
-const STORAGE_KEY_ALL_USERS = 'up_portal_registered_users';
-const STORAGE_KEY_SAVED_CREDS = 'uposn_saved_login_credentials';
-const STORAGE_KEY_SAVED_ADMIN_PASS = 'uposn_saved_admin_passkey';
+const STORAGE_KEY_TOKEN = 'uposn_auth_token';
 
 type AuthListener = (user: UserProfile | null) => void;
 const listeners: Set<AuthListener> = new Set();
@@ -177,21 +112,7 @@ function notifyListeners(user: UserProfile | null) {
   });
 }
 
-export const PRIMARY_ADMIN_PASSWORD = '7905@Aftab';
-
 export const authService = {
-  checkAdminPassword(password?: string): boolean {
-    const clean = (password || '').trim();
-    if (!clean) return false;
-    const custom = localStorage.getItem('uposn_admin_custom_password');
-    if (custom && clean === custom.trim()) return true;
-    if (clean === PRIMARY_ADMIN_PASSWORD || clean.toLowerCase() === PRIMARY_ADMIN_PASSWORD.toLowerCase()) {
-      return true;
-    }
-    const validPasswords = ['1076', 'admin', 'uposn2026', 'aftab.mohd9@gmail.com'];
-    return validPasswords.includes(clean.toLowerCase());
-  },
-
   getDistricts(): string[] {
     return UP_DISTRICTS;
   },
@@ -200,26 +121,11 @@ export const authService = {
     return UP_DEPARTMENTS;
   },
 
-  getDemoUsers(): UserProfile[] {
-    return [];
-  },
-
   getCurrentUser(): UserProfile | null {
     try {
-      const loggedOutFlag = localStorage.getItem('up_portal_user_logged_out');
-      if (loggedOutFlag === 'true') {
-        return null;
-      }
-
       const stored = localStorage.getItem(STORAGE_KEY_USER);
       if (stored) {
-        const parsed = JSON.parse(stored);
-        // Clear out old demo accounts if any were stored
-        if (parsed?.id && ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7'].includes(parsed.id)) {
-          localStorage.removeItem(STORAGE_KEY_USER);
-          return null;
-        }
-        return parsed;
+        return JSON.parse(stored);
       }
     } catch (e) {
       console.error('Error reading auth state:', e);
@@ -227,395 +133,157 @@ export const authService = {
     return null;
   },
 
-  login(identifier: string, password?: string): { success: boolean; user?: UserProfile; error?: string; notRegistered?: boolean } {
-    const cleanId = identifier.trim().toLowerCase();
-    if (!cleanId) {
-      return { success: false, error: 'कृपया पंजीकृत मोबाइल नंबर या ईमेल दर्ज करें।' };
+  getAuthToken(): string | null {
+    try {
+      return sessionStorage.getItem(STORAGE_KEY_TOKEN) || localStorage.getItem(STORAGE_KEY_TOKEN);
+    } catch (e) {
+      return null;
     }
+  },
 
-    const cleanPass = (password || '').trim();
-    const isAdminIdentifier = cleanId === 'aftab.mohd9@gmail.com' || cleanId === 'admin' || cleanId === '9876500000';
-
-    // If identifier is Admin, password is strictly mandatory!
-    if (isAdminIdentifier) {
-      if (!cleanPass) {
-        return { 
-          success: false, 
-          error: 'प्रशासक लॉगिन हेतु पासवर्ड दर्ज करना अनिवार्य है।' 
-        };
+  setAuthToken(token: string, persist: boolean = false): void {
+    try {
+      sessionStorage.setItem(STORAGE_KEY_TOKEN, token);
+      if (persist) {
+        localStorage.setItem(STORAGE_KEY_TOKEN, token);
       }
-      if (!this.checkAdminPassword(cleanPass)) {
-        return { 
-          success: false, 
-          error: 'अमान्य पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड दर्ज करें।' 
-        };
-      }
-      const admin = this.loginAsAdmin();
-      return { success: true, user: admin };
+    } catch (e) {
+      // Ignored
     }
+  },
 
-    // Check strictly in registered users
-    const allUsers = this.getAllUsers();
-    const cleanMobile = cleanId.replace(/\D/g, '');
-    
-    const found = allUsers.find(u => {
-      const userMobile = (u.mobile || '').replace(/\D/g, '');
-      if (cleanMobile.length === 10 && userMobile === cleanMobile) {
-        return true;
-      }
-      if (u.email && u.email.toLowerCase() === cleanId) {
-        return true;
-      }
-      return false;
-    });
+  async verifyServerSession(): Promise<UserProfile | null> {
+    const token = this.getAuthToken();
+    if (!token) return null;
 
-    if (found) {
-      // Check Admin credentials if applicable
-      if (found.email?.toLowerCase() === 'aftab.mohd9@gmail.com' || found.isAdmin) {
-        if (!cleanPass) {
-          return { success: false, error: 'प्रशासक लॉगिन हेतु पासवर्ड दर्ज करना अनिवार्य है।' };
+    try {
+      const res = await fetch('/api/admin/verify', {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-        if (!this.checkAdminPassword(cleanPass)) {
-          return { success: false, error: 'अमान्य पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड दर्ज करें।' };
-        }
-        found.isAdmin = true;
-        found.role = 'admin';
-        sessionStorage.setItem('uposn_editor_auth', 'true');
-        localStorage.setItem('uposn_admin_mode', 'true');
-      } else if (found.password) {
-        // If user configured a password during registration, verify it
-        if (!cleanPass) {
-          return { 
-            success: false, 
-            error: 'कृपया इस पंजीकृत खाते का पासवर्ड दर्ज करें।' 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.valid && data.user) {
+          const user: UserProfile = {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            role: 'admin',
+            isAdmin: true,
+            isVerified: true,
+            district: 'लखनऊ (Lucknow)',
+            department: 'प्रशासनिक व संपादकीय सेल (UPOSN)',
+            designation: 'मुख्य प्रशासक (Super Admin)',
+            joinedDate: 'जनवरी 2024'
           };
-        }
-        if (cleanPass !== found.password) {
-          return { 
-            success: false, 
-            error: 'अमान्य पासवर्ड! कृपया सही पासवर्ड प्रविष्ट करें।' 
-          };
+          localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+          notifyListeners(user);
+          return user;
         }
       }
-
-      localStorage.removeItem('up_portal_user_logged_out');
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(found));
-      notifyListeners(found);
-      return { success: true, user: found };
+    } catch (e) {
+      console.error('Session verification error:', e);
     }
 
-    // ONLY REGISTERED USERS CAN LOGIN:
-    // Reject unregistered users and direct them to register first!
-    return { 
-      success: false, 
-      notRegistered: true,
-      error: 'यह मोबाइल नंबर / ईमेल पंजीकृत नहीं है। केवल पंजीकृत कर्मचारी ही लॉगिन कर सकते हैं। कृपया पहले नया पंजीकरण (Register) करें।' 
-    };
+    // Token invalid or expired
+    this.logout();
+    return null;
+  },
+
+  async loginAdmin(loginId: string, passkey: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loginId, passkey })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'अमान्य प्रशासक क्रेडेंशियल्स।' };
+      }
+
+      this.setAuthToken(data.token, true);
+      const adminUser: UserProfile = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        role: 'admin',
+        isAdmin: true,
+        isVerified: true,
+        district: 'लखनऊ (Lucknow)',
+        department: 'प्रशासनिक व संपादकीय सेल (UPOSN)',
+        designation: 'मुख्य प्रशासक (Super Admin)',
+        joinedDate: 'जनवरी 2024'
+      };
+
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(adminUser));
+      notifyListeners(adminUser);
+      return { success: true, user: adminUser };
+    } catch (err: any) {
+      return { success: false, error: 'प्रमाणीकरण सर्वर से संपर्क नहीं हो सका।' };
+    }
   },
 
   isAdminUser(user?: UserProfile | null): boolean {
-    if (sessionStorage.getItem('uposn_editor_auth') === 'true' || localStorage.getItem('uposn_admin_mode') === 'true') {
-      return true;
+    if (!user) {
+      user = this.getCurrentUser();
     }
     if (!user) return false;
-    if (user.isAdmin === true || user.role === 'admin') return true;
-    if (user.email && user.email.toLowerCase() === 'aftab.mohd9@gmail.com') return true;
-    return false;
+    // Server token must exist for admin actions
+    const hasToken = Boolean(this.getAuthToken());
+    return Boolean(user.isAdmin && user.role === 'admin' && hasToken);
   },
 
-  verifyAdminPasskey(passkey: string): { success: boolean; user?: UserProfile; error?: string } {
-    if (this.checkAdminPassword(passkey)) {
-      const admin = this.loginAsAdmin();
-      return { success: true, user: admin };
-    }
-    return { 
-      success: false, 
-      error: 'गलत पासवर्ड! कृपया सही प्रशासक पासवर्ड प्रविष्ट करें।' 
-    };
-  },
-
-  getAdminUser(): UserProfile {
-    return {
-      id: 'admin-aftab',
-      name: 'आफताब मोहम्मद (Admin/Me)',
-      mobile: '9876500000',
-      email: 'aftab.mohd9@gmail.com',
-      password: localStorage.getItem('uposn_admin_custom_password') || PRIMARY_ADMIN_PASSWORD,
-      district: 'लखनऊ (Lucknow)',
-      department: 'प्रशासनिक व संपादकीय सेल (UPOSN)',
-      designation: 'मुख्य प्रशासक (Super Admin)',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      isVerified: true,
-      isAdmin: true,
-      role: 'admin',
-      joinedDate: 'जनवरी 2024',
-      savedPostIds: [],
-      savedOrderIds: [],
-      savedNewsIds: []
-    };
-  },
-
-  loginAsAdmin(): UserProfile {
-    const admin = this.getAdminUser();
-    sessionStorage.setItem('uposn_editor_auth', 'true');
-    localStorage.setItem('uposn_admin_mode', 'true');
-    localStorage.removeItem('up_portal_user_logged_out');
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(admin));
-    notifyListeners(admin);
-    return admin;
-  },
-
-  quickLogin(userId: string): UserProfile {
-    const allUsers = this.getAllUsers();
-    const user = allUsers.find(u => u.id === userId) || this.getAdminUser();
-    localStorage.removeItem('up_portal_user_logged_out');
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-    notifyListeners(user);
-    return user;
-  },
-
-  register(userData: {
-    name: string;
-    mobile: string;
-    email?: string;
-    district: string;
-    department: string;
-    designation: string;
-    password?: string;
-  }): { success: boolean; user?: UserProfile; error?: string } {
-    if (!userData.name.trim()) {
-      return { success: false, error: 'कृपया पूरा नाम दर्ज करें।' };
-    }
-    const cleanMobile = userData.mobile.trim().replace(/\D/g, '');
-    if (!cleanMobile || cleanMobile.length !== 10) {
-      return { success: false, error: 'कृपया वैध 10 अंकों का मोबाइल नंबर दर्ज करें।' };
-    }
-
-    // Check if this mobile number or email is already registered
-    const allUsers = this.getAllUsers();
-    const existing = allUsers.find(u => {
-      const userMobile = (u.mobile || '').replace(/\D/g, '');
-      if (userMobile === cleanMobile) return true;
-      if (userData.email && u.email && u.email.toLowerCase() === userData.email.trim().toLowerCase()) return true;
-      return false;
-    });
-
-    if (existing) {
-      return { 
-        success: false, 
-        error: 'यह मोबाइल नंबर या ईमेल पहले से पंजीकृत है। कृपया लॉगिन (Sign In) करें।' 
+  async requestOtp(mobile: string): Promise<{ success: boolean; message: string; phoneMasked?: string }> {
+    try {
+      const res = await fetch('/api/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile })
+      });
+      const data = await res.json();
+      return {
+        success: data.success,
+        message: data.message || 'OTP अनुरोध प्रेषित किया गया।',
+        phoneMasked: data.phoneMasked
       };
+    } catch (e) {
+      return { success: false, message: 'OTP गेटवे से संपर्क विफल रहा।' };
     }
-
-    const newUser: UserProfile = {
-      id: `user-${Date.now()}`,
-      name: userData.name.trim(),
-      mobile: cleanMobile,
-      email: userData.email?.trim() || undefined,
-      password: userData.password?.trim() || undefined,
-      district: userData.district || 'लखनऊ (Lucknow)',
-      department: userData.department || 'चिकित्सा स्वास्थ्य एवं परिवार कल्याण (Health Dept)',
-      designation: userData.designation.trim() || 'डाटा एंट्री ऑपरेटर',
-      avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
-      isVerified: false,
-      joinedDate: 'हाल ही में',
-      savedPostIds: [],
-      savedOrderIds: [],
-      savedNewsIds: []
-    };
-
-    this.saveRegisteredUser(newUser);
-    localStorage.removeItem('up_portal_user_logged_out');
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(newUser));
-    notifyListeners(newUser);
-    return { success: true, user: newUser };
   },
 
-  updateProfile(updates: Partial<UserProfile>): UserProfile | null {
-    const current = this.getCurrentUser();
-    if (!current) return null;
-
-    const updated: UserProfile = {
-      ...current,
-      ...updates
-    };
-
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updated));
-    this.saveRegisteredUser(updated);
-    notifyListeners(updated);
-    return updated;
+  async verifyOtp(mobile: string, otp: string): Promise<{ success: boolean; verificationToken?: string; error?: string }> {
+    try {
+      const res = await fetch('/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, otp })
+      });
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      return { success: false, error: 'सत्यापन सर्वर से संपर्क विफल रहा।' };
+    }
   },
 
-  findUserByIdentifier(identifier: string): UserProfile | null {
-    const cleanId = identifier.trim().toLowerCase();
-    if (!cleanId) return null;
-    const cleanMobile = cleanId.replace(/\D/g, '');
-    if (cleanId === 'aftab.mohd9@gmail.com' || cleanId === 'admin' || (cleanMobile.length === 10 && cleanMobile === '9876500000')) {
-      return this.getAdminUser();
-    }
-    const allUsers = this.getAllUsers();
-    return allUsers.find(u => {
-      const userMobile = (u.mobile || '').replace(/\D/g, '');
-      if (cleanMobile.length === 10 && userMobile === cleanMobile) return true;
-      if (u.email && u.email.toLowerCase() === cleanId) return true;
-      return false;
-    }) || null;
-  },
-
-  resetPassword(identifier: string, newPassword: string): { success: boolean; error?: string } {
-    const cleanId = identifier.trim().toLowerCase();
-    const cleanPass = newPassword.trim();
-    if (!cleanPass || cleanPass.length < 4) {
-      return { success: false, error: 'पासवर्ड में कम से कम 4 अक्षर या अंक होने चाहिए।' };
-    }
-
-    const cleanMobile = cleanId.replace(/\D/g, '');
-    const isAdminId = cleanId === 'aftab.mohd9@gmail.com' || cleanId === 'admin' || (cleanMobile.length === 10 && cleanMobile === '9876500000');
-    if (isAdminId) {
-      localStorage.setItem('uposn_admin_custom_password', cleanPass);
-      const admin = this.getAdminUser();
-      const current = this.getCurrentUser();
-      if (current && (current.id === admin.id || current.isAdmin)) {
-        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(admin));
-        notifyListeners(admin);
+  async logout(): Promise<void> {
+    const token = this.getAuthToken();
+    if (token) {
+      try {
+        await fetch('/api/admin/logout', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (e) {
+        // Silently caught
       }
-      return { success: true };
     }
-
-    const user = this.findUserByIdentifier(cleanId);
-    if (!user) {
-      return { 
-        success: false, 
-        error: 'यह मोबाइल नंबर / ईमेल पंजीकृत नहीं है। केवल पंजीकृत कर्मचारी ही पासवर्ड रीसेट कर सकते हैं।' 
-      };
-    }
-
-    user.password = cleanPass;
-    this.saveRegisteredUser(user);
-
-    const current = this.getCurrentUser();
-    if (current && current.id === user.id) {
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-      notifyListeners(user);
-    }
-
-    return { success: true };
-  },
-
-  logout(): void {
     localStorage.removeItem(STORAGE_KEY_USER);
-    localStorage.removeItem('uposn_admin_mode');
-    sessionStorage.removeItem('uposn_editor_auth');
-    localStorage.setItem('up_portal_user_logged_out', 'true');
+    localStorage.removeItem(STORAGE_KEY_TOKEN);
+    sessionStorage.removeItem(STORAGE_KEY_TOKEN);
     notifyListeners(null);
-  },
-
-  getAllUsers(): UserProfile[] {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_ALL_USERS);
-      if (stored) {
-        const parsed: UserProfile[] = JSON.parse(stored);
-        return parsed.filter(u => !['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7'].includes(u.id));
-      }
-    } catch (e) {
-      console.error('Error reading all users:', e);
-    }
-    return [];
-  },
-
-  saveRegisteredUser(user: UserProfile) {
-    try {
-      const currentList = this.getAllUsers();
-      const filtered = currentList.filter(u => u.id !== user.id);
-      filtered.unshift(user);
-      localStorage.setItem(STORAGE_KEY_ALL_USERS, JSON.stringify(filtered));
-    } catch (e) {
-      console.error('Error saving user:', e);
-    }
-  },
-
-  toggleBookmark(type: 'post' | 'order' | 'news', id: string): boolean {
-    const current = this.getCurrentUser();
-    if (!current) return false;
-
-    let savedList: string[] = [];
-    if (type === 'post') {
-      savedList = current.savedPostIds || [];
-      const exists = savedList.includes(id);
-      current.savedPostIds = exists ? savedList.filter(x => x !== id) : [...savedList, id];
-    } else if (type === 'order') {
-      savedList = current.savedOrderIds || [];
-      const exists = savedList.includes(id);
-      current.savedOrderIds = exists ? savedList.filter(x => x !== id) : [...savedList, id];
-    } else if (type === 'news') {
-      savedList = current.savedNewsIds || [];
-      const exists = savedList.includes(id);
-      current.savedNewsIds = exists ? savedList.filter(x => x !== id) : [...savedList, id];
-    }
-
-    this.updateProfile(current);
-    return true;
-  },
-
-  getSavedCredentials(): { loginId: string; password?: string; remember: boolean } | null {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY_SAVED_CREDS);
-      if (data) {
-        return JSON.parse(data);
-      }
-    } catch (e) {
-      console.error('Error reading saved credentials:', e);
-    }
-    return null;
-  },
-
-  saveCredentials(loginId: string, password?: string, remember: boolean = true): void {
-    try {
-      if (remember && loginId.trim()) {
-        localStorage.setItem(STORAGE_KEY_SAVED_CREDS, JSON.stringify({
-          loginId: loginId.trim(),
-          password: password || '',
-          remember: true,
-          savedAt: new Date().toISOString()
-        }));
-      } else {
-        localStorage.removeItem(STORAGE_KEY_SAVED_CREDS);
-      }
-    } catch (e) {
-      console.error('Error saving credentials:', e);
-    }
-  },
-
-  clearSavedCredentials(): void {
-    try {
-      localStorage.removeItem(STORAGE_KEY_SAVED_CREDS);
-    } catch (e) {
-      console.error('Error clearing saved credentials:', e);
-    }
-  },
-
-  getSavedAdminPasskey(): { passkey: string; remember: boolean } | null {
-    try {
-      const pass = localStorage.getItem(STORAGE_KEY_SAVED_ADMIN_PASS);
-      if (pass) {
-        return { passkey: pass, remember: true };
-      }
-    } catch (e) {
-      console.error('Error reading saved admin passkey:', e);
-    }
-    return null;
-  },
-
-  saveAdminPasskey(passkey: string, remember: boolean = true): void {
-    try {
-      if (remember && passkey.trim()) {
-        localStorage.setItem(STORAGE_KEY_SAVED_ADMIN_PASS, passkey.trim());
-      } else {
-        localStorage.removeItem(STORAGE_KEY_SAVED_ADMIN_PASS);
-      }
-    } catch (e) {
-      console.error('Error saving admin passkey:', e);
-    }
   },
 
   subscribe(listener: AuthListener): () => void {

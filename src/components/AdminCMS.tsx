@@ -66,10 +66,17 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   onOpenSewayojanSync,
 }) => {
   const [isAuthorized, setIsAuthorized] = useState(() => {
-    return sessionStorage.getItem('uposn_editor_auth') === 'true';
+    return authService.isAdminUser();
   });
   const [passkeyInput, setPasskeyInput] = useState('');
   const [authError, setAuthError] = useState('');
+
+  // Validate server session on mount
+  React.useEffect(() => {
+    authService.verifyServerSession().then((user) => {
+      setIsAuthorized(Boolean(user && user.isAdmin));
+    });
+  }, []);
 
   const [activeTab, setActiveTab] = useState<AdminTab>('DASHBOARD');
   const [successMsg, setSuccessMsg] = useState('');
@@ -85,20 +92,25 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     setTimeout(() => setSuccessMsg(''), 4500);
   };
 
-  const handleAuthorize = (e: React.FormEvent) => {
+  const handleAuthorize = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (authService.checkAdminPassword(passkeyInput)) {
-      sessionStorage.setItem('uposn_editor_auth', 'true');
-      setIsAuthorized(true);
-      setAuthError('');
-      showNotification('प्रशासक पोर्टल में स्वागत है! आप सभी अनुभागों को संपादित कर सकते हैं।');
-    } else {
-      setAuthError('गलत पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड दर्ज करें।');
+    setAuthError('');
+    try {
+      const res = await authService.loginAdmin('admin', passkeyInput);
+      if (res.success && res.user) {
+        setIsAuthorized(true);
+        setPasskeyInput('');
+        showNotification('प्रशासक पोर्टल में स्वागत है! आप सभी अनुभागों को संपादित कर सकते हैं।');
+      } else {
+        setAuthError(res.error || 'गलत पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड दर्ज करें।');
+      }
+    } catch (err) {
+      setAuthError('प्रमाणीकरण सर्वर से संपर्क नहीं हो सका।');
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('uposn_editor_auth');
+  const handleLogout = async () => {
+    await authService.logout();
     setIsAuthorized(false);
   };
 

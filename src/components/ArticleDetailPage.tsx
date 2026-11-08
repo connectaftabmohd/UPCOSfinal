@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { NewsItem, GovernmentOrder, PageView } from '../types';
 import { NewsSidebar } from './NewsSidebar';
+import { AdPlacement } from './AdPlacement';
 import { useLanguage } from '../context/LanguageContext';
 
 interface ArticleDetailPageProps {
@@ -610,6 +611,11 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
               </div>
             )}
 
+            {/* Google AdSense Compliant In-Article Slot */}
+            <div className="my-6">
+              <AdPlacement slotType="in-article" />
+            </div>
+
             {/* Structured Content & Rich Tabular Presentation */}
             <div className="space-y-6 text-sm sm:text-base text-slate-700 leading-relaxed mb-8">
               {contentBlocks.map((block, bIdx) => {
@@ -797,6 +803,11 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                 ))}
               </div>
             )}
+
+            {/* Google AdSense Compliant Banner Slot */}
+            <div className="mb-8">
+              <AdPlacement slotType="bottom-banner" />
+            </div>
 
             {/* Related Articles Section ("यह भी पढ़ें") */}
             <div className="pt-6 border-t border-slate-200">

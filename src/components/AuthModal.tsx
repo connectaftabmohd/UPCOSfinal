@@ -190,82 +190,71 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }, 400);
   };
 
-  const handleRequestReset = (e: React.FormEvent) => {
+  const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError('');
     setForgotSuccess('');
 
     const cleanMobile = forgotMobile.trim().replace(/\D/g, '');
     if (!cleanMobile || cleanMobile.length !== 10) {
-      setForgotError('कृपया 10-अंकीय पंजीकृत मोबाइल नंबर दर्ज करें (उदा. 9876543210)। पासवर्ड रीसेट केवल WhatsApp के माध्यम से उपलब्ध है।');
+      setForgotError('कृपया 10-अंकीय वैध मोबाइल नंबर दर्ज करें (उदा. 9876543210)।');
       return;
     }
 
     setForgotLoading(true);
 
-    setTimeout(() => {
-      setForgotLoading(false);
-      const user = authService.findUserByIdentifier(cleanMobile);
-      if (!user) {
-        setForgotError(`मोबाइल नंबर +91 ${cleanMobile} पोर्टल पर पंजीकृत नहीं है। केवल पंजीकृत कर्मचारी ही WhatsApp पर पासवर्ड रीसेट कर सकते हैं।`);
-        return;
-      }
-
-      const randomOtp = Math.floor(1000 + Math.random() * 9000).toString();
-      const targetMobile = (user.mobile || cleanMobile).replace(/\D/g, '');
-      const waText = encodeURIComponent(`नमस्ते ${user.name},\n\nउत्तर प्रदेश आउटसोर्सिंग कर्मचारी पोर्टल पासवर्ड रीसेट हेतु आपका सत्यापन कोड (OTP): *${randomOtp}*\n\nयह कोड 10 मिनट के लिए मान्य है। कृपया इसे किसी के साथ साझा न करें।\n\n— उ.प्र. आउटसोर्स एवं संविदा कर्मचारी मंच`);
-      const targetWaUrl = `https://api.whatsapp.com/send?phone=91${targetMobile}&text=${waText}`;
-
-      setGeneratedOtp(randomOtp);
-      setMatchedUser(user);
-      setForgotOtp('');
-      setForgotNewPassword('');
-      setForgotConfirmPassword('');
-      setForgotStep(2);
-      setResendCountdown(30);
-      setWaUrl(targetWaUrl);
-      setWaAlert({ show: true, mobile: targetMobile, code: randomOtp, waUrl: targetWaUrl });
-
-      // Automatically launch WhatsApp with pre-filled OTP message
-      try {
-        window.open(targetWaUrl, '_blank', 'noopener,noreferrer');
-      } catch {
-        // Handled gracefully via button in UI
-      }
-    }, 350);
-  };
-
-  const handleResendWaOtp = () => {
-    if (resendCountdown > 0) return;
-    const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
-    const cleanMobile = (matchedUser?.mobile || forgotMobile).replace(/\D/g, '');
-    const waText = encodeURIComponent(`नमस्ते ${matchedUser?.name || 'साथी'},\n\nउत्तर प्रदेश आउटसोर्सिंग कर्मचारी पोर्टल पासवर्ड रीसेट हेतु आपका नया सत्यापन कोड (OTP): *${newOtp}*\n\nयह कोड 10 मिनट के लिए मान्य है।\n\n— उ.प्र. आउटसोर्स एवं संविदा कर्मचारी मंच`);
-    const newWaUrl = `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${waText}`;
-
-    setGeneratedOtp(newOtp);
-    setForgotOtp('');
-    setResendCountdown(30);
-    setWaUrl(newWaUrl);
-    setWaAlert({ show: true, mobile: cleanMobile, code: newOtp, waUrl: newWaUrl });
-
     try {
-      window.open(newWaUrl, '_blank', 'noopener,noreferrer');
-    } catch {
-      // Handled via UI button
+      const res = await authService.requestOtp(cleanMobile);
+      setForgotLoading(false);
+      if (res.success) {
+        setForgotOtp('');
+        setForgotNewPassword('');
+        setForgotConfirmPassword('');
+        setForgotStep(2);
+        setResendCountdown(60);
+        setForgotSuccess(res.message);
+      } else {
+        setForgotError(res.message || 'OTP भेजने में त्रुटि हुई।');
+      }
+    } catch (err: any) {
+      setForgotLoading(false);
+      setForgotError('सत्यापन सर्वर से संपर्क नहीं हो सका।');
     }
   };
 
-  const handleConfirmReset = (e: React.FormEvent) => {
+  const handleResendWaOtp = async () => {
+    if (resendCountdown > 0) return;
+    const cleanMobile = forgotMobile.trim().replace(/\D/g, '');
+    setForgotLoading(true);
+    setForgotError('');
+
+    try {
+      const res = await authService.requestOtp(cleanMobile);
+      setForgotLoading(false);
+      if (res.success) {
+        setResendCountdown(60);
+        setForgotSuccess(res.message);
+      } else {
+        setForgotError(res.message || 'OTP पुनः भेजने में त्रुटि हुई।');
+      }
+    } catch (err) {
+      setForgotLoading(false);
+      setForgotError('सत्यापन सर्वर से संपर्क नहीं हो सका।');
+    }
+  };
+
+  const handleConfirmReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError('');
 
-    if (forgotOtp.trim() !== generatedOtp.trim()) {
-      setForgotError('अमान्य सत्यापन कोड (OTP)। कृपया WhatsApp पर भेजा गया 4-अंकीय कोड प्रविष्ट करें।');
+    const cleanOtp = forgotOtp.trim().replace(/\D/g, '');
+    if (!cleanOtp || cleanOtp.length !== 6) {
+      setForgotError('कृपया 6-अंकीय मान्य सत्यापन कोड (OTP) दर्ज करें।');
       return;
     }
 
-    if (!forgotNewPassword.trim() || forgotNewPassword.trim().length < 4) {
-      setForgotError('पासवर्ड में कम से कम 4 अक्षर या अंक होने चाहिए।');
+    if (!forgotNewPassword.trim() || forgotNewPassword.trim().length < 6) {
+      setForgotError('पासवर्ड में कम से कम 6 अक्षर या अंक होने चाहिए।');
       return;
     }
 
@@ -276,24 +265,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setForgotLoading(true);
 
-    setTimeout(() => {
-      const cleanMobile = (matchedUser?.mobile || forgotMobile).replace(/\D/g, '');
-      const res = authService.resetPassword(cleanMobile, forgotNewPassword);
-      setForgotLoading(false);
+    try {
+      const cleanMobile = forgotMobile.trim().replace(/\D/g, '');
+      const verifyRes = await authService.verifyOtp(cleanMobile, cleanOtp);
 
-      if (res.success) {
-        setForgotSuccess('पासवर्ड सफलतापूर्वक बदल दिया गया है!');
-        setTimeout(() => {
-          setLoginId(cleanMobile);
-          setLoginPassword(forgotNewPassword);
-          setActiveTab('login');
-          setForgotSuccess('');
-          setForgotStep(1);
-        }, 1500);
-      } else {
-        setForgotError(res.error || 'पासवर्ड रीसेट विफल रहा');
+      if (!verifyRes.success) {
+        setForgotLoading(false);
+        setForgotError(verifyRes.error || 'अमान्य अथवा समाप्त हो चुका OTP।');
+        return;
       }
-    }, 400);
+
+      setForgotLoading(false);
+      setForgotSuccess('सत्यापन सफल! पासवर्ड सफलतापूर्वक अपडेट किया गया।');
+      setTimeout(() => {
+        setLoginId(cleanMobile);
+        setLoginPassword(forgotNewPassword);
+        setActiveTab('login');
+        setForgotSuccess('');
+        setForgotStep(1);
+      }, 1500);
+    } catch (err) {
+      setForgotLoading(false);
+      setForgotError('सत्यापन सर्वर से संपर्क विफल रहा।');
+    }
   };
 
   return (

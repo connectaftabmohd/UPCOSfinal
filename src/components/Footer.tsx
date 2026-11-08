@@ -215,9 +215,9 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Legal, Policy & About (Col 8-10) */}
           <div className="lg:col-span-3 space-y-3">
             <h4 className="text-white font-bold text-sm tracking-wide uppercase">
-              {isEnglish ? 'Legal & Info' : 'नीति एवं सूचना (Legal & Info)'}
+              {isEnglish ? 'Legal & Compliance' : 'नीति एवं वैधानिक सूचना (Legal)'}
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-1.5 text-xs">
               <li>
                 <button
                   onClick={() => onNavigate({ type: 'about' })}
@@ -238,6 +238,15 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
+                  onClick={() => onNavigate({ type: 'privacy' })}
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <span>{isEnglish ? 'Privacy Policy' : 'गोपनीयता नीति (Privacy Policy)'}</span>
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onNavigate({ type: 'disclaimer' })}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
@@ -247,31 +256,66 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate({ type: 'privacy' })}
+                  onClick={() => onNavigate({ type: 'terms' })}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
-                  <span>{isEnglish ? 'Privacy Policy' : 'गोपनीयता नीति (Privacy Policy)'}</span>
+                  <span>{isEnglish ? 'Terms & Conditions' : 'नियम एवं शर्तें (Terms)'}</span>
                 </button>
               </li>
-              {isAdmin ? (
+              <li>
+                <button
+                  onClick={() => onNavigate({ type: 'editorial-policy' })}
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <span>{isEnglish ? 'Editorial Policy' : 'संपादकीय नीति (Editorial Policy)'}</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate({ type: 'fact-checking' })}
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <span>{isEnglish ? 'Fact-Checking' : 'तथ्य-जांच नीति (Fact-Check)'}</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate({ type: 'corrections-policy' })}
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <span>{isEnglish ? 'Correction Policy' : 'संशोधन नीति (Corrections)'}</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate({ type: 'copyright-policy' })}
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <span>{isEnglish ? 'Copyright Policy' : 'कॉपीराइट नीति (Copyright)'}</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate({ type: 'advertise' })}
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <span>{isEnglish ? 'Advertise With Us' : 'विज्ञापन नीति (Advertise)'}</span>
+                </button>
+              </li>
+              {isAdmin && (
                 <li>
                   <button
                     onClick={() => onNavigate({ type: 'admin' })}
-                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-amber-400 font-semibold cursor-pointer"
+                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-amber-400 font-semibold cursor-pointer pt-1"
                   >
                     <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
                     <span>{isEnglish ? 'Editorial CMS (Admin)' : 'संपादकीय सीएमएस (Admin)'}</span>
-                  </button>
-                </li>
-              ) : (
-                <li>
-                  <button
-                    onClick={() => onNavigate({ type: 'employee-hub' })}
-                    className="hover:text-amber-400 transition flex items-center gap-1.5 text-slate-400 cursor-pointer"
-                  >
-                    <ChevronRight className="w-3 h-3 text-slate-600" />
-                    <span>{isEnglish ? 'Help Desk' : 'कर्मचारी सहायता केंद्र (Help Desk)'}</span>
                   </button>
                 </li>
               )}
@@ -318,8 +362,9 @@ export const Footer: React.FC<FooterProps> = ({
           <div>
             © 2026 UP Outsource Seva Nigam News &amp; Information. All Rights Reserved.
           </div>
-          <div className="flex items-center gap-4 text-slate-400">
+          <div className="flex items-center gap-3 text-slate-400">
             <span>{isEnglish ? 'Digital Empowerment • Objective Information' : 'डिजिटल सशक्तिकरण • निष्पक्ष सूचना'}</span>
+            
             <button
               onClick={onOpenAdminAccess}
               title={isEnglish ? 'Admin Access (Shortcut: Ctrl+Shift+A)' : 'व्यवस्थापक प्रवेश (Admin Access - शॉर्टकट: Ctrl+Shift+A)'}

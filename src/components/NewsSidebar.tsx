@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingUp, Clock, FileText, ChevronRight, Sparkles, ExternalLink } from 'lucide-react';
 import { NewsItem, GovernmentOrder, PageView } from '../types';
+import { AdPlacement } from './AdPlacement';
 
 interface NewsSidebarProps {
   latestNews: NewsItem[];
@@ -127,6 +128,9 @@ export const NewsSidebar: React.FC<NewsSidebarProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Compliant AdSense Sidebar Slot */}
+      <AdPlacement slotType="sidebar" />
 
       {/* UPCOS Reference Callout */}
       <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-xs text-xs space-y-2.5">

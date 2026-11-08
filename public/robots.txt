@@ -1,7 +1,17 @@
+User-agent: Mediapartners-Google
+Allow: /
+Allow: /ads.txt
+
+User-agent: Googlebot
+Allow: /
+Allow: /ads.txt
+
 User-agent: *
 Allow: /
+Allow: /ads.txt
 Disallow: /#admin
 Disallow: /?admin=true
 
-# Sitemap
-Sitemap: https://ais-pre-2xexmvv7uo46v6r6ddwtfu-257787806369.asia-east1.run.app/sitemap.xml
+# Sitemaps
+Sitemap: https://upcos.netlify.app/sitemap.xml
+

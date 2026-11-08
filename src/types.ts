@@ -144,4 +144,10 @@ export type PageView =
   | { type: 'contact' }
   | { type: 'privacy' }
   | { type: 'disclaimer' }
+  | { type: 'terms' }
+  | { type: 'editorial-policy' }
+  | { type: 'fact-checking' }
+  | { type: 'corrections-policy' }
+  | { type: 'copyright-policy' }
+  | { type: 'advertise' }
   | { type: 'admin' };
