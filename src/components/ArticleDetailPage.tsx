@@ -17,7 +17,8 @@ import {
   Table as TableIcon,
   AlertTriangle,
   FileText,
-  BadgeCheck
+  BadgeCheck,
+  Eye
 } from 'lucide-react';
 import { NewsItem, GovernmentOrder, PageView } from '../types';
 import { NewsSidebar } from './NewsSidebar';
@@ -80,8 +81,10 @@ function renderFormattedInline(text: string): React.ReactNode {
 }
 
 interface ParsedBlock {
-  type: 'table' | 'heading2' | 'heading3' | 'callout' | 'paragraph';
+  type: 'table' | 'heading2' | 'heading3' | 'callout' | 'paragraph' | 'image';
   content?: string;
+  imageUrl?: string;
+  imageAlt?: string;
   tableData?: {
     headers: string[];
     alignments: ('left' | 'center' | 'right')[];
@@ -163,7 +166,17 @@ function parseArticleBlocks(fullContent: string[]): ParsedBlock[] {
       continue;
     }
 
-    if (trimmed.startsWith('### ')) {
+    if (trimmed.startsWith('![') && trimmed.includes('](') && trimmed.endsWith(')')) {
+      const closeBracket = trimmed.indexOf('](');
+      const alt = trimmed.slice(2, closeBracket);
+      const url = trimmed.slice(closeBracket + 2, -1);
+      blocks.push({
+        type: 'image',
+        content: trimmed,
+        imageUrl: url,
+        imageAlt: alt
+      });
+    } else if (trimmed.startsWith('### ')) {
       blocks.push({ type: 'heading3', content: trimmed.replace(/^###\s+/, '') });
     } else if (trimmed.startsWith('## ')) {
       blocks.push({ type: 'heading2', content: trimmed.replace(/^##\s+/, '') });
@@ -623,6 +636,36 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                         {renderFormattedInline(block.content || '')}
                       </h3>
                     </div>
+                  );
+                }
+
+                if (block.type === 'image' && block.imageUrl) {
+                  return (
+                    <figure key={bIdx} className="my-6 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 p-3 sm:p-4 shadow-2xs">
+                      <div className="rounded-xl overflow-hidden bg-white border border-slate-200">
+                        <img
+                          src={block.imageUrl}
+                          alt={block.imageAlt || 'आधिकारिक दस्तावेज साक्ष्य'}
+                          className="w-full max-h-[780px] object-contain mx-auto transition-transform hover:scale-[1.01]"
+                          loading="lazy"
+                        />
+                      </div>
+                      {block.imageAlt && (
+                        <figcaption className="text-center text-xs text-slate-700 font-semibold mt-3 flex items-center justify-center gap-2">
+                          <Eye className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                          <span>{block.imageAlt}</span>
+                          <a
+                            href={block.imageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-0.5 text-blue-700 hover:text-blue-900 font-bold ml-1 hover:underline"
+                          >
+                            [पूर्ण आकार में देखें]
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </figcaption>
+                      )}
+                    </figure>
                   );
                 }
 

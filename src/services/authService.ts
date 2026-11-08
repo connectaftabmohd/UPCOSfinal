@@ -161,6 +161,8 @@ export const DEMO_USERS: UserProfile[] = [
 
 const STORAGE_KEY_USER = 'up_portal_current_user';
 const STORAGE_KEY_ALL_USERS = 'up_portal_registered_users';
+const STORAGE_KEY_SAVED_CREDS = 'uposn_saved_login_credentials';
+const STORAGE_KEY_SAVED_ADMIN_PASS = 'uposn_saved_admin_passkey';
 
 type AuthListener = (user: UserProfile | null) => void;
 const listeners: Set<AuthListener> = new Set();
@@ -553,6 +555,67 @@ export const authService = {
 
     this.updateProfile(current);
     return true;
+  },
+
+  getSavedCredentials(): { loginId: string; password?: string; remember: boolean } | null {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_SAVED_CREDS);
+      if (data) {
+        return JSON.parse(data);
+      }
+    } catch (e) {
+      console.error('Error reading saved credentials:', e);
+    }
+    return null;
+  },
+
+  saveCredentials(loginId: string, password?: string, remember: boolean = true): void {
+    try {
+      if (remember && loginId.trim()) {
+        localStorage.setItem(STORAGE_KEY_SAVED_CREDS, JSON.stringify({
+          loginId: loginId.trim(),
+          password: password || '',
+          remember: true,
+          savedAt: new Date().toISOString()
+        }));
+      } else {
+        localStorage.removeItem(STORAGE_KEY_SAVED_CREDS);
+      }
+    } catch (e) {
+      console.error('Error saving credentials:', e);
+    }
+  },
+
+  clearSavedCredentials(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY_SAVED_CREDS);
+    } catch (e) {
+      console.error('Error clearing saved credentials:', e);
+    }
+  },
+
+  getSavedAdminPasskey(): { passkey: string; remember: boolean } | null {
+    try {
+      const pass = localStorage.getItem(STORAGE_KEY_SAVED_ADMIN_PASS);
+      if (pass) {
+        return { passkey: pass, remember: true };
+      }
+    } catch (e) {
+      console.error('Error reading saved admin passkey:', e);
+    }
+    return null;
+  },
+
+  saveAdminPasskey(passkey: string, remember: boolean = true): void {
+    try {
+      if (remember && passkey.trim()) {
+        localStorage.setItem(STORAGE_KEY_SAVED_ADMIN_PASS, passkey.trim());
+      } else {
+        localStorage.removeItem(STORAGE_KEY_SAVED_ADMIN_PASS);
+      }
+    } catch (e) {
+      console.error('Error saving admin passkey:', e);
+    }
   },
 
   subscribe(listener: AuthListener): () => void {

@@ -26,6 +26,18 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
   const [passkey, setPasskey] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberPasskey, setRememberPasskey] = useState(true);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setError('');
+      const saved = authService.getSavedAdminPasskey();
+      if (saved && saved.remember && saved.passkey) {
+        setPasskey(saved.passkey);
+        setRememberPasskey(true);
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -42,6 +54,11 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
       const res = authService.verifyAdminPasskey(passkey);
       setIsLoading(false);
       if (res.success && res.user) {
+        if (rememberPasskey) {
+          authService.saveAdminPasskey(passkey, true);
+        } else {
+          authService.saveAdminPasskey('', false);
+        }
         onSuccess(res.user);
         onClose();
         onNavigate({ type: 'admin' });
@@ -124,11 +141,37 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
                   type="password"
                   value={passkey}
                   onChange={e => setPasskey(e.target.value)}
+                  autoComplete="current-password"
                   placeholder="प्रशासक पासवर्ड प्रविष्ट करें"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition"
                   autoFocus
                 />
               </div>
+            </div>
+
+            {/* Remember Admin Password */}
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none w-full">
+                <input
+                  type="checkbox"
+                  checked={rememberPasskey}
+                  onChange={e => setRememberPasskey(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 rounded text-amber-600 focus:ring-amber-500 border-slate-300 cursor-pointer accent-amber-600"
+                />
+                <div className="flex-1">
+                  <span className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                    <span>अगली बार के लिए पासवर्ड याद रखें (Save Password)</span>
+                    {rememberPasskey && (
+                      <span className="text-[10px] text-amber-700 font-semibold bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+                        सुरक्षित
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block mt-0.5">
+                    भविष्य में एडमिन पोर्टल खोलते समय पासवर्ड स्वतः भरा रहेगा।
+                  </span>
+                </div>
+              </label>
             </div>
 
             <button

@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import { NewsItem, GovernmentOrder, Department, FAQItem } from '../types';
 import { NEWS_DATA, GOV_ORDERS_DATA, DEPARTMENTS_DATA, BREAKING_NEWS_ITEMS, FAQS_DATA } from './mockData';
 
-const NEWS_STORAGE_KEY = 'uposn_news_data_v6';
-const GOV_ORDERS_STORAGE_KEY = 'uposn_gov_orders_v1';
+const NEWS_STORAGE_KEY = 'uposn_news_data_v7';
+const GOV_ORDERS_STORAGE_KEY = 'uposn_gov_orders_v2';
 const DEPARTMENTS_STORAGE_KEY = 'uposn_departments_v1';
-const TICKER_STORAGE_KEY = 'uposn_ticker_v3';
+const TICKER_STORAGE_KEY = 'uposn_ticker_v4';
 const FAQS_STORAGE_KEY = 'uposn_faqs_v1';
 
 export function getStoredNews(): NewsItem[] {
   try {
-    const raw = localStorage.getItem(NEWS_STORAGE_KEY) || localStorage.getItem('uposn_news_data_v5') || localStorage.getItem('uposn_news_data_v4') || localStorage.getItem('uposn_news_data_v3') || localStorage.getItem('uposn_news_data_v2') || localStorage.getItem('uposn_news_data_v1');
+    const raw = localStorage.getItem(NEWS_STORAGE_KEY) || localStorage.getItem('uposn_news_data_v6') || localStorage.getItem('uposn_news_data_v5') || localStorage.getItem('uposn_news_data_v4');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -56,11 +56,22 @@ export function saveStoredNews(news: NewsItem[]) {
 
 export function getStoredGovOrders(): GovernmentOrder[] {
   try {
-    const raw = localStorage.getItem(GOV_ORDERS_STORAGE_KEY);
+    const raw = localStorage.getItem(GOV_ORDERS_STORAGE_KEY) || localStorage.getItem('uposn_gov_orders_v1');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        const freshMap = new Map(GOV_ORDERS_DATA.map((item: GovernmentOrder) => [item.id, item]));
+        const updatedParsed = parsed.map((item: GovernmentOrder) => {
+          if (freshMap.has(item.id)) {
+            return freshMap.get(item.id)!;
+          }
+          return item;
+        });
+        const existingIds = new Set(updatedParsed.map((item: GovernmentOrder) => item.id));
+        const missingNewOrders = GOV_ORDERS_DATA.filter(o => !existingIds.has(o.id));
+        const combined = [...missingNewOrders, ...updatedParsed];
+        localStorage.setItem(GOV_ORDERS_STORAGE_KEY, JSON.stringify(combined));
+        return combined;
       }
     }
   } catch (e) {

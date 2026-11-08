@@ -47,6 +47,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loginError, setLoginError] = useState('');
   const [isNotRegistered, setIsNotRegistered] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [rememberCredentials, setRememberCredentials] = useState(true);
 
   // Register form state
   const [regName, setRegName] = useState('');
@@ -97,6 +98,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setForgotStep(1);
       setWaAlert(null);
       setResendCountdown(30);
+
+      // Load saved login credentials for next time
+      const saved = authService.getSavedCredentials();
+      if (saved && saved.remember && saved.loginId) {
+        setLoginId(saved.loginId);
+        if (saved.password) {
+          setLoginPassword(saved.password);
+        }
+        setRememberCredentials(true);
+      }
     }
   }, [isOpen, initialTab]);
 
@@ -135,6 +146,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const res = authService.login(loginId, loginPassword);
       setLoginLoading(false);
       if (res.success && res.user) {
+        if (rememberCredentials) {
+          authService.saveCredentials(loginId, loginPassword, true);
+        } else {
+          authService.clearSavedCredentials();
+        }
         if (onSuccess) onSuccess(res.user);
         onClose();
       } else {
@@ -163,6 +179,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       });
       setRegLoading(false);
       if (res.success && res.user) {
+        if (rememberCredentials) {
+          authService.saveCredentials(regMobile || regEmail, regPassword, true);
+        }
         if (onSuccess) onSuccess(res.user);
         onClose();
       } else {
@@ -404,6 +423,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="text"
                     value={loginId}
                     onChange={e => setLoginId(e.target.value)}
+                    autoComplete="username"
                     placeholder="उदा. 9876543210 अथवा aftab.mohd9@gmail.com"
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition"
                     required
@@ -449,11 +469,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="password"
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
+                    autoComplete="current-password"
                     placeholder={isAdminSelected ? 'प्रशासक पासवर्ड दर्ज करें' : '••••••••'}
                     required={isAdminSelected}
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition"
                   />
                 </div>
+              </div>
+
+              {/* Remember Credentials Option */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 transition hover:bg-slate-100/60 dark:hover:bg-slate-800">
+                <label className="flex items-start gap-3 cursor-pointer select-none w-full">
+                  <input
+                    type="checkbox"
+                    checked={rememberCredentials}
+                    onChange={e => setRememberCredentials(e.target.checked)}
+                    className="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 cursor-pointer accent-blue-600"
+                  />
+                  <div className="flex-1">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                      <span>अगली बार के लिए लॉगिन विवरण याद रखें (Save Credentials)</span>
+                      {rememberCredentials && (
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                          सक्रिय (Active)
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5 leading-snug">
+                      अगली बार आपको मोबाइल/ईमेल और पासवर्ड पुनः दर्ज नहीं करना पड़ेगा।
+                    </span>
+                  </div>
+                </label>
               </div>
 
               <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-2">
