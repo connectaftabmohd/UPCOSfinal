@@ -98,6 +98,8 @@ export const UP_DEPARTMENTS = [
 
 const STORAGE_KEY_USER = 'up_portal_current_user';
 const STORAGE_KEY_TOKEN = 'uposn_auth_token';
+const STORAGE_KEY_SAVED_CREDS = 'uposn_saved_login_credentials';
+const STORAGE_KEY_ALL_USERS = 'up_portal_registered_users';
 
 type AuthListener = (user: UserProfile | null) => void;
 const listeners: Set<AuthListener> = new Set();
@@ -169,6 +171,7 @@ export const authService = {
             id: data.user.id,
             name: data.user.name,
             email: data.user.email,
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
             role: 'admin',
             isAdmin: true,
             isVerified: true,
@@ -209,6 +212,7 @@ export const authService = {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         role: 'admin',
         isAdmin: true,
         isVerified: true,
@@ -231,9 +235,152 @@ export const authService = {
       user = this.getCurrentUser();
     }
     if (!user) return false;
-    // Server token must exist for admin actions
     const hasToken = Boolean(this.getAuthToken());
     return Boolean(user.isAdmin && user.role === 'admin' && hasToken);
+  },
+
+  // Normal Employee User Login
+  login(identifier: string, password?: string): { success: boolean; user?: UserProfile; error?: string; notRegistered?: boolean } {
+    const cleanId = identifier.trim().toLowerCase();
+    if (!cleanId) {
+      return { success: false, error: 'कृपया पंजीकृत मोबाइल नंबर या ईमेल दर्ज करें।' };
+    }
+
+    // Admin login requires server passkey check
+    if (cleanId === 'admin' || cleanId === 'aftab.mohd9@gmail.com') {
+      return { 
+        success: false, 
+        error: 'व्यवस्थापक लॉगिन हेतु "प्रशासक प्रवेश" (Admin Access) बटन का उपयोग करें।' 
+      };
+    }
+
+    const allUsers = this.getAllRegisteredUsers();
+    const cleanMobile = cleanId.replace(/\D/g, '');
+
+    const found = allUsers.find(u => {
+      const userMobile = (u.mobile || '').replace(/\D/g, '');
+      if (cleanMobile.length === 10 && userMobile === cleanMobile) return true;
+      if (u.email && u.email.toLowerCase() === cleanId) return true;
+      return false;
+    });
+
+    if (found) {
+      if (found.password && password && found.password !== password.trim()) {
+        return { success: false, error: 'अमान्य पासवर्ड! कृपया सही पासवर्ड दर्ज करें।' };
+      }
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(found));
+      notifyListeners(found);
+      return { success: true, user: found };
+    }
+
+    return {
+      success: false,
+      notRegistered: true,
+      error: 'यह खाता पंजीकृत नहीं है। कृपया पहले नया पंजीकरण करें।'
+    };
+  },
+
+  // Normal Employee Registration
+  register(userData: {
+    name: string;
+    mobile: string;
+    email?: string;
+    district: string;
+    department: string;
+    designation: string;
+    password?: string;
+  }): { success: boolean; user?: UserProfile; error?: string } {
+    if (!userData.name.trim()) {
+      return { success: false, error: 'कृपया पूरा नाम दर्ज करें।' };
+    }
+    const cleanMobile = userData.mobile.trim().replace(/\D/g, '');
+    if (!cleanMobile || cleanMobile.length !== 10) {
+      return { success: false, error: 'कृपया 10 अंकों का मान्य मोबाइल नंबर दर्ज करें।' };
+    }
+
+    const allUsers = this.getAllRegisteredUsers();
+    const exists = allUsers.some(u => (u.mobile || '').replace(/\D/g, '') === cleanMobile);
+    if (exists) {
+      return { success: false, error: 'यह मोबाइल नंबर पहले से पंजीकृत है। कृपया लॉगिन करें।' };
+    }
+
+    const newUser: UserProfile = {
+      id: `usr-${Date.now()}`,
+      name: userData.name.trim(),
+      mobile: cleanMobile,
+      email: userData.email?.trim() || undefined,
+      password: userData.password?.trim() || undefined,
+      district: userData.district || 'लखनऊ (Lucknow)',
+      department: userData.department || 'चिकित्सा स्वास्थ्य एवं परिवार कल्याण (Health Dept)',
+      designation: userData.designation.trim() || 'डाटा एंट्री ऑपरेटर',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      isVerified: false,
+      role: 'user',
+      joinedDate: 'हाल ही में',
+      savedPostIds: [],
+      savedOrderIds: [],
+      savedNewsIds: []
+    };
+
+    allUsers.unshift(newUser);
+    localStorage.setItem(STORAGE_KEY_ALL_USERS, JSON.stringify(allUsers));
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(newUser));
+    notifyListeners(newUser);
+    return { success: true, user: newUser };
+  },
+
+  updateProfile(updates: Partial<UserProfile>): UserProfile | null {
+    const current = this.getCurrentUser();
+    if (!current) return null;
+    const updated: UserProfile = { ...current, ...updates };
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updated));
+
+    const allUsers = this.getAllRegisteredUsers().map(u => u.id === updated.id ? updated : u);
+    localStorage.setItem(STORAGE_KEY_ALL_USERS, JSON.stringify(allUsers));
+    notifyListeners(updated);
+    return updated;
+  },
+
+  getAllRegisteredUsers(): UserProfile[] {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_ALL_USERS);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  getSavedCredentials(): { loginId: string; password?: string; remember: boolean } | null {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_SAVED_CREDS);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  saveCredentials(loginId: string, password?: string, remember: boolean = true): void {
+    try {
+      if (remember && loginId.trim()) {
+        localStorage.setItem(STORAGE_KEY_SAVED_CREDS, JSON.stringify({
+          loginId: loginId.trim(),
+          password: password || '',
+          remember: true
+        }));
+      } else {
+        localStorage.removeItem(STORAGE_KEY_SAVED_CREDS);
+      }
+    } catch {
+      // Ignored
+    }
+  },
+
+  clearSavedCredentials(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY_SAVED_CREDS);
+    } catch {
+      // Ignored
+    }
   },
 
   async requestOtp(mobile: string): Promise<{ success: boolean; message: string; phoneMasked?: string }> {
