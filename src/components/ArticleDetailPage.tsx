@@ -24,6 +24,7 @@ import { NewsItem, GovernmentOrder, PageView } from '../types';
 import { NewsSidebar } from './NewsSidebar';
 import { AdPlacement } from './AdPlacement';
 import { useLanguage } from '../context/LanguageContext';
+import { getCanonicalUrl } from '../utils/seo';
 
 interface ArticleDetailPageProps {
   article: NewsItem;
@@ -82,7 +83,7 @@ function renderFormattedInline(text: string): React.ReactNode {
 }
 
 interface ParsedBlock {
-  type: 'table' | 'heading2' | 'heading3' | 'callout' | 'paragraph' | 'image';
+  type: 'table' | 'heading2' | 'heading3' | 'heading4' | 'callout' | 'paragraph' | 'image';
   content?: string;
   imageUrl?: string;
   imageAlt?: string;
@@ -177,6 +178,8 @@ function parseArticleBlocks(fullContent: string[]): ParsedBlock[] {
         imageUrl: url,
         imageAlt: alt
       });
+    } else if (trimmed.startsWith('#### ')) {
+      blocks.push({ type: 'heading4', content: trimmed.replace(/^####\s+/, '') });
     } else if (trimmed.startsWith('### ')) {
       blocks.push({ type: 'heading3', content: trimmed.replace(/^###\s+/, '') });
     } else if (trimmed.startsWith('## ')) {
@@ -233,13 +236,15 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
       tag.setAttribute('content', contentVal);
     };
 
+    const canonicalHref = getCanonicalUrl(`/news/${article.slug}`);
+
     // OpenGraph
     setMetaTag('property', 'og:title', article.title);
     setMetaTag('property', 'og:description', article.shortDescription);
     setMetaTag('property', 'og:image', article.featuredImage);
     setMetaTag('property', 'og:type', 'article');
     setMetaTag('property', 'og:site_name', 'UP Outsource Seva Nigam');
-    setMetaTag('property', 'og:url', window.location.href);
+    setMetaTag('property', 'og:url', canonicalHref);
 
     // Twitter Card
     setMetaTag('name', 'twitter:card', 'summary_large_image');
@@ -254,11 +259,11 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
       canonical.setAttribute('rel', 'canonical');
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute('href', window.location.origin + window.location.pathname);
+    canonical.setAttribute('href', canonicalHref);
 
     // Schema.org Structured Data
-    const isRecruitment = article.category === 'भर्ती एवं तैनाती' || article.tags?.some(t => t.includes('भर्ती') || t.includes('Nurse'));
-    const schemaData = isRecruitment
+    const isPrayagrajNursePost = article.id === 'post-sb-staff-nurse-prayagraj';
+    const schemaData = isPrayagrajNursePost
       ? {
           '@context': 'https://schema.org',
           '@type': 'JobPosting',
@@ -299,15 +304,23 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
       : {
           '@context': 'https://schema.org',
           '@type': 'NewsArticle',
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': canonicalHref
+          },
           headline: article.title,
+          alternativeHeadline: article.englishTitle || article.title,
           image: [article.featuredImage],
           datePublished: article.publicationDate,
           dateModified: article.publicationDate,
+          inLanguage: 'hi-IN',
+          keywords: article.tags?.join(', '),
           author: [{ '@type': 'Person', name: article.author }],
           publisher: {
             '@type': 'Organization',
             name: 'UP Outsource Seva Nigam',
-            logo: { '@type': 'ImageObject', url: window.location.origin + '/logo.png' }
+            url: 'https://upcos.netlify.app',
+            logo: { '@type': 'ImageObject', url: getCanonicalUrl('/favicon.svg') }
           },
           description: article.shortDescription
         };
@@ -645,6 +658,17 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                   );
                 }
 
+                if (block.type === 'heading4') {
+                  return (
+                    <h4
+                      key={bIdx}
+                      className="mt-6 mb-2 text-sm sm:text-base font-bold text-blue-950 bg-blue-50/70 border-l-4 border-blue-700 px-3.5 py-2 rounded-r-lg"
+                    >
+                      {renderFormattedInline(block.content || '')}
+                    </h4>
+                  );
+                }
+
                 if (block.type === 'image' && block.imageUrl) {
                   return (
                     <figure key={bIdx} className="my-6 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 p-3 sm:p-4 shadow-2xs">
@@ -752,7 +776,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                 }
 
                 return (
-                  <p key={bIdx} className="leading-relaxed">
+                  <p key={bIdx} className="leading-relaxed whitespace-pre-line">
                     {renderFormattedInline(block.content || '')}
                   </p>
                 );

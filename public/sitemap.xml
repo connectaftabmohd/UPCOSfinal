@@ -40,7 +40,13 @@
 
   <!-- 2. Verified High-Impact Articles -->
   <url>
-    <loc>https://upcos.netlify.app/news/post-up-outsource-salary-hike-2026</loc>
+    <loc>https://upcos.netlify.app/news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://upcos.netlify.app/news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026</loc>
     <lastmod>2026-11-08</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>

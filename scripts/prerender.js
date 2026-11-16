@@ -41,7 +41,8 @@ const homeBodySnippet = `
     <section>
       <h2>प्रमुख समाचार एवं नवीनतम शासनादेश</h2>
       <ul>
-        <li><a href="/news/post-up-outsource-salary-hike-2026">उत्तर प्रदेश आउटसोर्सिंग कर्मियों के मानदेय में वृद्धि: ₹15,396 से ₹39,000 मासिक पारिश्रमिक एवं EPF/ESI विवरण</a></li>
+        <li><a href="/news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator">महिला कल्याण विभाग हमीरपुर भर्ती 2026: Case Worker, MTS, Computer Operator व District Coordinator (अंतिम तिथि 20-11-2026)</a></li>
+        <li><a href="/news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026">उत्तर प्रदेश आउटसोर्सिंग कर्मियों के मानदेय में वृद्धि: ₹15,396 से ₹39,000 मासिक पारिश्रमिक एवं EPF/ESI विवरण</a></li>
         <li><a href="/shasanadesh/order-upcos-wages-2026">शासनादेश संख्या 3/2026/1/1511176/2026: श्रेणीवार पारिश्रमिक एवं सेवा शर्तें</a></li>
       </ul>
     </section>
@@ -63,7 +64,8 @@ const routes = [
         <h1>ताज़ा खबरें एवं विभागीय समाचार (Latest UP Outsource News)</h1>
         <p>उत्तर प्रदेश के विभिन्न विभागों में कार्यरत आउटसोर्स कर्मियों के वेतन, ईपीएफ, ईएसआई और सेवा शर्तों से जुड़े नवीनतम अपडेट।</p>
         <ul>
-          <li><a href="/news/post-up-outsource-salary-hike-2026">आउटसोर्सिंग कर्मियों के लिए नई मासिक पारिश्रमिक दरें (₹15,396 से ₹39,000)</a></li>
+          <li><a href="/news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator">महिला कल्याण विभाग हमीरपुर आउटसोर्सिंग भर्ती 2026 (अंतिम तिथि 20-11-2026)</a></li>
+          <li><a href="/news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026">आउटसोर्सिंग कर्मियों के लिए नई मासिक पारिश्रमिक दरें (₹15,396 से ₹39,000)</a></li>
         </ul>
         ${NAV_LINKS}
       </main>
@@ -221,7 +223,28 @@ const routes = [
     `
   },
   {
-    path: 'news/post-up-outsource-salary-hike-2026',
+    path: 'news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator',
+    title: 'महिला कल्याण विभाग हमीरपुर आउटसोर्सिंग भर्ती 2026: Case Worker, MTS, Computer Operator व District Coordinator – UPCOS',
+    description: 'महिला कल्याण विभाग, जनपद हमीरपुर में Case Worker (₹25,000/₹15,830), MTS (₹10,500), Computer Operator (₹16,771) व District Coordinator (₹23,170) भर्ती 2026। अंतिम तिथि 20-11-2026।',
+    bodySnippet: `
+      <article style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
+        <h1>महिला कल्याण विभाग हमीरपुर आउटसोर्सिंग भर्ती 2026 (अंतिम तिथि: 20-11-2026)</h1>
+        <p>उत्तर प्रदेश शासन के महिला कल्याण विभाग, जनपद हमीरपुर में सेवा प्रदाता एजेंसियों (Sambhav Foundation, LIFE LINE NETWORK KANPUR व SANGAM SEWA SAMITI..) द्वारा आउटसोर्सिंग आधार पर 5 विभिन्न पदों हेतु आवेदन आमंत्रित किए गए हैं।</p>
+        <h2>रिक्तियों का संक्षिप्त विवरण:</h2>
+        <ul>
+          <li><strong>Case Worker (Sambhav Foundation):</strong> योग्यता B.A./B.S.W., 3 वर्ष अनुभव | वेतन ₹25,000/माह | प्राप्त आवेदन: 537</li>
+          <li><strong>Multi Tasking Staff (MTS) (Sambhav Foundation):</strong> योग्यता SSC/HighSchool, 1 वर्ष अनुभव | वेतन ₹10,500/माह | प्राप्त आवेदन: 3,014</li>
+          <li><strong>Computer Operator (LIFE LINE NETWORK KANPUR):</strong> योग्यता Graduate + CCC व टाइपिंग | वेतन ₹16,771/माह | प्राप्त आवेदन: 4,406</li>
+          <li><strong>Case Worker (SANGAM SEWA SAMITI..):</strong> योग्यता HSC/Intermediate + संवाद कौशल / हेल्पलाइन वरीयता | वेतन ₹15,830/माह | प्राप्त आवेदन: 9,247</li>
+          <li><strong>District Coordinator (LIFE LINE NETWORK KANPUR):</strong> योग्यता M.A./स्नातकोत्तर + 3 वर्ष WCD अनुभव वरीयता | वेतन ₹23,170/माह | प्राप्त आवेदन: 82</li>
+        </ul>
+        <p>ऑनलाइन आवेदन एवं सत्यापन हेतु आधिकारिक सेवायोजन पोर्टल: <a href="https://sewayojan.up.nic.in/jobs.aspx" rel="noopener noreferrer">sewayojan.up.nic.in</a></p>
+        ${NAV_LINKS}
+      </article>
+    `
+  },
+  {
+    path: 'news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026',
     title: 'उत्तर प्रदेश आउटसोर्सिंग कर्मियों के मानदेय में ऐतिहासिक वृद्धि (₹15,396 से ₹39,000) – UPCOS',
     description: 'उत्तर प्रदेश सरकार ने सरकारी विभागों में कार्यरत आउटसोर्सिंग कर्मचारियों के लिए नई मासिक पारिश्रमिक दरें निर्धारित की हैं। श्रेणी-1 से 4 तक संपूर्ण वेतन व ईपीएफ/ईएसआई विवरण।',
     bodySnippet: `
