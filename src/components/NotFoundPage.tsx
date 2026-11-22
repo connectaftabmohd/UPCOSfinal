@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertCircle, Home, ArrowLeft, Search } from 'lucide-react';
 import { PageView } from '../types';
+import { updatePageSEO } from '../utils/seo';
 
 interface NotFoundPageProps {
   onNavigate: (view: PageView) => void;
@@ -13,6 +14,14 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({
   message,
   itemType = 'page'
 }) => {
+  useEffect(() => {
+    updatePageSEO({
+      title: '404 • पृष्ठ उपलब्ध नहीं – UPCOS',
+      description: message || 'खोजा गया पृष्ठ उपलब्ध नहीं है।',
+      noindex: true
+    });
+  }, [message]);
+
   return (
     <div className="min-h-[60vh] flex items-center justify-center py-16 px-4 bg-slate-50">
       <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 p-8 shadow-sm text-center space-y-5">

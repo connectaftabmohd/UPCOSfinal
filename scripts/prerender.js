@@ -1,14 +1,18 @@
 /**
- * Static HTML Prerenderer for UPCOS
- * Injects static SEO headers, H1 headings, content bodies, and canonical tags
- * into root dist/index.html and individual route index.html files during build.
+ * Full-Site Static HTML Prerenderer & Sitemap Generator for UPCOS
+ * - Reads live records from data/db.json (news, orders, departments, faqs)
+ * - Syncs public/sitemap.xml and dist/sitemap.xml with zero broken/404 URLs
+ * - Generates static SEO HTML (title, description, canonical, OpenGraph, Twitter, JSON-LD, semantic body)
+ *   for every hub, article, government order, department, and policy page.
  */
 
 import fs from 'fs';
 import path from 'path';
 
 const DIST_DIR = path.resolve(process.cwd(), 'dist');
+const PUBLIC_DIR = path.resolve(process.cwd(), 'public');
 const BASE_HTML = path.join(DIST_DIR, 'index.html');
+const DB_PATH = path.resolve(process.cwd(), 'data', 'db.json');
 const DOMAIN = 'https://upcos.netlify.app';
 
 if (!fs.existsSync(BASE_HTML)) {
@@ -18,6 +22,35 @@ if (!fs.existsSync(BASE_HTML)) {
 
 const template = fs.readFileSync(BASE_HTML, 'utf-8');
 
+const escapeHtmlAttr = (str = '') =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+const escapeHtmlText = (str = '') =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+let dbData = { news: [], orders: [], departments: [], faqs: [] };
+if (fs.existsSync(DB_PATH)) {
+  try {
+    dbData = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+  } catch (err) {
+    console.warn('Warning: Could not parse data/db.json:', err.message);
+  }
+}
+
+const newsList = Array.isArray(dbData.news) ? dbData.news : [];
+const ordersList = Array.isArray(dbData.orders) ? dbData.orders : [];
+const departmentsList = Array.isArray(dbData.departments) ? dbData.departments : [];
+const faqsList = Array.isArray(dbData.faqs) ? dbData.faqs : [];
+
+const latestDate = newsList[0]?.publicationDate || '2026-11-22';
+
 const NAV_LINKS = `
   <nav aria-label="Primary Portal Navigation" style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e2e8f0;font-size:0.9rem;">
     <a href="/">मुख्य पृष्ठ (Home)</a> |
@@ -25,6 +58,7 @@ const NAV_LINKS = `
     <a href="/shasanadesh">शासनादेश (Orders)</a> |
     <a href="/departments">विभाग (Departments)</a> |
     <a href="/employee-hub">कर्मचारी हब (Employee Hub)</a> |
+    <a href="/employee-community">कर्मचारी संवाद (Community)</a> |
     <a href="/about-us">हमारे बारे में (About Us)</a> |
     <a href="/contact-us">संपर्क करें (Contact)</a> |
     <a href="/privacy-policy">गोपनीयता नीति (Privacy Policy)</a> |
@@ -33,18 +67,53 @@ const NAV_LINKS = `
   </nav>
 `;
 
-// Inject meaningful crawlable content into root dist/index.html for AdSense & search bots
+const makeBreadcrumbList = (crumbs) => ({
+  '@type': 'BreadcrumbList',
+  itemListElement: crumbs.map((c, idx) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    name: c.name,
+    item: c.url
+  }))
+});
+
 const homeBodySnippet = `
   <main style="max-width:900px;margin:2rem auto;padding:1.5rem;font-family:sans-serif;line-height:1.7;">
     <h1>UPCOS – उत्तर प्रदेश आउटसोर्स सेवा एवं कर्मचारी सूचना पोर्टल</h1>
-    <p><strong>UP Outsource Seva Nigam News & Information</strong> उत्तर प्रदेश के सरकारी विभागों एवं निगमों में कार्यरत आउटसोर्सिंग एवं संविदा कर्मचारियों के लिए समर्पित एक स्वतंत्र समाचार एवं सूचना मंच है।</p>
+    <p><strong>UP Outsource Seva Nigam News &amp; Information</strong> उत्तर प्रदेश के सरकारी विभागों एवं निगमों में कार्यरत आउटसोर्सिंग एवं संविदा कर्मचारियों के लिए समर्पित एक स्वतंत्र समाचार एवं सूचना मंच है।</p>
     <section>
-      <h2>प्रमुख समाचार एवं नवीनतम शासनादेश</h2>
+      <h2>नवीनतम समाचार एवं भर्ती अपडेट</h2>
       <ul>
-        <li><a href="/news/sant-kabir-nagar-basic-shiksha-vibhag-educator-instructor-vacancy-2026">संत कबीर नगर बेसिक शिक्षा विभाग भर्ती 2026: Educator व ITI Instructor (अंतिम तिथि 22-11-2026)</a></li>
-        <li><a href="/news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator">महिला कल्याण विभाग हमीरपुर भर्ती 2026: Case Worker, MTS, Computer Operator व District Coordinator (अंतिम तिथि 20-11-2026)</a></li>
-        <li><a href="/news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026">उत्तर प्रदेश आउटसोर्सिंग कर्मियों के मानदेय में वृद्धि: ₹15,396 से ₹39,000 मासिक पारिश्रमिक एवं EPF/ESI विवरण</a></li>
-        <li><a href="/shasanadesh/order-upcos-wages-2026">शासनादेश संख्या 3/2026/1/1511176/2026: श्रेणीवार पारिश्रमिक एवं सेवा शर्तें</a></li>
+        ${newsList
+          .slice(0, 8)
+          .map(
+            (n) =>
+              `<li><a href="/news/${escapeHtmlAttr(n.slug)}">${escapeHtmlText(n.title)}</a> (${escapeHtmlText(n.publicationDate)})</li>`
+          )
+          .join('\n        ')}
+      </ul>
+    </section>
+    <section>
+      <h2>प्रमुख शासनादेश (UP Government Orders)</h2>
+      <ul>
+        ${ordersList
+          .slice(0, 5)
+          .map(
+            (o) =>
+              `<li><a href="/shasanadesh/${escapeHtmlAttr(o.slug)}">${escapeHtmlText(o.orderNumber)}: ${escapeHtmlText(o.title)}</a></li>`
+          )
+          .join('\n        ')}
+      </ul>
+    </section>
+    <section>
+      <h2>विभागीय सूचना केंद्र</h2>
+      <ul>
+        ${departmentsList
+          .map(
+            (d) =>
+              `<li><a href="/departments/${escapeHtmlAttr(d.id)}">${escapeHtmlText(d.name)} (${escapeHtmlText(d.englishName)})</a></li>`
+          )
+          .join('\n        ')}
       </ul>
     </section>
     <section>
@@ -55,19 +124,41 @@ const homeBodySnippet = `
   </main>
 `;
 
-const routes = [
+const staticRoutes = [
   {
     path: 'news',
-    title: 'ताज़ा खबरें एवं विभागीय समाचार – UP Outsource Seva Nigam',
-    description: 'उत्तर प्रदेश आउटसोर्सिंग एवं संविदा कर्मचारियों से जुड़े नवीनतम समाचार, मानदेय वृद्धि एवं सेवायोजन भर्ती सूचनाएं।',
+    title: 'ताज़ा खबरें एवं विभागीय समाचार – UPCOS',
+    description:
+      'उत्तर प्रदेश आउटसोर्सिंग एवं संविदा कर्मचारियों से जुड़े नवीनतम समाचार, मानदेय वृद्धि एवं सेवायोजन भर्ती सूचनाएं।',
+    changefreq: 'daily',
+    priority: '0.9',
+    lastmod: latestDate,
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          name: 'ताज़ा खबरें एवं विभागीय समाचार – UPCOS',
+          url: `${DOMAIN}/news`,
+          inLanguage: 'hi-IN'
+        },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'News', url: `${DOMAIN}/news` }
+        ])
+      ]
+    },
     bodySnippet: `
-      <main style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
+      <main style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
         <h1>ताज़ा खबरें एवं विभागीय समाचार (Latest UP Outsource News)</h1>
-        <p>उत्तर प्रदेश के विभिन्न विभागों में कार्यरत आउटसोर्स कर्मियों के वेतन, ईपीएफ, ईएसआई और सेवा शर्तों से जुड़े नवीनतम अपडेट।</p>
+        <p>उत्तर प्रदेश के विभिन्न विभागों में कार्यरत आउटसोर्स कर्मियों के वेतन, ईपीएफ, ईएसआई और सेवायोजन भर्ती से जुड़े नवीनतम अपडेट।</p>
         <ul>
-          <li><a href="/news/sant-kabir-nagar-basic-shiksha-vibhag-educator-instructor-vacancy-2026">संत कबीर नगर बेसिक शिक्षा विभाग आउटसोर्सिंग भर्ती 2026 (Educator व Instructor)</a></li>
-          <li><a href="/news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator">महिला कल्याण विभाग हमीरपुर आउटसोर्सिंग भर्ती 2026 (अंतिम तिथि 20-11-2026)</a></li>
-          <li><a href="/news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026">आउटसोर्सिंग कर्मियों के लिए नई मासिक पारिश्रमिक दरें (₹15,396 से ₹39,000)</a></li>
+          ${newsList
+            .map(
+              (n) =>
+                `<li><a href="/news/${escapeHtmlAttr(n.slug)}">${escapeHtmlText(n.title)}</a></li>`
+            )
+            .join('\n          ')}
         </ul>
         ${NAV_LINKS}
       </main>
@@ -75,14 +166,38 @@ const routes = [
   },
   {
     path: 'shasanadesh',
-    title: 'शासनादेश एवं विधिक परिपत्र (Shasanadesh) – UP Outsource Seva Nigam',
-    description: 'उत्तर प्रदेश शासन के कार्मिक, वित्त एवं अन्य विभागों द्वारा जारी आउटसोर्सिंग संबंधी आधिकारिक शासनादेश।',
+    title: 'शासनादेश एवं विधिक परिपत्र (Shasanadesh) – UPCOS',
+    description:
+      'उत्तर प्रदेश शासन के कार्मिक, वित्त एवं अन्य विभागों द्वारा जारी आउटसोर्सिंग संबंधी आधिकारिक शासनादेश।',
+    changefreq: 'daily',
+    priority: '0.9',
+    lastmod: ordersList[0]?.date || latestDate,
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          name: 'उत्तर प्रदेश आउटसोर्सिंग शासनादेश संग्रह',
+          url: `${DOMAIN}/shasanadesh`,
+          inLanguage: 'hi-IN'
+        },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'Shasanadesh', url: `${DOMAIN}/shasanadesh` }
+        ])
+      ]
+    },
     bodySnippet: `
-      <main style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
+      <main style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
         <h1>उत्तर प्रदेश आउटसोर्सिंग शासनादेश संग्रह (Government Orders)</h1>
         <p>शासकीय विभागों एवं सचिवालय प्रशासन द्वारा जारी आउटसोर्स कर्मचारियों से संबंधित महत्वपूर्ण आदेश व परिपत्र।</p>
         <ul>
-          <li><a href="/shasanadesh/order-upcos-wages-2026">शासनादेश संख्या 3/2026/1/1511176/2026 – श्रेणीवार मानदेय निर्धारण</a></li>
+          ${ordersList
+            .map(
+              (o) =>
+                `<li><a href="/shasanadesh/${escapeHtmlAttr(o.slug)}">${escapeHtmlText(o.orderNumber)} – ${escapeHtmlText(o.title)}</a></li>`
+            )
+            .join('\n          ')}
         </ul>
         ${NAV_LINKS}
       </main>
@@ -90,32 +205,122 @@ const routes = [
   },
   {
     path: 'departments',
-    title: 'विभागीय मार्गदर्शिका एवं सूचना – UP Outsource Seva Nigam',
-    description: 'स्वास्थ्य, शिक्षा, पंचायती राज, ऊर्जा समेत उ.प्र. के सभी प्रमुख सरकारी विभागों के आउटसोर्स कर्मचारी आदेश।',
+    title: 'विभागीय मार्गदर्शिका एवं सूचना – UPCOS',
+    description:
+      'स्वास्थ्य, शिक्षा, पंचायती राज, ऊर्जा समेत उ.प्र. के सभी प्रमुख सरकारी विभागों के आउटसोर्स कर्मचारी आदेश।',
+    changefreq: 'weekly',
+    priority: '0.85',
+    lastmod: latestDate,
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          name: 'उत्तर प्रदेश विभागीय आउटसोर्स सूचना केंद्र',
+          url: `${DOMAIN}/departments`,
+          inLanguage: 'hi-IN'
+        },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'Departments', url: `${DOMAIN}/departments` }
+        ])
+      ]
+    },
     bodySnippet: `
-      <main style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
+      <main style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
         <h1>उत्तर प्रदेश विभागीय आउटसोर्स सूचना केंद्र</h1>
-        <p>चिकित्सा स्वास्थ्य, बेसिक शिक्षा, पंचायती राज, नगर विकास, ऊर्जा (UPPCL) एवं राजस्व विभाग से संबंधित विवरण।</p>
+        <p>उ.प्र. के सभी प्रमुख सरकारी विभागों के आउटसोर्स कर्मचारियों से जुड़े समाचार व शासनादेश।</p>
+        <ul>
+          ${departmentsList
+            .map(
+              (d) =>
+                `<li><a href="/departments/${escapeHtmlAttr(d.id)}">${escapeHtmlText(d.name)} (${escapeHtmlText(d.englishName)})</a> – ${escapeHtmlText(d.description)}</li>`
+            )
+            .join('\n          ')}
+        </ul>
         ${NAV_LINKS}
       </main>
     `
   },
   {
     path: 'employee-hub',
-    title: 'कर्मचारी सूचना हब एवं वेतन कैलकुलेटर – UP Outsource Seva Nigam',
-    description: 'वेतन श्रेणियां, ईपीएफ-ईएसआई कैलकुलेटर, अवकाश नियम और कर्मचारी अधिकार संबंधी विस्तृत जानकारी।',
+    title: 'कर्मचारी सूचना हब एवं वेतन कैलकुलेटर – UPCOS',
+    description:
+      'वेतन श्रेणियां, ईपीएफ-ईएसआई कैलकुलेटर, अवकाश नियम और कर्मचारी अधिकार संबंधी विस्तृत जानकारी।',
+    changefreq: 'weekly',
+    priority: '0.85',
+    lastmod: latestDate,
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'FAQPage',
+          mainEntity: faqsList.map((f) => ({
+            '@type': 'Question',
+            name: f.question,
+            acceptedAnswer: { '@type': 'Answer', text: f.answer }
+          }))
+        },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'Employee Hub', url: `${DOMAIN}/employee-hub` }
+        ])
+      ]
+    },
+    bodySnippet: `
+      <main style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
+        <h1>कर्मचारी सूचना हब एवं वेतन कैलकुलेटर (Employee Hub)</h1>
+        <p>आउटसोर्सिंग कर्मियों के लिए श्रेणीवार इन-हैंड वेतन गणना, EPF (12%) तथा ESI (0.75% / 3.25%) अंशदान व सामान्य प्रश्न उत्तर।</p>
+        ${faqsList
+          .map(
+            (f) => `<section><h2>${escapeHtmlText(f.question)}</h2><p>${escapeHtmlText(f.answer)}</p></section>`
+          )
+          .join('\n        ')}
+        ${NAV_LINKS}
+      </main>
+    `
+  },
+  {
+    path: 'employee-community',
+    title: 'कर्मचारी संवाद एवं विचार मंच – UPCOS',
+    description:
+      'उत्तर प्रदेश के 75 जनपदों के आउटसोर्स कर्मचारियों का स्वतंत्र संवाद, समस्या साझा एवं सहायता मंच।',
+    changefreq: 'daily',
+    priority: '0.8',
+    lastmod: latestDate,
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Employee Community', url: `${DOMAIN}/employee-community` }
+      ])
+    },
     bodySnippet: `
       <main style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
-        <h1>कर्मचारी सूचना हब एवं वेतन कैलकुलेटर (Employee Hub)</h1>
-        <p>आउटसोर्सिंग कर्मियों के लिए श्रेणीवार इन-हैंड वेतन गणना, EPF (12%) तथा ESI (0.75% / 3.25%) अंशदान मार्गदर्शिका।</p>
+        <h1>उत्तर प्रदेश आउटसोर्स कर्मचारी संवाद मंच (Community Forum)</h1>
+        <p>जनपदवार आउटसोर्स कर्मचारी अनुभव साझा करें, वेतन/पीएफ समस्याओं पर मार्गदर्शन पाएं और अन्य साथियों से जुड़ें।</p>
         ${NAV_LINKS}
       </main>
     `
   },
   {
     path: 'about-us',
-    title: 'हमारे बारे में (About Us) – UP Outsource Seva Nigam',
-    description: 'UPCOS का परिचय, उद्देश्य, स्वतंत्र पहचान और उत्तर प्रदेश आउटसोर्सिंग कर्मचारियों के सशक्तिकरण का मिशन।',
+    title: 'हमारे बारे में (About Us) – UPCOS',
+    description:
+      'UPCOS का परिचय, उद्देश्य, स्वतंत्र पहचान और उत्तर प्रदेश आउटसोर्सिंग कर्मचारियों के सशक्तिकरण का मिशन।',
+    changefreq: 'monthly',
+    priority: '0.8',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'AboutPage', name: 'About UPCOS', url: `${DOMAIN}/about-us`, inLanguage: 'hi-IN' },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'About Us', url: `${DOMAIN}/about-us` }
+        ])
+      ]
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>हमारे बारे में (About UPCOS Portal)</h1>
@@ -126,9 +331,45 @@ const routes = [
     `
   },
   {
+    path: 'contact-us',
+    title: 'संपर्क सूत्र एवं संपादकीय डेस्क (Contact Us) – UPCOS',
+    description:
+      'संपादकीय टीम से संपर्क, शिकायत निवारण, सूचना सत्यापन एवं सुझाव प्रेषण प्रपत्र।',
+    changefreq: 'monthly',
+    priority: '0.8',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'ContactPage', name: 'Contact UPCOS', url: `${DOMAIN}/contact-us`, inLanguage: 'hi-IN' },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'Contact Us', url: `${DOMAIN}/contact-us` }
+        ])
+      ]
+    },
+    bodySnippet: `
+      <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
+        <h1>संपर्क सूत्र (Contact Us)</h1>
+        <p>किसी भी समाचार, शासनादेश सत्यापन, सुधार या प्रश्न के लिए हमारी संपादकीय टीम से संपर्क करें: contact@uposn.in</p>
+        ${NAV_LINKS}
+      </article>
+    `
+  },
+  {
     path: 'privacy-policy',
-    title: 'गोपनीयता नीति (Privacy Policy) – UP Outsource Seva Nigam',
+    title: 'गोपनीयता नीति (Privacy Policy) – UPCOS',
     description: 'डेटा गोपनीयता, कुकीज, Google AdSense अनुपालन एवं उपयोगकर्ता अधिकारों का संपूर्ण विवरण।',
+    changefreq: 'monthly',
+    priority: '0.7',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Privacy Policy', url: `${DOMAIN}/privacy-policy` }
+      ])
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>गोपनीयता नीति (Privacy Policy)</h1>
@@ -141,12 +382,22 @@ const routes = [
   },
   {
     path: 'disclaimer',
-    title: 'अस्वीकरण एवं विधिक नीति (Disclaimer) – UP Outsource Seva Nigam',
+    title: 'अस्वीकरण एवं विधिक नीति (Disclaimer) – UPCOS',
     description: 'गैर-सरकारी स्पष्टीकरण, अनधिकृत सूचना निषेध एवं विधिक सूचना अस्वीकरण।',
+    changefreq: 'monthly',
+    priority: '0.7',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Disclaimer', url: `${DOMAIN}/disclaimer` }
+      ])
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>अस्वीकरण एवं विधिक सूचना (Disclaimer)</h1>
-        <p><strong>महत्वपूर्ण अस्वीकरण:</strong> UP Outsource Seva Nigam News & Information एक स्वतंत्र सूचना मंच है। यह उत्तर प्रदेश सरकार अथवा किसी सरकारी विभाग की आधिकारिक वेबसाइट नहीं है।</p>
+        <p><strong>महत्वपूर्ण अस्वीकरण:</strong> UP Outsource Seva Nigam News &amp; Information एक स्वतंत्र सूचना मंच है। यह उत्तर प्रदेश सरकार अथवा किसी सरकारी विभाग की आधिकारिक वेबसाइट नहीं है।</p>
         <p>पोर्टल पर प्रकाशित जानकारी केवल जन-जागरूकता के उद्देश्य से है। किसी भी प्रशासनिक निर्णय से पूर्व कृपया shasanadesh.up.gov.in पर मूल शासनादेश का अवलोकन करें।</p>
         ${NAV_LINKS}
       </article>
@@ -154,8 +405,18 @@ const routes = [
   },
   {
     path: 'terms-and-conditions',
-    title: 'नियम एवं शर्तें (Terms & Conditions) – UP Outsource Seva Nigam',
+    title: 'नियम एवं शर्तें (Terms & Conditions) – UPCOS',
     description: 'UPCOS वेबसाइट उपयोग की सामान्य शर्तें, बौद्धिक संपदा अधिकार एवं आचरण नियम।',
+    changefreq: 'monthly',
+    priority: '0.7',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Terms & Conditions', url: `${DOMAIN}/terms-and-conditions` }
+      ])
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>नियम एवं शर्तें (Terms of Use)</h1>
@@ -165,21 +426,19 @@ const routes = [
     `
   },
   {
-    path: 'contact-us',
-    title: 'संपर्क सूत्र एवं संपादकीय डेस्क – UP Outsource Seva Nigam',
-    description: 'संपादकीय टीम से संपर्क, शिकायत निवारण, सूचना सत्यापन एवं सुझाव प्रेषण प्रपत्र।',
-    bodySnippet: `
-      <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
-        <h1>संपर्क सूत्र (Contact Us)</h1>
-        <p>किसी भी समाचार, शासनादेश सत्यापन, सुधार या प्रश्न के लिए हमारी संपादकीय टीम से संपर्क करें: contact@uposn.in</p>
-        ${NAV_LINKS}
-      </article>
-    `
-  },
-  {
     path: 'editorial-policy',
-    title: 'संपादकीय नीति (Editorial Policy) – UP Outsource Seva Nigam',
+    title: 'संपादकीय नीति (Editorial Policy) – UPCOS',
     description: 'स्वतंत्रता, निष्पक्षता, स्रोत प्रमाणिकता एवं पत्रकारिता सत्यनिष्ठा के मानक।',
+    changefreq: 'monthly',
+    priority: '0.7',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Editorial Policy', url: `${DOMAIN}/editorial-policy` }
+      ])
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>संपादकीय नीति (Editorial Policy)</h1>
@@ -190,8 +449,18 @@ const routes = [
   },
   {
     path: 'fact-checking-policy',
-    title: 'तथ्य-जांच नीति (Fact-Checking Policy) – UP Outsource Seva Nigam',
+    title: 'तथ्य-जांच नीति (Fact-Checking Policy) – UPCOS',
     description: 'शासनादेशों एवं सरकारी परिपत्रों के सत्यापन की कठोर तथ्य-जांच प्रक्रिया।',
+    changefreq: 'monthly',
+    priority: '0.7',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Fact-Checking Policy', url: `${DOMAIN}/fact-checking-policy` }
+      ])
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>तथ्य-जांच नीति (Fact-Checking Policy)</h1>
@@ -202,8 +471,18 @@ const routes = [
   },
   {
     path: 'correction-policy',
-    title: 'संशोधन एवं अद्यतन नीति (Corrections Policy) – UP Outsource Seva Nigam',
+    title: 'संशोधन एवं अद्यतन नीति (Corrections Policy) – UPCOS',
     description: 'पारदर्शी त्रुटि सुधार, सुधार समय-सारिणी एवं पाठक फीडबैक तंत्र।',
+    changefreq: 'monthly',
+    priority: '0.7',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Corrections Policy', url: `${DOMAIN}/correction-policy` }
+      ])
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>संशोधन एवं अद्यतन नीति (Corrections Policy)</h1>
@@ -214,8 +493,18 @@ const routes = [
   },
   {
     path: 'copyright-policy',
-    title: 'कॉपीराइट नीति (Copyright Policy) – UP Outsource Seva Nigam',
+    title: 'कॉपीराइट नीति (Copyright Policy) – UPCOS',
     description: 'सार्वजनिक शासकीय परिपत्र, उचित उपयोग (Fair Use) एवं कॉपीराइट सुरक्षा दिशानिर्देश।',
+    changefreq: 'monthly',
+    priority: '0.7',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Copyright Policy', url: `${DOMAIN}/copyright-policy` }
+      ])
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>कॉपीराइट नीति (Copyright Policy)</h1>
@@ -225,91 +514,314 @@ const routes = [
     `
   },
   {
-    path: 'news/sant-kabir-nagar-basic-shiksha-vibhag-educator-instructor-vacancy-2026',
-    title: 'UP Sewayojan Sant Kabir Nagar Educator Instructor Vacancy 2026 – UPCOS',
-    description: 'संत कबीर नगर बेसिक शिक्षा विभाग में Educator व Instructor आउटसोर्सिंग भर्ती 2026। वेतन ₹10,313/माह, अंतिम तिथि 22-11-2026। योग्यता व आवेदन विवरण पढ़ें।',
-    bodySnippet: `
-      <article style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
-        <h1>संत कबीर नगर बेसिक शिक्षा विभाग भर्ती 2026: ECE Educator व ITI Instructor पदों पर आवेदन (अंतिम तिथि 22-11-2026)</h1>
-        <p>जनपद संत कबीर नगर के बेसिक शिक्षा विभाग में NIT COMPUTER CENTRE के माध्यम से Educator व Instructor पदों पर आउटसोर्सिंग भर्ती जारी की गई है।</p>
-        <h2>पदों का विवरण:</h2>
-        <ul>
-          <li><strong>Educator (ECE):</strong> Bachelor of Home Science | 01 जुलाई 2025 को अधिकतम आयु 40 वर्ष | वेतन ₹10,313/माह | प्राप्त आवेदन: 1,950</li>
-          <li><strong>Instructor (मल्टी-ट्रेड):</strong> Plumber/Sheet Metal/Carpenter/Painter/Fitter/Construction/Fabrication + हिन्दी व अंग्रेजी ज्ञान | वेतन ₹10,313/माह | प्राप्त आवेदन: 616</li>
-          <li><strong>Instructor (इलेक्ट्रिकल/इलेक्ट्रॉनिक्स):</strong> राजकीय मान्यता प्राप्त ITI से संबंधित 01 ट्रेड सर्टिफिकेट | वेतन ₹10,313/माह | प्राप्त आवेदन: 1,122</li>
-        </ul>
-        <p>आधिकारिक पोर्टल: <a href="https://sewayojan.up.nic.in/jobs.aspx" rel="noopener noreferrer">sewayojan.up.nic.in</a></p>
-        ${NAV_LINKS}
-      </article>
-    `
-  },
-  {
-    path: 'news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator',
-    title: 'महिला कल्याण विभाग हमीरपुर आउटसोर्सिंग भर्ती 2026: Case Worker, MTS, Computer Operator व District Coordinator – UPCOS',
-    description: 'महिला कल्याण विभाग, जनपद हमीरपुर में Case Worker (₹25,000/₹15,830), MTS (₹10,500), Computer Operator (₹16,771) व District Coordinator (₹23,170) भर्ती 2026। अंतिम तिथि 20-11-2026।',
-    bodySnippet: `
-      <article style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
-        <h1>महिला कल्याण विभाग हमीरपुर आउटसोर्सिंग भर्ती 2026 (अंतिम तिथि: 20-11-2026)</h1>
-        <p>उत्तर प्रदेश शासन के महिला कल्याण विभाग, जनपद हमीरपुर में सेवा प्रदाता एजेंसियों (Sambhav Foundation, LIFE LINE NETWORK KANPUR व SANGAM SEWA SAMITI..) द्वारा आउटसोर्सिंग आधार पर 5 विभिन्न पदों हेतु आवेदन आमंत्रित किए गए हैं।</p>
-        <h2>रिक्तियों का संक्षिप्त विवरण:</h2>
-        <ul>
-          <li><strong>Case Worker (Sambhav Foundation):</strong> योग्यता B.A./B.S.W., 3 वर्ष अनुभव | वेतन ₹25,000/माह | प्राप्त आवेदन: 537</li>
-          <li><strong>Multi Tasking Staff (MTS) (Sambhav Foundation):</strong> योग्यता SSC/HighSchool, 1 वर्ष अनुभव | वेतन ₹10,500/माह | प्राप्त आवेदन: 3,014</li>
-          <li><strong>Computer Operator (LIFE LINE NETWORK KANPUR):</strong> योग्यता Graduate + CCC व टाइपिंग | वेतन ₹16,771/माह | प्राप्त आवेदन: 4,406</li>
-          <li><strong>Case Worker (SANGAM SEWA SAMITI..):</strong> योग्यता HSC/Intermediate + संवाद कौशल / हेल्पलाइन वरीयता | वेतन ₹15,830/माह | प्राप्त आवेदन: 9,247</li>
-          <li><strong>District Coordinator (LIFE LINE NETWORK KANPUR):</strong> योग्यता M.A./स्नातकोत्तर + 3 वर्ष WCD अनुभव वरीयता | वेतन ₹23,170/माह | प्राप्त आवेदन: 82</li>
-        </ul>
-        <p>ऑनलाइन आवेदन एवं सत्यापन हेतु आधिकारिक सेवायोजन पोर्टल: <a href="https://sewayojan.up.nic.in/jobs.aspx" rel="noopener noreferrer">sewayojan.up.nic.in</a></p>
-        ${NAV_LINKS}
-      </article>
-    `
-  },
-  {
-    path: 'news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026',
-    title: 'उत्तर प्रदेश आउटसोर्सिंग कर्मियों के मानदेय में ऐतिहासिक वृद्धि (₹15,396 से ₹39,000) – UPCOS',
-    description: 'उत्तर प्रदेश सरकार ने सरकारी विभागों में कार्यरत आउटसोर्सिंग कर्मचारियों के लिए नई मासिक पारिश्रमिक दरें निर्धारित की हैं। श्रेणी-1 से 4 तक संपूर्ण वेतन व ईपीएफ/ईएसआई विवरण।',
+    path: 'advertise',
+    title: 'विज्ञापन नीति (Advertise With Us) – UPCOS',
+    description: 'कर्मचारी हितैषी विज्ञापन दिशानिर्देश एवं Google AdSense अनुपालन नीति।',
+    changefreq: 'monthly',
+    priority: '0.6',
+    lastmod: '2026-11-08',
+    schema: {
+      '@context': 'https://schema.org',
+      ...makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'Advertise', url: `${DOMAIN}/advertise` }
+      ])
+    },
     bodySnippet: `
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
-        <h1>उत्तर प्रदेश आउटसोर्सिंग कर्मचारियों के लिए नई पारिश्रमिक दरें निर्धारित</h1>
-        <p>उत्तर प्रदेश शासन द्वारा जारी शासनादेश के अनुसार आउटसोर्स कर्मियों को 4 श्रेणियों में वर्गीकृत कर ₹15,396 से लेकर ₹39,000 तक मानदेय निर्धारित किया गया है।</p>
-        <h2>श्रेणीवार मानदेय विवरण:</h2>
-        <ul>
-          <li>श्रेणी-1: ₹39,000 (हाथ में ₹39,000)</li>
-          <li>श्रेणी-2: ₹21,947 (हाथ में ₹19,148.76)</li>
-          <li>श्रेणी-3: ₹19,446 (हाथ में ₹16,966.64)</li>
-          <li>श्रेणी-4: ₹17,646 (हाथ में ₹15,396.14)</li>
-        </ul>
-        <p>आधिकारिक शासनादेश संख्या: 3/2026/1/1511176/2026</p>
+        <h1>विज्ञापन नीति (Advertise With Us)</h1>
+        <p>UPCOS पर सभी विज्ञापन Google AdSense तथा पारदर्शी संपादकीय मानकों के अनुरूप प्रदर्शित किए जाते हैं।</p>
         ${NAV_LINKS}
       </article>
     `
   }
 ];
 
+// Dynamically build routes for all News Articles
+const newsRoutes = newsList.map((article, idx) => {
+  const canonicalUrl = `${DOMAIN}/news/${article.slug}`;
+  const jobNodes = Array.isArray(article.jobPostings)
+    ? article.jobPostings.map((job, jIdx) => ({
+        '@type': 'JobPosting',
+        '@id': `${canonicalUrl}#job-${job.identifier || jIdx + 1}`,
+        title: job.title,
+        description: job.description,
+        url: canonicalUrl,
+        directApply: false,
+        identifier: {
+          '@type': 'PropertyValue',
+          name: 'UP Sewayojan Outsource',
+          value: job.identifier || `${article.id}-${jIdx + 1}`
+        },
+        datePosted: job.datePosted || article.publicationDate,
+        validThrough: job.validThrough,
+        employmentType: job.employmentType || 'CONTRACTOR',
+        hiringOrganization: {
+          '@type': 'Organization',
+          name: job.hiringOrganization,
+          sameAs: job.sameAs || article.sourceUrl || 'https://sewayojan.up.nic.in'
+        },
+        jobLocation: {
+          '@type': 'Place',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: job.locality,
+            addressRegion: job.region || 'Uttar Pradesh',
+            addressCountry: job.country || 'IN'
+          }
+        },
+        baseSalary: {
+          '@type': 'MonetaryAmount',
+          currency: job.salaryCurrency || 'INR',
+          value: {
+            '@type': 'QuantitativeValue',
+            value: job.salaryValue,
+            unitText: job.salaryUnit || 'MONTH'
+          }
+        },
+        ...(job.qualifications ? { qualifications: job.qualifications } : {}),
+        ...(job.experienceRequirements ? { experienceRequirements: job.experienceRequirements } : {})
+      }))
+    : [];
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'NewsArticle',
+        mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
+        headline: article.title,
+        alternativeHeadline: article.englishTitle || article.title,
+        image: [article.featuredImage],
+        datePublished: article.publicationDate,
+        dateModified: article.publicationDate,
+        inLanguage: 'hi-IN',
+        keywords: Array.isArray(article.tags) ? article.tags.join(', ') : '',
+        author: [{ '@type': 'Person', name: article.author }],
+        publisher: {
+          '@type': 'Organization',
+          name: 'UPCOS – UP Outsource Seva Nigam News & Information',
+          url: DOMAIN,
+          logo: { '@type': 'ImageObject', url: `${DOMAIN}/logo.png` }
+        },
+        description: article.shortDescription
+      },
+      makeBreadcrumbList([
+        { name: 'Home', url: `${DOMAIN}/` },
+        { name: 'News', url: `${DOMAIN}/news` },
+        { name: article.title, url: canonicalUrl }
+      ]),
+      ...jobNodes
+    ]
+  };
+
+  const highlightsHtml = Array.isArray(article.keyHighlights)
+    ? `<ul>${article.keyHighlights.map((h) => `<li>${escapeHtmlText(h)}</li>`).join('')}</ul>`
+    : '';
+  const bodyHtml = Array.isArray(article.fullContent)
+    ? article.fullContent
+        .slice(0, 8)
+        .map((line) => `<p>${escapeHtmlText(line)}</p>`)
+        .join('\n')
+    : '';
+
+  return {
+    path: `news/${article.slug}`,
+    title: `${article.title} | UP Outsource Seva Nigam`,
+    description: article.shortDescription,
+    image: article.featuredImage,
+    ogType: 'article',
+    changefreq: idx < 5 ? 'daily' : 'weekly',
+    priority: idx < 3 ? '0.95' : '0.85',
+    lastmod: article.publicationDate || latestDate,
+    schema,
+    bodySnippet: `
+      <article style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
+        <h1>${escapeHtmlText(article.title)}</h1>
+        <p>${escapeHtmlText(article.shortDescription)}</p>
+        ${highlightsHtml}
+        ${bodyHtml}
+        <p>स्रोत: ${escapeHtmlText(article.source)}</p>
+        ${NAV_LINKS}
+      </article>
+    `
+  };
+});
+
+// Dynamically build routes for all Government Orders
+const orderRoutes = ordersList.map((order) => {
+  const canonicalUrl = `${DOMAIN}/shasanadesh/${order.slug}`;
+  return {
+    path: `shasanadesh/${order.slug}`,
+    title: `${order.orderNumber}: ${order.title} – UPCOS शासनादेश`,
+    description: order.summary,
+    ogType: 'article',
+    changefreq: 'monthly',
+    priority: order.isImportant ? '0.90' : '0.80',
+    lastmod: order.date || latestDate,
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'DigitalDocument',
+          '@id': `${canonicalUrl}#order`,
+          name: order.title,
+          identifier: order.orderNumber,
+          datePublished: order.date,
+          description: order.summary,
+          inLanguage: 'hi-IN',
+          url: canonicalUrl,
+          publisher: {
+            '@type': 'Organization',
+            name: 'UP Outsource Seva Nigam',
+            url: DOMAIN
+          }
+        },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'Shasanadesh', url: `${DOMAIN}/shasanadesh` },
+          { name: order.orderNumber, url: canonicalUrl }
+        ])
+      ]
+    },
+    bodySnippet: `
+      <article style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
+        <h1>${escapeHtmlText(order.orderNumber)}: ${escapeHtmlText(order.title)}</h1>
+        <p>${escapeHtmlText(order.summary)}</p>
+        <ul>${(order.keyPoints || []).map((k) => `<li>${escapeHtmlText(k)}</li>`).join('')}</ul>
+        ${NAV_LINKS}
+      </article>
+    `
+  };
+});
+
+// Dynamically build routes for all Departments
+const deptRoutes = departmentsList.map((dept) => {
+  const canonicalUrl = `${DOMAIN}/departments/${dept.id}`;
+  const relatedNews = newsList.filter(
+    (n) => n.departmentId === dept.id || (n.department && n.department.includes(dept.name.substring(0, 4)))
+  );
+  return {
+    path: `departments/${dept.id}`,
+    title: `${dept.name} (${dept.englishName}) – आउटसोर्स समाचार व शासनादेश | UPCOS`,
+    description: dept.description,
+    changefreq: 'weekly',
+    priority: '0.80',
+    lastmod: latestDate,
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          '@id': `${canonicalUrl}#collection`,
+          name: dept.name,
+          description: dept.description,
+          url: canonicalUrl,
+          inLanguage: 'hi-IN'
+        },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'Departments', url: `${DOMAIN}/departments` },
+          { name: dept.name, url: canonicalUrl }
+        ])
+      ]
+    },
+    bodySnippet: `
+      <main style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
+        <h1>${escapeHtmlText(dept.name)} (${escapeHtmlText(dept.englishName)})</h1>
+        <p>${escapeHtmlText(dept.description)}</p>
+        ${
+          relatedNews.length > 0
+            ? `<h2>विभागीय समाचार एवं भर्तियां</h2><ul>${relatedNews
+                .map((n) => `<li><a href="/news/${escapeHtmlAttr(n.slug)}">${escapeHtmlText(n.title)}</a></li>`)
+                .join('')}</ul>`
+            : ''
+        }
+        ${NAV_LINKS}
+      </main>
+    `
+  };
+});
+
+const allRoutes = [...staticRoutes, ...newsRoutes, ...orderRoutes, ...deptRoutes];
+
 // Write updated root dist/index.html with crawlable homepage markup
 const rootHtml = template.replace('<div id="root"></div>', `<div id="root">${homeBodySnippet}</div>`);
 fs.writeFileSync(BASE_HTML, rootHtml, 'utf-8');
 console.log('Prerendered: /index.html');
 
-routes.forEach((r) => {
+// Prerender every route HTML file
+allRoutes.forEach((r) => {
   const targetDir = path.join(DIST_DIR, r.path);
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
   }
 
   const canonicalUrl = `${DOMAIN}/${r.path}`;
+  const safeTitle = escapeHtmlAttr(r.title);
+  const safeTitleText = escapeHtmlText(r.title);
+  const safeDesc = escapeHtmlAttr(r.description);
   let html = template;
 
-  html = html.replace(/<title>.*?<\/title>/i, `<title>${r.title}</title>`);
-  html = html.replace(/<meta name="description" content=".*?" \/>/i, `<meta name="description" content="${r.description}" />`);
+  html = html.replace(/<title>.*?<\/title>/i, `<title>${safeTitleText}</title>`);
+  html = html.replace(/<meta name="title" content=".*?" \/>/i, `<meta name="title" content="${safeTitle}" />`);
+  html = html.replace(/<meta name="description" content=".*?" \/>/i, `<meta name="description" content="${safeDesc}" />`);
   html = html.replace(/<link rel="canonical" href=".*?" \/>/i, `<link rel="canonical" href="${canonicalUrl}" />`);
-  html = html.replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${r.title}" />`);
-  html = html.replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${r.description}" />`);
+  html = html.replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${safeTitle}" />`);
+  html = html.replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${safeDesc}" />`);
   html = html.replace(/<meta property="og:url" content=".*?" \/>/i, `<meta property="og:url" content="${canonicalUrl}" />`);
+  html = html.replace(/<meta name="twitter:title" content=".*?" \/>/i, `<meta name="twitter:title" content="${safeTitle}" />`);
+  html = html.replace(/<meta name="twitter:description" content=".*?" \/>/i, `<meta name="twitter:description" content="${safeDesc}" />`);
+
+  if (r.ogType) {
+    html = html.replace(/<meta property="og:type" content=".*?" \/>/i, `<meta property="og:type" content="${escapeHtmlAttr(r.ogType)}" />`);
+  }
+  if (r.image) {
+    const safeImg = escapeHtmlAttr(r.image);
+    html = html.replace(/<meta property="og:image" content=".*?" \/>/i, `<meta property="og:image" content="${safeImg}" />`);
+    html = html.replace(/<meta name="twitter:image" content=".*?" \/>/i, `<meta name="twitter:image" content="${safeImg}" />`);
+  }
+
+  if (r.schema) {
+    html = html.replace(
+      '</head>',
+      `  <script id="jsonld-article-schema" type="application/ld+json">${JSON.stringify(r.schema)}</script>\n</head>`
+    );
+  }
+
   html = html.replace('<div id="root"></div>', `<div id="root">${r.bodySnippet}</div>`);
 
   fs.writeFileSync(path.join(targetDir, 'index.html'), html, 'utf-8');
-  console.log(`Prerendered: /${r.path}/index.html`);
 });
 
-console.log('Static prerender completed successfully.');
+console.log(`Prerendered ${allRoutes.length + 1} routes successfully.`);
+
+// Generate synced XML Sitemap with zero broken URLs
+const sitemapEntries = [
+  { loc: `${DOMAIN}/`, lastmod: latestDate, changefreq: 'daily', priority: '1.0' },
+  ...allRoutes.map((r) => ({
+    loc: `${DOMAIN}/${r.path}`,
+    lastmod: r.lastmod || latestDate,
+    changefreq: r.changefreq || 'weekly',
+    priority: r.priority || '0.8'
+  }))
+];
+
+const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemapEntries
+  .map(
+    (u) => `  <url>
+    <loc>${escapeHtmlText(u.loc)}</loc>
+    <lastmod>${escapeHtmlText(u.lastmod)}</lastmod>
+    <changefreq>${escapeHtmlText(u.changefreq)}</changefreq>
+    <priority>${escapeHtmlText(u.priority)}</priority>
+  </url>`
+  )
+  .join('\n')}
+</urlset>
+`;
+
+fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), sitemapXml, 'utf-8');
+fs.writeFileSync(path.join(DIST_DIR, 'sitemap.xml'), sitemapXml, 'utf-8');
+console.log(`Generated sitemap.xml with ${sitemapEntries.length} verified URLs.`);

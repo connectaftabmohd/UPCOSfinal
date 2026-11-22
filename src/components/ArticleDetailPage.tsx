@@ -238,6 +238,10 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 
     const canonicalHref = getCanonicalUrl(`/news/${article.slug}`);
 
+    // Ensure indexable robots directives
+    setMetaTag('name', 'robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+    setMetaTag('name', 'googlebot', 'index, follow');
+
     // OpenGraph
     setMetaTag('property', 'og:title', article.title);
     setMetaTag('property', 'og:description', article.shortDescription);
@@ -261,96 +265,129 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     }
     canonical.setAttribute('href', canonicalHref);
 
-    // Schema.org Structured Data
-    const isPrayagrajNursePost = article.id === 'post-sb-staff-nurse-prayagraj';
-    const schemaData = isPrayagrajNursePost
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'JobPosting',
-          title: article.title,
-          description: article.shortDescription,
-          identifier: {
-            '@type': 'PropertyValue',
-            name: 'UP Sewayojan Outsource',
-            value: article.id
-          },
-          datePosted: article.publicationDate,
-          validThrough: '2026-09-27T23:59:59+05:30',
-          employmentType: 'CONTRACTOR',
-          hiringOrganization: {
-            '@type': 'Organization',
-            name: 'महिला कल्याण विभाग (उत्तर प्रदेश शासन) / SB ENTERPRISES',
-            sameAs: 'https://sewayojan.up.nic.in'
-          },
-          jobLocation: {
-            '@type': 'Place',
-            address: {
-              '@type': 'PostalAddress',
-              addressLocality: 'Prayagraj',
-              addressRegion: 'Uttar Pradesh',
-              addressCountry: 'IN'
-            }
-          },
-          baseSalary: {
-            '@type': 'MonetaryAmount',
-            currency: 'INR',
-            value: {
-              '@type': 'QuantitativeValue',
-              value: 27000,
-              unitText: 'MONTH'
-            }
-          }
-        }
-      : {
-          '@context': 'https://schema.org',
-          '@graph': [
+    // Schema.org Structured Data (Dynamic NewsArticle + BreadcrumbList + JobPosting array)
+    const fallbackPrayagrajJob =
+      article.id === 'post-sb-staff-nurse-prayagraj'
+        ? [
             {
-              '@type': 'NewsArticle',
-              mainEntityOfPage: {
-                '@type': 'WebPage',
-                '@id': canonicalHref
-              },
-              headline: article.title,
-              alternativeHeadline: article.englishTitle || article.title,
-              image: [article.featuredImage],
-              datePublished: article.publicationDate,
-              dateModified: article.publicationDate,
-              inLanguage: 'hi-IN',
-              keywords: article.tags?.join(', '),
-              author: [{ '@type': 'Person', name: article.author }],
-              publisher: {
-                '@type': 'Organization',
-                name: 'UPCOS – UP Outsource Seva Nigam News & Information',
-                url: 'https://upcos.netlify.app',
-                logo: { '@type': 'ImageObject', url: getCanonicalUrl('/favicon.svg') }
-              },
-              description: article.shortDescription
-            },
-            {
-              '@type': 'BreadcrumbList',
-              itemListElement: [
-                {
-                  '@type': 'ListItem',
-                  position: 1,
-                  name: 'Home',
-                  item: 'https://upcos.netlify.app/'
-                },
-                {
-                  '@type': 'ListItem',
-                  position: 2,
-                  name: 'News',
-                  item: 'https://upcos.netlify.app/news'
-                },
-                {
-                  '@type': 'ListItem',
-                  position: 3,
-                  name: article.title,
-                  item: canonicalHref
-                }
-              ]
+              identifier: article.id,
+              title: article.title,
+              description: article.shortDescription,
+              hiringOrganization: 'महिला कल्याण विभाग (उत्तर प्रदेश शासन) / SB ENTERPRISES',
+              sameAs: 'https://sewayojan.up.nic.in',
+              locality: 'Prayagraj',
+              region: 'Uttar Pradesh',
+              country: 'IN',
+              salaryValue: 27000,
+              salaryCurrency: 'INR',
+              salaryUnit: 'MONTH' as const,
+              datePosted: article.publicationDate,
+              validThrough: '2026-09-27T23:59:59+05:30',
+              employmentType: 'CONTRACTOR',
+              qualifications: 'B.Sc. Nursing',
+              experienceRequirements: '3 Years'
             }
           ]
-        };
+        : [];
+
+    const activeJobPostings =
+      article.jobPostings && article.jobPostings.length > 0
+        ? article.jobPostings
+        : fallbackPrayagrajJob;
+
+    const jobPostingNodes = activeJobPostings.map((job, idx) => ({
+      '@type': 'JobPosting',
+      '@id': `${canonicalHref}#job-${job.identifier || idx + 1}`,
+      title: job.title,
+      description: job.description,
+      url: canonicalHref,
+      directApply: false,
+      identifier: {
+        '@type': 'PropertyValue',
+        name: 'UP Sewayojan Outsource',
+        value: job.identifier || `${article.id}-${idx + 1}`
+      },
+      datePosted: job.datePosted || article.publicationDate,
+      validThrough: job.validThrough,
+      employmentType: job.employmentType || 'CONTRACTOR',
+      hiringOrganization: {
+        '@type': 'Organization',
+        name: job.hiringOrganization,
+        sameAs: job.sameAs || article.sourceUrl || 'https://sewayojan.up.nic.in'
+      },
+      jobLocation: {
+        '@type': 'Place',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: job.locality,
+          addressRegion: job.region || 'Uttar Pradesh',
+          addressCountry: job.country || 'IN'
+        }
+      },
+      baseSalary: {
+        '@type': 'MonetaryAmount',
+        currency: job.salaryCurrency || 'INR',
+        value: {
+          '@type': 'QuantitativeValue',
+          value: job.salaryValue,
+          unitText: job.salaryUnit || 'MONTH'
+        }
+      },
+      ...(job.qualifications ? { qualifications: job.qualifications } : {}),
+      ...(job.experienceRequirements ? { experienceRequirements: job.experienceRequirements } : {})
+    }));
+
+    const schemaData = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'NewsArticle',
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': canonicalHref
+          },
+          headline: article.title,
+          alternativeHeadline: article.englishTitle || article.title,
+          image: [article.featuredImage],
+          datePublished: article.publicationDate,
+          dateModified: article.publicationDate,
+          inLanguage: 'hi-IN',
+          keywords: article.tags?.join(', '),
+          author: [{ '@type': 'Person', name: article.author }],
+          publisher: {
+            '@type': 'Organization',
+            name: 'UPCOS – UP Outsource Seva Nigam News & Information',
+            url: 'https://upcos.netlify.app',
+            logo: { '@type': 'ImageObject', url: getCanonicalUrl('/logo.png') }
+          },
+          description: article.shortDescription
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: 'https://upcos.netlify.app/'
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'News',
+              item: 'https://upcos.netlify.app/news'
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: article.title,
+              item: canonicalHref
+            }
+          ]
+        },
+        ...jobPostingNodes
+      ]
+    };
 
     let scriptTag = document.getElementById('jsonld-article-schema');
     if (!scriptTag) {

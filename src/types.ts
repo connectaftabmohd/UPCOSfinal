@@ -8,6 +8,25 @@ export type Category =
   | 'पीएफ एवं ईएसआई' 
   | 'अदालत व नियम';
 
+export interface JobPostingMetadata {
+  identifier?: string;
+  title: string;
+  description: string;
+  hiringOrganization: string;
+  sameAs?: string;
+  locality: string;
+  region?: string;
+  country?: string;
+  salaryValue: number;
+  salaryCurrency?: string;
+  salaryUnit?: 'MONTH' | 'YEAR' | 'DAY' | 'HOUR';
+  datePosted?: string;
+  validThrough: string;
+  employmentType?: string;
+  qualifications?: string;
+  experienceRequirements?: string;
+}
+
 export interface NewsItem {
   id: string;
   slug: string;
@@ -26,6 +45,7 @@ export interface NewsItem {
   publishedTime: string;
   author: string;
   tags: string[];
+  jobPostings?: JobPostingMetadata[];
   isFeatured?: boolean;
   isBreaking?: boolean;
   isMostRead?: boolean;

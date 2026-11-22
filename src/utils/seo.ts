@@ -22,13 +22,20 @@ export interface SEOConfig {
   image?: string;
   publishedTime?: string;
   author?: string;
+  noindex?: boolean;
+  robots?: string;
   structuredData?: Record<string, unknown>;
 }
+
+const DEFAULT_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+const DEFAULT_OG_IMAGE = 'https://upcos.netlify.app/logo.png';
 
 export function updatePageSEO(config: SEOConfig): void {
   // 1. Update Document Title
   const baseTitle = 'UP Outsource Seva Nigam';
-  const fullTitle = config.title.includes(baseTitle) ? config.title : `${config.title} | ${baseTitle}`;
+  const fullTitle = config.title.includes(baseTitle) || config.title.includes('UPCOS')
+    ? config.title
+    : `${config.title} | ${baseTitle}`;
   document.title = fullTitle;
 
   // 2. Helper to set or create meta tag
@@ -42,32 +49,37 @@ export function updatePageSEO(config: SEOConfig): void {
     element.setAttribute('content', content);
   };
 
-  // 3. Primary Meta Tags
+  // 3. Robots / Indexing Control
+  const robotsValue = config.robots || (config.noindex ? 'noindex, nofollow' : DEFAULT_ROBOTS);
+  setMetaTag('name', 'robots', robotsValue);
+  setMetaTag('name', 'googlebot', config.noindex ? 'noindex, nofollow' : 'index, follow');
+
+  // 4. Primary Meta Tags
   setMetaTag('name', 'description', config.description);
   setMetaTag('name', 'title', fullTitle);
   if (config.keywords && config.keywords.length > 0) {
     setMetaTag('name', 'keywords', config.keywords.join(', '));
   }
 
-  // 4. OpenGraph Tags
+  // 5. OpenGraph Tags
+  const currentUrl = config.canonicalUrl || getCanonicalUrl(window.location.pathname);
+  const ogImage = config.image || DEFAULT_OG_IMAGE;
+
+  setMetaTag('property', 'og:site_name', 'UP Outsource Seva Nigam');
   setMetaTag('property', 'og:title', fullTitle);
   setMetaTag('property', 'og:description', config.description);
   setMetaTag('property', 'og:type', config.ogType || 'website');
-  if (config.image) {
-    setMetaTag('property', 'og:image', config.image);
-  }
-  const currentUrl = config.canonicalUrl || getCanonicalUrl(window.location.pathname);
+  setMetaTag('property', 'og:image', ogImage);
   setMetaTag('property', 'og:url', currentUrl);
 
-  // 5. Twitter Card Tags
+  // 6. Twitter Card Tags
   setMetaTag('name', 'twitter:card', 'summary_large_image');
   setMetaTag('name', 'twitter:title', fullTitle);
   setMetaTag('name', 'twitter:description', config.description);
-  if (config.image) {
-    setMetaTag('name', 'twitter:image', config.image);
-  }
+  setMetaTag('name', 'twitter:image', ogImage);
+  setMetaTag('name', 'twitter:url', currentUrl);
 
-  // 6. Canonical Link Tag
+  // 7. Canonical Link Tag
   let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
   if (!canonicalEl) {
     canonicalEl = document.createElement('link');
@@ -76,7 +88,7 @@ export function updatePageSEO(config: SEOConfig): void {
   }
   canonicalEl.setAttribute('href', currentUrl);
 
-  // 7. Dynamic JSON-LD Structured Data
+  // 8. Dynamic JSON-LD Structured Data
   const existingDynamicSchema = document.getElementById('dynamic-jsonld-schema');
   if (existingDynamicSchema) {
     existingDynamicSchema.remove();

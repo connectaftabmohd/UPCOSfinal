@@ -5,13 +5,21 @@ Allow: /ads.txt
 User-agent: Googlebot
 Allow: /
 Allow: /ads.txt
+Allow: /sitemap.xml
+Disallow: /admin
+Disallow: /search
+Disallow: /api/
 
 User-agent: *
 Allow: /
 Allow: /ads.txt
+Allow: /sitemap.xml
+Disallow: /admin
+Disallow: /search
+Disallow: /api/
 Disallow: /#admin
 Disallow: /?admin=true
+Disallow: /*?*view=
 
 # Sitemaps
 Sitemap: https://upcos.netlify.app/sitemap.xml
-

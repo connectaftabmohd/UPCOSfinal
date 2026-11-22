@@ -76,15 +76,7 @@ function ArticleRouteWrapper({
         description: article.shortDescription,
         canonicalUrl: getCanonicalUrl(`/news/${article.slug}`),
         ogType: 'article',
-        image: article.featuredImage,
-        structuredData: {
-          '@context': 'https://schema.org',
-          '@type': 'NewsArticle',
-          headline: article.title,
-          image: [article.featuredImage],
-          datePublished: article.publicationDate,
-          author: { '@type': 'Person', name: article.author }
-        }
+        image: article.featuredImage
       });
     }
   }, [article]);
@@ -121,11 +113,40 @@ function OrderRouteWrapper({
 
   useEffect(() => {
     if (order) {
+      const orderUrl = getCanonicalUrl(`/shasanadesh/${order.slug}`);
       updatePageSEO({
         title: `${order.orderNumber}: ${order.title} – UPCOS शासनादेश`,
         description: order.summary,
-        canonicalUrl: getCanonicalUrl(`/shasanadesh/${order.slug}`),
-        ogType: 'article'
+        canonicalUrl: orderUrl,
+        ogType: 'article',
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'DigitalDocument',
+              '@id': `${orderUrl}#order`,
+              name: order.title,
+              identifier: order.orderNumber,
+              datePublished: order.date,
+              description: order.summary,
+              inLanguage: 'hi-IN',
+              url: orderUrl,
+              publisher: {
+                '@type': 'Organization',
+                name: 'UP Outsource Seva Nigam',
+                url: 'https://upcos.netlify.app'
+              }
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://upcos.netlify.app/' },
+                { '@type': 'ListItem', position: 2, name: 'Shasanadesh', item: 'https://upcos.netlify.app/shasanadesh' },
+                { '@type': 'ListItem', position: 3, name: order.orderNumber, item: orderUrl }
+              ]
+            }
+          ]
+        }
       });
     }
   }, [order]);
@@ -161,6 +182,38 @@ function DepartmentRouteWrapper({
 }) {
   const { id } = useParams<{ id: string }>();
   const dept = departments.find((d) => d.id === id);
+
+  useEffect(() => {
+    if (dept) {
+      const deptUrl = getCanonicalUrl(`/departments/${dept.id}`);
+      updatePageSEO({
+        title: `${dept.name} (${dept.englishName}) – आउटसोर्स समाचार व शासनादेश | UPCOS`,
+        description: dept.description,
+        canonicalUrl: deptUrl,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'CollectionPage',
+              '@id': `${deptUrl}#collection`,
+              name: dept.name,
+              description: dept.description,
+              url: deptUrl,
+              inLanguage: 'hi-IN'
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://upcos.netlify.app/' },
+                { '@type': 'ListItem', position: 2, name: 'Departments', item: 'https://upcos.netlify.app/departments' },
+                { '@type': 'ListItem', position: 3, name: dept.name, item: deptUrl }
+              ]
+            }
+          ]
+        }
+      });
+    }
+  }, [dept]);
 
   if (!dept) {
     return (
@@ -222,6 +275,16 @@ function SearchRouteWrapper({
 }) {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
+
+  useEffect(() => {
+    updatePageSEO({
+      title: query ? `खोज परिणाम: "${query}" – UPCOS` : 'खोज पृष्ठ (Search) – UPCOS',
+      description: 'UPCOS पोर्टल पर समाचार, शासनादेश और विभागीय सूचना खोजें।',
+      canonicalUrl: getCanonicalUrl('/search'),
+      noindex: true,
+      robots: 'noindex, follow'
+    });
+  }, [query]);
 
   return (
     <SearchResultsPage
@@ -491,6 +554,13 @@ function MainApp() {
   useEffect(() => {
     const isEn = language === 'EN';
     const p = location.pathname;
+    const makeBreadcrumbs = (label: string, pathStr: string) => ({
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://upcos.netlify.app/' },
+        { '@type': 'ListItem', position: 2, name: label, item: `https://upcos.netlify.app${pathStr}` }
+      ]
+    });
 
     if (p === '/') {
       updatePageSEO({
@@ -503,97 +573,186 @@ function MainApp() {
         canonicalUrl: getCanonicalUrl('/')
       });
     } else if (p === '/news') {
+      const url = getCanonicalUrl('/news');
       updatePageSEO({
         title: isEn ? 'Latest Outsource News & Updates – UPCOS' : 'ताज़ा खबरें एवं विभागीय समाचार – UPCOS',
         description: 'उत्तर प्रदेश आउटसोर्सिंग एवं संविदा कर्मचारियों से जुड़े नवीनतम समाचार, मानदेय वृद्धि एवं सेवायोजन भर्ती सूचनाएं।',
-        canonicalUrl: getCanonicalUrl('/news')
+        canonicalUrl: url,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'CollectionPage',
+              name: 'ताज़ा खबरें एवं विभागीय समाचार – UPCOS',
+              url,
+              inLanguage: 'hi-IN'
+            },
+            makeBreadcrumbs('News', '/news')
+          ]
+        }
       });
     } else if (p === '/shasanadesh') {
+      const url = getCanonicalUrl('/shasanadesh');
       updatePageSEO({
         title: isEn ? 'Official Government Orders (Shasanadesh) – UPCOS' : 'शासनादेश एवं विधिक परिपत्र (Shasanadesh) – UPCOS',
         description: 'उत्तर प्रदेश शासन के कार्मिक, वित्त एवं अन्य विभागों द्वारा जारी आउटसोर्सिंग संबंधी आधिकारिक शासनादेश।',
-        canonicalUrl: getCanonicalUrl('/shasanadesh')
+        canonicalUrl: url,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'CollectionPage',
+              name: 'उत्तर प्रदेश आउटसोर्सिंग शासनादेश संग्रह',
+              url,
+              inLanguage: 'hi-IN'
+            },
+            makeBreadcrumbs('Shasanadesh', '/shasanadesh')
+          ]
+        }
       });
     } else if (p === '/departments') {
+      const url = getCanonicalUrl('/departments');
       updatePageSEO({
         title: isEn ? 'Departments Information Portal – UPCOS' : 'विभागीय मार्गदर्शिका एवं सूचना – UPCOS',
         description: 'स्वास्थ्य, शिक्षा, पंचायती राज, ऊर्जा समेत उ.प्र. के सभी प्रमुख सरकारी विभागों के आउटसोर्स कर्मचारी आदेश।',
-        canonicalUrl: getCanonicalUrl('/departments')
+        canonicalUrl: url,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'CollectionPage',
+              name: 'उत्तर प्रदेश विभागीय आउटसोर्स सूचना केंद्र',
+              url,
+              inLanguage: 'hi-IN'
+            },
+            makeBreadcrumbs('Departments', '/departments')
+          ]
+        }
       });
     } else if (p === '/employee-hub') {
+      const url = getCanonicalUrl('/employee-hub');
       updatePageSEO({
         title: isEn ? 'Employee Hub & Salary Calculator – UPCOS' : 'कर्मचारी सूचना हब एवं वेतन कैलकुलेटर – UPCOS',
         description: 'वेतन श्रेणियां, ईपीएफ-ईएसआई कैलकुलेटर, अवकाश नियम और कर्मचारी अधिकार संबंधी विस्तृत जानकारी।',
-        canonicalUrl: getCanonicalUrl('/employee-hub')
+        canonicalUrl: url,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'FAQPage',
+              mainEntity: (faqs || []).map((f) => ({
+                '@type': 'Question',
+                name: f.question,
+                acceptedAnswer: { '@type': 'Answer', text: f.answer }
+              }))
+            },
+            makeBreadcrumbs('Employee Hub', '/employee-hub')
+          ]
+        }
       });
     } else if (p === '/employee-community') {
       updatePageSEO({
         title: isEn ? 'Employee Community Forum – UPCOS' : 'कर्मचारी संवाद एवं विचार मंच – UPCOS',
         description: 'उत्तर प्रदेश के 75 जनपदों के आउटसोर्स कर्मचारियों का स्वतंत्र संवाद एवं सहायता मंच।',
-        canonicalUrl: getCanonicalUrl('/employee-community')
+        canonicalUrl: getCanonicalUrl('/employee-community'),
+        structuredData: {
+          '@context': 'https://schema.org',
+          ...makeBreadcrumbs('Employee Community', '/employee-community')
+        }
       });
     } else if (p === '/about-us') {
+      const url = getCanonicalUrl('/about-us');
       updatePageSEO({
         title: isEn ? 'About Us – UPCOS Portal' : 'हमारे बारे में (About Us) – UPCOS',
         description: 'UPCOS का परिचय, उद्देश्य, स्वतंत्र पहचान और उत्तर प्रदेश आउटसोर्सिंग कर्मचारियों के सशक्तिकरण का मिशन।',
-        canonicalUrl: getCanonicalUrl('/about-us')
+        canonicalUrl: url,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            { '@type': 'AboutPage', name: 'About UPCOS', url, inLanguage: 'hi-IN' },
+            makeBreadcrumbs('About Us', '/about-us')
+          ]
+        }
       });
     } else if (p === '/contact-us') {
+      const url = getCanonicalUrl('/contact-us');
       updatePageSEO({
         title: isEn ? 'Contact Us – Editorial Grievance Desk – UPCOS' : 'संपर्क सूत्र एवं संपादकीय डेस्क (Contact Us) – UPCOS',
         description: 'संपादकीय टीम से संपर्क, शिकायत निवारण, सूचना सत्यापन एवं सुझाव प्रेषण प्रपत्र।',
-        canonicalUrl: getCanonicalUrl('/contact-us')
+        canonicalUrl: url,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            { '@type': 'ContactPage', name: 'Contact UPCOS', url, inLanguage: 'hi-IN' },
+            makeBreadcrumbs('Contact Us', '/contact-us')
+          ]
+        }
       });
     } else if (p === '/privacy-policy') {
       updatePageSEO({
         title: isEn ? 'Privacy Policy – Data & Cookie Standards – UPCOS' : 'गोपनीयता नीति (Privacy Policy) – UPCOS',
         description: 'डेटा गोपनीयता, कुकीज, Google AdSense अनुपालन एवं उपयोगकर्ता अधिकारों का संपूर्ण विवरण।',
-        canonicalUrl: getCanonicalUrl('/privacy-policy')
+        canonicalUrl: getCanonicalUrl('/privacy-policy'),
+        structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Privacy Policy', '/privacy-policy') }
       });
     } else if (p === '/disclaimer') {
       updatePageSEO({
         title: isEn ? 'Disclaimer & Legal Notice – UPCOS' : 'अस्वीकरण एवं विधिक नीति (Disclaimer) – UPCOS',
         description: 'गैर-सरकारी स्पष्टीकरण, अनधिकृत सूचना निषेध एवं विधिक सूचना अस्वीकरण।',
-        canonicalUrl: getCanonicalUrl('/disclaimer')
+        canonicalUrl: getCanonicalUrl('/disclaimer'),
+        structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Disclaimer', '/disclaimer') }
       });
     } else if (p === '/terms-and-conditions') {
       updatePageSEO({
         title: isEn ? 'Terms & Conditions of Use – UPCOS' : 'नियम एवं शर्तें (Terms & Conditions) – UPCOS',
         description: 'UPCOS वेबसाइट उपयोग की सामान्य शर्तें, बौद्धिक संपदा अधिकार एवं आचरण नियम।',
-        canonicalUrl: getCanonicalUrl('/terms-and-conditions')
+        canonicalUrl: getCanonicalUrl('/terms-and-conditions'),
+        structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Terms & Conditions', '/terms-and-conditions') }
       });
     } else if (p === '/editorial-policy') {
       updatePageSEO({
         title: isEn ? 'Editorial Policy & Standards – UPCOS' : 'संपादकीय नीति (Editorial Policy) – UPCOS',
         description: 'स्वतंत्रता, निष्पक्षता, स्रोत प्रमाणिकता एवं पत्रकारिता सत्यनिष्ठा के मानक।',
-        canonicalUrl: getCanonicalUrl('/editorial-policy')
+        canonicalUrl: getCanonicalUrl('/editorial-policy'),
+        structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Editorial Policy', '/editorial-policy') }
       });
     } else if (p === '/fact-checking-policy') {
       updatePageSEO({
         title: isEn ? 'Fact-Checking Policy & Protocols – UPCOS' : 'तथ्य-जांच नीति (Fact-Checking Policy) – UPCOS',
         description: 'शासनादेशों एवं सरकारी परिपत्रों के सत्यापन की कठोर तथ्य-जांच प्रक्रिया।',
-        canonicalUrl: getCanonicalUrl('/fact-checking-policy')
+        canonicalUrl: getCanonicalUrl('/fact-checking-policy'),
+        structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Fact-Checking Policy', '/fact-checking-policy') }
       });
     } else if (p === '/correction-policy') {
       updatePageSEO({
         title: isEn ? 'Corrections & Updates Policy – UPCOS' : 'संशोधन एवं अद्यतन नीति (Corrections Policy) – UPCOS',
         description: 'पारदर्शी त्रुटि सुधार, सुधार समय-सारिणी एवं पाठक फीडबैक तंत्र।',
-        canonicalUrl: getCanonicalUrl('/correction-policy')
+        canonicalUrl: getCanonicalUrl('/correction-policy'),
+        structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Corrections Policy', '/correction-policy') }
       });
     } else if (p === '/copyright-policy') {
       updatePageSEO({
         title: isEn ? 'Copyright Policy & Fair Use – UPCOS' : 'कॉपीराइट नीति (Copyright Policy) – UPCOS',
         description: 'सार्वजनिक शासकीय परिपत्र, उचित उपयोग (Fair Use) एवं कॉपीराइट सुरक्षा दिशानिर्देश।',
-        canonicalUrl: getCanonicalUrl('/copyright-policy')
+        canonicalUrl: getCanonicalUrl('/copyright-policy'),
+        structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Copyright Policy', '/copyright-policy') }
       });
     } else if (p === '/advertise') {
       updatePageSEO({
         title: isEn ? 'Advertise With Us – Ethical Ads Policy – UPCOS' : 'विज्ञापन नीति (Advertise With Us) – UPCOS',
         description: 'कर्मचारी हितैषी विज्ञापन दिशानिर्देश एवं Google AdSense अनुपालन नीति।',
-        canonicalUrl: getCanonicalUrl('/advertise')
+        canonicalUrl: getCanonicalUrl('/advertise'),
+        structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Advertise', '/advertise') }
+      });
+    } else if (p === '/admin') {
+      updatePageSEO({
+        title: 'Admin CMS – UPCOS',
+        description: 'संपादकीय प्रबंधन डैशबोर्ड',
+        canonicalUrl: getCanonicalUrl('/admin'),
+        noindex: true
       });
     }
-  }, [location.pathname, language]);
+  }, [location.pathname, language, faqs]);
 
   const featuredNews = contentStore.getFeaturedNews() || news[0];
 
