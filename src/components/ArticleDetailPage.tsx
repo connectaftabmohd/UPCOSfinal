@@ -303,26 +303,53 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
         }
       : {
           '@context': 'https://schema.org',
-          '@type': 'NewsArticle',
-          mainEntityOfPage: {
-            '@type': 'WebPage',
-            '@id': canonicalHref
-          },
-          headline: article.title,
-          alternativeHeadline: article.englishTitle || article.title,
-          image: [article.featuredImage],
-          datePublished: article.publicationDate,
-          dateModified: article.publicationDate,
-          inLanguage: 'hi-IN',
-          keywords: article.tags?.join(', '),
-          author: [{ '@type': 'Person', name: article.author }],
-          publisher: {
-            '@type': 'Organization',
-            name: 'UP Outsource Seva Nigam',
-            url: 'https://upcos.netlify.app',
-            logo: { '@type': 'ImageObject', url: getCanonicalUrl('/favicon.svg') }
-          },
-          description: article.shortDescription
+          '@graph': [
+            {
+              '@type': 'NewsArticle',
+              mainEntityOfPage: {
+                '@type': 'WebPage',
+                '@id': canonicalHref
+              },
+              headline: article.title,
+              alternativeHeadline: article.englishTitle || article.title,
+              image: [article.featuredImage],
+              datePublished: article.publicationDate,
+              dateModified: article.publicationDate,
+              inLanguage: 'hi-IN',
+              keywords: article.tags?.join(', '),
+              author: [{ '@type': 'Person', name: article.author }],
+              publisher: {
+                '@type': 'Organization',
+                name: 'UPCOS – UP Outsource Seva Nigam News & Information',
+                url: 'https://upcos.netlify.app',
+                logo: { '@type': 'ImageObject', url: getCanonicalUrl('/favicon.svg') }
+              },
+              description: article.shortDescription
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: 'Home',
+                  item: 'https://upcos.netlify.app/'
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 2,
+                  name: 'News',
+                  item: 'https://upcos.netlify.app/news'
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 3,
+                  name: article.title,
+                  item: canonicalHref
+                }
+              ]
+            }
+          ]
         };
 
     let scriptTag = document.getElementById('jsonld-article-schema');

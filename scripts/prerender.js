@@ -41,6 +41,7 @@ const homeBodySnippet = `
     <section>
       <h2>प्रमुख समाचार एवं नवीनतम शासनादेश</h2>
       <ul>
+        <li><a href="/news/sant-kabir-nagar-basic-shiksha-vibhag-educator-instructor-vacancy-2026">संत कबीर नगर बेसिक शिक्षा विभाग भर्ती 2026: Educator व ITI Instructor (अंतिम तिथि 22-11-2026)</a></li>
         <li><a href="/news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator">महिला कल्याण विभाग हमीरपुर भर्ती 2026: Case Worker, MTS, Computer Operator व District Coordinator (अंतिम तिथि 20-11-2026)</a></li>
         <li><a href="/news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026">उत्तर प्रदेश आउटसोर्सिंग कर्मियों के मानदेय में वृद्धि: ₹15,396 से ₹39,000 मासिक पारिश्रमिक एवं EPF/ESI विवरण</a></li>
         <li><a href="/shasanadesh/order-upcos-wages-2026">शासनादेश संख्या 3/2026/1/1511176/2026: श्रेणीवार पारिश्रमिक एवं सेवा शर्तें</a></li>
@@ -64,6 +65,7 @@ const routes = [
         <h1>ताज़ा खबरें एवं विभागीय समाचार (Latest UP Outsource News)</h1>
         <p>उत्तर प्रदेश के विभिन्न विभागों में कार्यरत आउटसोर्स कर्मियों के वेतन, ईपीएफ, ईएसआई और सेवा शर्तों से जुड़े नवीनतम अपडेट।</p>
         <ul>
+          <li><a href="/news/sant-kabir-nagar-basic-shiksha-vibhag-educator-instructor-vacancy-2026">संत कबीर नगर बेसिक शिक्षा विभाग आउटसोर्सिंग भर्ती 2026 (Educator व Instructor)</a></li>
           <li><a href="/news/mahila-kalyan-vibhag-hamirpur-outsourcing-bharti-2026-case-worker-mts-operator">महिला कल्याण विभाग हमीरपुर आउटसोर्सिंग भर्ती 2026 (अंतिम तिथि 20-11-2026)</a></li>
           <li><a href="/news/up-outsourcing-employees-new-salary-rates-15396-to-39000-shasanadesh-2026">आउटसोर्सिंग कर्मियों के लिए नई मासिक पारिश्रमिक दरें (₹15,396 से ₹39,000)</a></li>
         </ul>
@@ -218,6 +220,25 @@ const routes = [
       <article style="max-width:800px;margin:2rem auto;padding:1rem;font-family:sans-serif;">
         <h1>कॉपीराइट नीति (Copyright Policy)</h1>
         <p>पोर्टल के मूल संपादकीय विश्लेषण कॉपीराइट द्वारा सुरक्षित हैं, जबकि सार्वजनिक शासनादेश जन-सूचना एवं उचित उपयोग के अंतर्गत संदर्भित किए जाते हैं।</p>
+        ${NAV_LINKS}
+      </article>
+    `
+  },
+  {
+    path: 'news/sant-kabir-nagar-basic-shiksha-vibhag-educator-instructor-vacancy-2026',
+    title: 'UP Sewayojan Sant Kabir Nagar Educator Instructor Vacancy 2026 – UPCOS',
+    description: 'संत कबीर नगर बेसिक शिक्षा विभाग में Educator व Instructor आउटसोर्सिंग भर्ती 2026। वेतन ₹10,313/माह, अंतिम तिथि 22-11-2026। योग्यता व आवेदन विवरण पढ़ें।',
+    bodySnippet: `
+      <article style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
+        <h1>संत कबीर नगर बेसिक शिक्षा विभाग भर्ती 2026: ECE Educator व ITI Instructor पदों पर आवेदन (अंतिम तिथि 22-11-2026)</h1>
+        <p>जनपद संत कबीर नगर के बेसिक शिक्षा विभाग में NIT COMPUTER CENTRE के माध्यम से Educator व Instructor पदों पर आउटसोर्सिंग भर्ती जारी की गई है।</p>
+        <h2>पदों का विवरण:</h2>
+        <ul>
+          <li><strong>Educator (ECE):</strong> Bachelor of Home Science | 01 जुलाई 2025 को अधिकतम आयु 40 वर्ष | वेतन ₹10,313/माह | प्राप्त आवेदन: 1,950</li>
+          <li><strong>Instructor (मल्टी-ट्रेड):</strong> Plumber/Sheet Metal/Carpenter/Painter/Fitter/Construction/Fabrication + हिन्दी व अंग्रेजी ज्ञान | वेतन ₹10,313/माह | प्राप्त आवेदन: 616</li>
+          <li><strong>Instructor (इलेक्ट्रिकल/इलेक्ट्रॉनिक्स):</strong> राजकीय मान्यता प्राप्त ITI से संबंधित 01 ट्रेड सर्टिफिकेट | वेतन ₹10,313/माह | प्राप्त आवेदन: 1,122</li>
+        </ul>
+        <p>आधिकारिक पोर्टल: <a href="https://sewayojan.up.nic.in/jobs.aspx" rel="noopener noreferrer">sewayojan.up.nic.in</a></p>
         ${NAV_LINKS}
       </article>
     `
