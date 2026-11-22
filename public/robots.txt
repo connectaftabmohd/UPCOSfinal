@@ -6,6 +6,7 @@ User-agent: Googlebot
 Allow: /
 Allow: /ads.txt
 Allow: /sitemap.xml
+Allow: /news-sitemap.xml
 Disallow: /admin
 Disallow: /search
 Disallow: /api/
@@ -14,6 +15,7 @@ User-agent: *
 Allow: /
 Allow: /ads.txt
 Allow: /sitemap.xml
+Allow: /news-sitemap.xml
 Disallow: /admin
 Disallow: /search
 Disallow: /api/
@@ -23,3 +25,4 @@ Disallow: /*?*view=
 
 # Sitemaps
 Sitemap: https://upcos.netlify.app/sitemap.xml
+Sitemap: https://upcos.netlify.app/news-sitemap.xml

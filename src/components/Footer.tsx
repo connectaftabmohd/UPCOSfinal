@@ -199,6 +199,15 @@ export const Footer: React.FC<FooterProps> = ({
                 </button>
               </li>
               <li>
+                <button
+                  onClick={() => onNavigate({ type: 'sitemap' })}
+                  className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <span>{isEnglish ? 'Sitemap (All Pages)' : 'साइटमैप (Sitemap)'}</span>
+                </button>
+              </li>
+              <li>
                 <a
                   href="https://upcos.org"
                   target="_blank"

@@ -10,10 +10,12 @@ import {
   Share2, 
   Printer, 
   Check, 
+  Copy,
   FileCode,
   Sparkles
 } from 'lucide-react';
 import { GovernmentOrder, PageView } from '../types';
+import { getCanonicalUrl } from '../utils/seo';
 
 interface GovOrderDetailPageProps {
   order: GovernmentOrder;
@@ -25,6 +27,32 @@ export const GovOrderDetailPage: React.FC<GovOrderDetailPageProps> = ({
   onNavigate,
 }) => {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const shareUrl = getCanonicalUrl(`/shasanadesh/${order.slug}`);
+  const shareSummaryText = `📜 ${order.orderNumber}: ${order.title}\n\n${order.summary}\n\nविस्तृत शासनादेश देखें 👇\n`;
+
+  const handleCopyShareLink = () => {
+    navigator.clipboard.writeText(`${shareSummaryText}${shareUrl}`);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  const handleNativeShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${order.orderNumber}: ${order.title}`,
+          text: order.summary,
+          url: shareUrl
+        });
+        return;
+      } catch {
+        // Cancelled or unsupported
+      }
+    }
+    handleCopyShareLink();
+  };
 
   const handleDownload = () => {
     const textContent = 
@@ -136,6 +164,62 @@ export const GovOrderDetailPage: React.FC<GovOrderDetailPageProps> = ({
 
           {/* Document Content Body */}
           <div className="p-5 sm:p-8 space-y-6">
+            {/* Share Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200/80 text-xs">
+              <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                <Share2 className="w-4 h-4 text-blue-900" />
+                <span>शासनादेश साझा करें:</span>
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareSummaryText)}${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition text-[11px]"
+                >
+                  WhatsApp
+                </a>
+                <a
+                  href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`${order.orderNumber}: ${order.title}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition text-[11px]"
+                >
+                  Telegram
+                </a>
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition text-[11px]"
+                >
+                  Facebook
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${order.orderNumber}: ${order.title}`)}&url=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold transition text-[11px]"
+                >
+                  X
+                </a>
+                <button
+                  onClick={handleNativeShare}
+                  className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg font-bold transition flex items-center gap-1 text-[11px] cursor-pointer"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>शेयर</span>
+                </button>
+                <button
+                  onClick={handleCopyShareLink}
+                  className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-semibold transition flex items-center gap-1 text-[11px] cursor-pointer"
+                >
+                  {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedLink ? 'कॉपी हुआ!' : 'लिंक कॉपी'}</span>
+                </button>
+              </div>
+            </div>
+
             {/* Verification Watermark Card */}
             <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-950 flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />

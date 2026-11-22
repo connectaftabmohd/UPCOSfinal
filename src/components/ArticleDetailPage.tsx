@@ -24,7 +24,7 @@ import { NewsItem, GovernmentOrder, PageView } from '../types';
 import { NewsSidebar } from './NewsSidebar';
 import { AdPlacement } from './AdPlacement';
 import { useLanguage } from '../context/LanguageContext';
-import { getCanonicalUrl } from '../utils/seo';
+import { getCanonicalUrl, resolveAbsoluteImageUrl } from '../utils/seo';
 
 interface ArticleDetailPageProps {
   article: NewsItem;
@@ -237,6 +237,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     };
 
     const canonicalHref = getCanonicalUrl(`/news/${article.slug}`);
+    const absoluteOgImage = resolveAbsoluteImageUrl(article.featuredImage);
 
     // Ensure indexable robots directives
     setMetaTag('name', 'robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
@@ -245,16 +246,22 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     // OpenGraph
     setMetaTag('property', 'og:title', article.title);
     setMetaTag('property', 'og:description', article.shortDescription);
-    setMetaTag('property', 'og:image', article.featuredImage);
+    setMetaTag('property', 'og:image', absoluteOgImage);
+    setMetaTag('property', 'og:image:secure_url', absoluteOgImage);
+    setMetaTag('property', 'og:image:alt', article.title);
     setMetaTag('property', 'og:type', 'article');
     setMetaTag('property', 'og:site_name', 'UP Outsource Seva Nigam');
     setMetaTag('property', 'og:url', canonicalHref);
+    setMetaTag('property', 'article:published_time', article.publicationDate);
+    setMetaTag('property', 'article:section', article.category);
 
     // Twitter Card
     setMetaTag('name', 'twitter:card', 'summary_large_image');
+    setMetaTag('name', 'twitter:url', canonicalHref);
     setMetaTag('name', 'twitter:title', article.title);
     setMetaTag('name', 'twitter:description', article.shortDescription);
-    setMetaTag('name', 'twitter:image', article.featuredImage);
+    setMetaTag('name', 'twitter:image', absoluteOgImage);
+    setMetaTag('name', 'twitter:image:alt', article.title);
 
     // Canonical Link
     let canonical = document.querySelector('link[rel="canonical"]');
@@ -433,10 +440,29 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 
   const mostRead = safeAllNews.filter((item) => item.isMostRead || item.isFeatured);
 
+  const canonicalShareUrl = getCanonicalUrl(`/news/${article.slug}`);
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+    const formattedShare = `${displayTitle}\n${article.shortDescription}\n\nपूरी खबर पढ़ें: ${canonicalShareUrl}`;
+    navigator.clipboard.writeText(formattedShare);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleNativeShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: displayTitle,
+          text: article.shortDescription,
+          url: canonicalShareUrl
+        });
+        return;
+      } catch {
+        // User cancelled or unsupported; fallback to copy
+      }
+    }
+    handleCopyLink();
   };
 
   const handlePrint = () => {
@@ -452,8 +478,9 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     setTimeout(() => setTableCopied(false), 2500);
   };
 
-  const shareText = encodeURIComponent(`${displayTitle}\n\nUP Outsource Seva Nigam पोर्टल पर संपूर्ण विवरण पढ़ें:\n`);
-  const currentUrl = encodeURIComponent(window.location.href);
+  const shareHeadline = encodeURIComponent(`📰 ${displayTitle}\n\n${article.shortDescription}\n\nपूरी जानकारी पढ़ें 👇\n`);
+  const tweetText = encodeURIComponent(`${displayTitle} – UP Outsource Seva Nigam`);
+  const currentUrl = encodeURIComponent(canonicalShareUrl);
 
   // Parse markdown content into structured blocks (tables, headings, callouts, paragraphs)
   const contentBlocks = parseArticleBlocks(article.fullContent);
@@ -583,15 +610,25 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                 <span>खबर साझा करें:</span>
               </span>
 
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 {/* WhatsApp */}
                 <a
-                  href={`https://api.whatsapp.com/send?text=${shareText}${currentUrl}`}
+                  href={`https://api.whatsapp.com/send?text=${shareHeadline}${currentUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition flex items-center gap-1 text-[11px]"
                 >
                   WhatsApp
+                </a>
+
+                {/* Telegram */}
+                <a
+                  href={`https://t.me/share/url?url=${currentUrl}&text=${tweetText}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition text-[11px]"
+                >
+                  Telegram
                 </a>
 
                 {/* Facebook */}
@@ -606,7 +643,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 
                 {/* X */}
                 <a
-                  href={`https://twitter.com/intent/tweet?text=${shareText}&url=${currentUrl}`}
+                  href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${currentUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold transition text-[11px]"
@@ -614,14 +651,24 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                   X
                 </a>
 
+                {/* Native Share / Share Sheet */}
+                <button
+                  onClick={handleNativeShare}
+                  className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg font-bold transition flex items-center gap-1 text-[11px] cursor-pointer"
+                  title="अन्य ऐप पर साझा करें"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>शेयर</span>
+                </button>
+
                 {/* Copy Link */}
                 <button
                   onClick={handleCopyLink}
-                  className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-semibold transition flex items-center gap-1 text-[11px]"
-                  title="लिंक कॉपी करें"
+                  className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-semibold transition flex items-center gap-1 text-[11px] cursor-pointer"
+                  title="शीर्षक व लिंक कॉपी करें"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copied ? 'कॉपी हुआ!' : 'लिंक'}</span>
+                  <span>{copied ? 'कॉपी हुआ!' : 'लिंक कॉपी'}</span>
                 </button>
               </div>
             </div>

@@ -170,4 +170,5 @@ export type PageView =
   | { type: 'corrections-policy' }
   | { type: 'copyright-policy' }
   | { type: 'advertise' }
+  | { type: 'sitemap' }
   | { type: 'admin' };

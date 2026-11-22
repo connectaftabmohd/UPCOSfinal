@@ -28,7 +28,14 @@ export interface SEOConfig {
 }
 
 const DEFAULT_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
-const DEFAULT_OG_IMAGE = 'https://upcos.netlify.app/logo.png';
+export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}/og-banner.jpg`;
+
+export function resolveAbsoluteImageUrl(img?: string): string {
+  if (!img || !img.trim()) return DEFAULT_OG_IMAGE;
+  const trimmed = img.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `${SITE_DOMAIN}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
+}
 
 export function updatePageSEO(config: SEOConfig): void {
   // 1. Update Document Title
@@ -63,13 +70,15 @@ export function updatePageSEO(config: SEOConfig): void {
 
   // 5. OpenGraph Tags
   const currentUrl = config.canonicalUrl || getCanonicalUrl(window.location.pathname);
-  const ogImage = config.image || DEFAULT_OG_IMAGE;
+  const ogImage = resolveAbsoluteImageUrl(config.image);
 
   setMetaTag('property', 'og:site_name', 'UP Outsource Seva Nigam');
   setMetaTag('property', 'og:title', fullTitle);
   setMetaTag('property', 'og:description', config.description);
   setMetaTag('property', 'og:type', config.ogType || 'website');
   setMetaTag('property', 'og:image', ogImage);
+  setMetaTag('property', 'og:image:secure_url', ogImage);
+  setMetaTag('property', 'og:image:alt', fullTitle);
   setMetaTag('property', 'og:url', currentUrl);
 
   // 6. Twitter Card Tags
@@ -77,6 +86,7 @@ export function updatePageSEO(config: SEOConfig): void {
   setMetaTag('name', 'twitter:title', fullTitle);
   setMetaTag('name', 'twitter:description', config.description);
   setMetaTag('name', 'twitter:image', ogImage);
+  setMetaTag('name', 'twitter:image:alt', fullTitle);
   setMetaTag('name', 'twitter:url', currentUrl);
 
   // 7. Canonical Link Tag

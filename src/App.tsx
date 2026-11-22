@@ -47,6 +47,7 @@ import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { AdminAccessModal } from './components/AdminAccessModal';
 import { NotFoundPage } from './components/NotFoundPage';
+import { SitemapPage } from './components/SitemapPage';
 import { initializeAutoSyncEngine } from './services/sewayojanSyncService';
 import { authService } from './services/authService';
 import { UserProfile } from './types';
@@ -391,6 +392,9 @@ function MainApp() {
       case 'advertise':
         navigate('/advertise');
         break;
+      case 'sitemap':
+        navigate('/sitemap');
+        break;
       case 'admin':
         navigate('/admin');
         break;
@@ -491,6 +495,7 @@ function MainApp() {
     if (p === '/correction-policy') return { type: 'corrections-policy' };
     if (p === '/copyright-policy') return { type: 'copyright-policy' };
     if (p === '/advertise') return { type: 'advertise' };
+    if (p === '/sitemap') return { type: 'sitemap' };
     if (p === '/admin') return { type: 'admin' };
     return { type: 'home' };
   }, [location.pathname]);
@@ -744,6 +749,20 @@ function MainApp() {
         canonicalUrl: getCanonicalUrl('/advertise'),
         structuredData: { '@context': 'https://schema.org', ...makeBreadcrumbs('Advertise', '/advertise') }
       });
+    } else if (p === '/sitemap') {
+      const url = getCanonicalUrl('/sitemap');
+      updatePageSEO({
+        title: isEn ? 'Website Sitemap – UPCOS' : 'साइटमैप (Sitemap) – UPCOS',
+        description: 'UPCOS पोर्टल के सभी समाचार, शासनादेश, विभाग, भर्ती सूचनाएं एवं नीति पृष्ठों की संपूर्ण सूची।',
+        canonicalUrl: url,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            { '@type': 'CollectionPage', name: 'UPCOS Website Sitemap', url, inLanguage: 'hi-IN' },
+            makeBreadcrumbs('Sitemap', '/sitemap')
+          ]
+        }
+      });
     } else if (p === '/admin') {
       updatePageSEO({
         title: 'Admin CMS – UPCOS',
@@ -959,6 +978,17 @@ function MainApp() {
           <Route path="/correction-policy" element={<StaticPages type="corrections-policy" onNavigate={handleNavigate} />} />
           <Route path="/copyright-policy" element={<StaticPages type="copyright-policy" onNavigate={handleNavigate} />} />
           <Route path="/advertise" element={<StaticPages type="advertise" onNavigate={handleNavigate} />} />
+          <Route
+            path="/sitemap"
+            element={
+              <SitemapPage
+                news={news}
+                orders={orders}
+                departments={departments}
+                onNavigate={handleNavigate}
+              />
+            }
+          />
 
           {/* 8. Editorial CMS Admin */}
           <Route

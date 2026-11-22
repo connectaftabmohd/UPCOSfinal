@@ -58,6 +58,13 @@ async function startServer() {
     res.sendFile(path.resolve(process.cwd(), "public/sitemap.xml"));
   });
 
+  // news-sitemap.xml Endpoint
+  app.get("/news-sitemap.xml", (_req, res) => {
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.sendFile(path.resolve(process.cwd(), "public/news-sitemap.xml"));
+  });
+
   // 1. Admin Authentication Endpoints
   app.post("/api/admin/login", (req, res) => {
     const { loginId, passkey } = req.body;
@@ -179,18 +186,150 @@ async function startServer() {
     res.json({ success: ok });
   });
 
+  // Dynamic Social Link Preview (OpenGraph / Twitter Card) Meta Injection for Vite & Express routes
+  const fs = await import("fs");
+  const escapeAttr = (str = "") =>
+    String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const resolveRequestOrigin = (req: express.Request) => {
+    const proto = (req.headers["x-forwarded-proto"] as string)?.split(",")[0] || req.protocol || "https";
+    const host = (req.headers["x-forwarded-host"] as string) || req.get("host") || "upcos.netlify.app";
+    return `${proto}://${host}`;
+  };
+
+  const buildRouteSocialMeta = (pathname: string, origin: string) => {
+    const cleanPath = pathname.split("?")[0].replace(/\/+$/, "") || "/";
+    const defaultImg = `${origin}/og-banner.jpg`;
+    const meta = {
+      title: "UP Outsource Seva Nigam Portal – News, Shasanadesh & Bharti for UP Outsource Employees",
+      description:
+        "उत्तर प्रदेश राज्य सरकार के आउटसोर्स व संविदा कर्मचारियों के लिए प्रामाणिक समाचार, शासनादेश, वेतन अपडेट व सेवायोजन पोर्टल भर्ती की हर जरूरी जानकारी।",
+      image: defaultImg,
+      url: `${origin}${cleanPath === "/" ? "/" : cleanPath}`,
+      ogType: "website" as "website" | "article"
+    };
+
+    const resolveImg = (img?: string) => {
+      if (!img) return defaultImg;
+      if (/^https?:\/\//i.test(img)) return img;
+      return `${origin}${img.startsWith("/") ? "" : "/"}${img}`;
+    };
+
+    if (cleanPath.startsWith("/news/")) {
+      const slug = cleanPath.replace("/news/", "");
+      const article = dbService.getNews().find((n) => n.slug === slug || n.id === slug);
+      if (article) {
+        meta.title = `${article.title} | UP Outsource Seva Nigam`;
+        meta.description = article.shortDescription || meta.description;
+        meta.image = resolveImg(article.featuredImage);
+        meta.ogType = "article";
+      }
+    } else if (cleanPath.startsWith("/shasanadesh/")) {
+      const slug = cleanPath.replace("/shasanadesh/", "");
+      const order = dbService.getOrders().find((o) => o.slug === slug || o.id === slug || o.orderNumber === slug);
+      if (order) {
+        meta.title = `${order.orderNumber}: ${order.title} – UPCOS शासनादेश`;
+        meta.description = order.summary || meta.description;
+        meta.ogType = "article";
+      }
+    } else if (cleanPath.startsWith("/departments/")) {
+      const id = cleanPath.replace("/departments/", "");
+      const dept = dbService.getDepartments().find((d) => d.id === id);
+      if (dept) {
+        meta.title = `${dept.name} (${dept.englishName}) – आउटसोर्स समाचार व शासनादेश | UPCOS`;
+        meta.description = dept.description || meta.description;
+      }
+    } else if (cleanPath === "/news") {
+      meta.title = "ताज़ा खबरें एवं विभागीय समाचार – UPCOS";
+      meta.description = "उत्तर प्रदेश आउटसोर्सिंग एवं संविदा कर्मचारियों से जुड़े नवीनतम समाचार, मानदेय वृद्धि एवं सेवायोजन भर्ती सूचनाएं।";
+    } else if (cleanPath === "/shasanadesh") {
+      meta.title = "शासनादेश एवं विधिक परिपत्र (Shasanadesh) – UPCOS";
+      meta.description = "उत्तर प्रदेश शासन के कार्मिक, वित्त एवं अन्य विभागों द्वारा जारी आउटसोर्सिंग संबंधी आधिकारिक शासनादेश।";
+    } else if (cleanPath === "/departments") {
+      meta.title = "विभागीय मार्गदर्शिका एवं सूचना – UPCOS";
+      meta.description = "स्वास्थ्य, शिक्षा, पंचायती राज, ऊर्जा समेत उ.प्र. के सभी प्रमुख सरकारी विभागों के आउटसोर्स कर्मचारी आदेश।";
+    } else if (cleanPath === "/employee-hub") {
+      meta.title = "कर्मचारी सूचना हब एवं वेतन कैलकुलेटर – UPCOS";
+      meta.description = "वेतन श्रेणियां, ईपीएफ-ईएसआई कैलकुलेटर, अवकाश नियम और कर्मचारी अधिकार संबंधी विस्तृत जानकारी।";
+    } else if (cleanPath === "/employee-community") {
+      meta.title = "कर्मचारी संवाद एवं विचार मंच – UPCOS";
+      meta.description = "उत्तर प्रदेश के 75 जनपदों के आउटसोर्स कर्मचारियों का स्वतंत्र संवाद, समस्या साझा एवं सहायता मंच।";
+    } else if (cleanPath === "/sitemap") {
+      meta.title = "साइटमैप (Sitemap) – UPCOS";
+      meta.description = "UPCOS पोर्टल के सभी समाचार, शासनादेश, विभाग, भर्ती सूचनाएं एवं नीति पृष्ठों की संपूर्ण सूची।";
+    }
+
+    return meta;
+  };
+
+  const applySocialMetaToHtml = (html: string, meta: ReturnType<typeof buildRouteSocialMeta>) => {
+    const safeTitle = escapeAttr(meta.title);
+    const safeDesc = escapeAttr(meta.description);
+    const safeImg = escapeAttr(meta.image);
+    const safeUrl = escapeAttr(meta.url);
+    return html
+      .replace(/<title>.*?<\/title>/i, `<title>${safeTitle}</title>`)
+      .replace(/<meta name="title" content=".*?" \/>/i, `<meta name="title" content="${safeTitle}" />`)
+      .replace(/<meta name="description" content=".*?" \/>/i, `<meta name="description" content="${safeDesc}" />`)
+      .replace(/<link rel="canonical" href=".*?" \/>/i, `<link rel="canonical" href="${safeUrl}" />`)
+      .replace(/<meta property="og:type" content=".*?" \/>/i, `<meta property="og:type" content="${meta.ogType}" />`)
+      .replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${safeTitle}" />`)
+      .replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${safeDesc}" />`)
+      .replace(/<meta property="og:url" content=".*?" \/>/i, `<meta property="og:url" content="${safeUrl}" />`)
+      .replace(/<meta property="og:image" content=".*?" \/>/i, `<meta property="og:image" content="${safeImg}" />`)
+      .replace(/<meta property="og:image:secure_url" content=".*?" \/>/i, `<meta property="og:image:secure_url" content="${safeImg}" />`)
+      .replace(/<meta property="og:image:alt" content=".*?" \/>/i, `<meta property="og:image:alt" content="${safeTitle}" />`)
+      .replace(/<meta name="twitter:url" content=".*?" \/>/i, `<meta name="twitter:url" content="${safeUrl}" />`)
+      .replace(/<meta name="twitter:title" content=".*?" \/>/i, `<meta name="twitter:title" content="${safeTitle}" />`)
+      .replace(/<meta name="twitter:description" content=".*?" \/>/i, `<meta name="twitter:description" content="${safeDesc}" />`)
+      .replace(/<meta name="twitter:image" content=".*?" \/>/i, `<meta name="twitter:image" content="${safeImg}" />`)
+      .replace(/<meta name="twitter:image:alt" content=".*?" \/>/i, `<meta name="twitter:image:alt" content="${safeTitle}" />`);
+  };
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
+
+    // Inject dynamic OpenGraph/Twitter tags for social link scrapers & browser navigation in dev/preview
+    app.use(async (req, res, next) => {
+      if (
+        req.method !== "GET" ||
+        req.path.startsWith("/api/") ||
+        req.path.startsWith("/@") ||
+        req.path.startsWith("/src/") ||
+        req.path.startsWith("/node_modules/") ||
+        /\.[a-zA-Z0-9]+$/.test(req.path)
+      ) {
+        return next();
+      }
+      const accept = req.headers.accept || "";
+      const ua = req.headers["user-agent"] || "";
+      const isSocialBot = /WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot|Pinterest|Googlebot|bingbot/i.test(ua);
+      if (!accept.includes("text/html") && !isSocialBot) {
+        return next();
+      }
+      try {
+        let html = fs.readFileSync(path.resolve(process.cwd(), "index.html"), "utf-8");
+        html = await vite.transformIndexHtml(req.originalUrl, html);
+        const meta = buildRouteSocialMeta(req.path, resolveRequestOrigin(req));
+        html = applySocialMetaToHtml(html, meta);
+        res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).end(html);
+      } catch (e) {
+        next(e);
+      }
+    });
+
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+    app.get("*", (req, res) => {
+      const indexHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
+      const meta = buildRouteSocialMeta(req.path, resolveRequestOrigin(req));
+      res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).end(applySocialMetaToHtml(indexHtml, meta));
     });
   }
 

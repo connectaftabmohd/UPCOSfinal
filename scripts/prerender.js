@@ -35,6 +35,13 @@ const escapeHtmlText = (str = '') =>
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
+const resolveAbsoluteImageUrl = (img = '') => {
+  const trimmed = String(img || '').trim();
+  if (!trimmed) return `${DOMAIN}/og-banner.jpg`;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `${DOMAIN}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
+};
+
 let dbData = { news: [], orders: [], departments: [], faqs: [] };
 if (fs.existsSync(DB_PATH)) {
   try {
@@ -63,7 +70,8 @@ const NAV_LINKS = `
     <a href="/contact-us">संपर्क करें (Contact)</a> |
     <a href="/privacy-policy">गोपनीयता नीति (Privacy Policy)</a> |
     <a href="/disclaimer">अस्वीकरण (Disclaimer)</a> |
-    <a href="/terms-and-conditions">नियम एवं शर्तें (Terms)</a>
+    <a href="/terms-and-conditions">नियम एवं शर्तें (Terms)</a> |
+    <a href="/sitemap">साइटमैप (Sitemap)</a>
   </nav>
 `;
 
@@ -534,6 +542,49 @@ const staticRoutes = [
         ${NAV_LINKS}
       </article>
     `
+  },
+  {
+    path: 'sitemap',
+    title: 'साइटमैप (Sitemap) – UPCOS',
+    description: 'UPCOS पोर्टल के सभी समाचार, शासनादेश, विभाग, भर्ती सूचनाएं एवं नीति पृष्ठों की संपूर्ण सूची।',
+    changefreq: 'daily',
+    priority: '0.7',
+    lastmod: latestDate,
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'CollectionPage', name: 'UPCOS Website Sitemap', url: `${DOMAIN}/sitemap`, inLanguage: 'hi-IN' },
+        makeBreadcrumbList([
+          { name: 'Home', url: `${DOMAIN}/` },
+          { name: 'Sitemap', url: `${DOMAIN}/sitemap` }
+        ])
+      ]
+    },
+    bodySnippet: `
+      <main style="max-width:900px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
+        <h1>UPCOS वेबसाइट साइटमैप (Complete Sitemap)</h1>
+        <p>ताज़ा समाचार, सेवायोजन भर्ती सूचनाएं, शासनादेश, विभाग और नीति पृष्ठों की संपूर्ण सूची (<a href="/sitemap.xml">XML Sitemap</a> | <a href="/news-sitemap.xml">Google News Sitemap</a>)।</p>
+        <h2>नवीनतम समाचार एवं भर्ती अपडेट</h2>
+        <ul>
+          ${newsList
+            .map((n) => `<li><a href="/news/${escapeHtmlAttr(n.slug)}">${escapeHtmlText(n.title)}</a> (${escapeHtmlText(n.publicationDate)})</li>`)
+            .join('\n          ')}
+        </ul>
+        <h2>प्रमुख शासनादेश (Government Orders)</h2>
+        <ul>
+          ${ordersList
+            .map((o) => `<li><a href="/shasanadesh/${escapeHtmlAttr(o.slug)}">${escapeHtmlText(o.orderNumber)}: ${escapeHtmlText(o.title)}</a></li>`)
+            .join('\n          ')}
+        </ul>
+        <h2>सरकारी विभाग (Departments)</h2>
+        <ul>
+          ${departmentsList
+            .map((d) => `<li><a href="/departments/${escapeHtmlAttr(d.id)}">${escapeHtmlText(d.name)} (${escapeHtmlText(d.englishName)})</a></li>`)
+            .join('\n          ')}
+        </ul>
+        ${NAV_LINKS}
+      </main>
+    `
   }
 ];
 
@@ -592,7 +643,7 @@ const newsRoutes = newsList.map((article, idx) => {
         mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
         headline: article.title,
         alternativeHeadline: article.englishTitle || article.title,
-        image: [article.featuredImage],
+        image: [resolveAbsoluteImageUrl(article.featuredImage)],
         datePublished: article.publicationDate,
         dateModified: article.publicationDate,
         inLanguage: 'hi-IN',
@@ -629,8 +680,10 @@ const newsRoutes = newsList.map((article, idx) => {
     path: `news/${article.slug}`,
     title: `${article.title} | UP Outsource Seva Nigam`,
     description: article.shortDescription,
-    image: article.featuredImage,
+    image: resolveAbsoluteImageUrl(article.featuredImage),
     ogType: 'article',
+    publishedTime: article.publicationDate,
+    section: article.category,
     changefreq: idx < 5 ? 'daily' : 'weekly',
     priority: idx < 3 ? '0.95' : '0.85',
     lastmod: article.publicationDate || latestDate,
@@ -770,23 +823,41 @@ allRoutes.forEach((r) => {
   html = html.replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${safeTitle}" />`);
   html = html.replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${safeDesc}" />`);
   html = html.replace(/<meta property="og:url" content=".*?" \/>/i, `<meta property="og:url" content="${canonicalUrl}" />`);
+  html = html.replace(/<meta property="og:image:alt" content=".*?" \/>/i, `<meta property="og:image:alt" content="${safeTitle}" />`);
+  html = html.replace(/<meta name="twitter:url" content=".*?" \/>/i, `<meta name="twitter:url" content="${canonicalUrl}" />`);
   html = html.replace(/<meta name="twitter:title" content=".*?" \/>/i, `<meta name="twitter:title" content="${safeTitle}" />`);
   html = html.replace(/<meta name="twitter:description" content=".*?" \/>/i, `<meta name="twitter:description" content="${safeDesc}" />`);
+  html = html.replace(/<meta name="twitter:image:alt" content=".*?" \/>/i, `<meta name="twitter:image:alt" content="${safeTitle}" />`);
 
   if (r.ogType) {
     html = html.replace(/<meta property="og:type" content=".*?" \/>/i, `<meta property="og:type" content="${escapeHtmlAttr(r.ogType)}" />`);
   }
-  if (r.image) {
-    const safeImg = escapeHtmlAttr(r.image);
-    html = html.replace(/<meta property="og:image" content=".*?" \/>/i, `<meta property="og:image" content="${safeImg}" />`);
-    html = html.replace(/<meta name="twitter:image" content=".*?" \/>/i, `<meta name="twitter:image" content="${safeImg}" />`);
+
+  const resolvedImg = resolveAbsoluteImageUrl(r.image);
+  const safeImg = escapeHtmlAttr(resolvedImg);
+  html = html.replace(/<meta property="og:image" content=".*?" \/>/i, `<meta property="og:image" content="${safeImg}" />`);
+  html = html.replace(/<meta property="og:image:secure_url" content=".*?" \/>/i, `<meta property="og:image:secure_url" content="${safeImg}" />`);
+  html = html.replace(/<meta name="twitter:image" content=".*?" \/>/i, `<meta name="twitter:image" content="${safeImg}" />`);
+
+  if (r.image && resolvedImg !== `${DOMAIN}/og-banner.jpg`) {
+    // Remove default 1376x768 banner dimensions when an article uses its own photo
+    html = html.replace(/\s*<meta property="og:image:type" content=".*?" \/>/i, '');
+    html = html.replace(/\s*<meta property="og:image:width" content=".*?" \/>/i, '');
+    html = html.replace(/\s*<meta property="og:image:height" content=".*?" \/>/i, '');
   }
 
+  const extraHeadTags = [];
+  if (r.publishedTime) {
+    extraHeadTags.push(`  <meta property="article:published_time" content="${escapeHtmlAttr(r.publishedTime)}" />`);
+  }
+  if (r.section) {
+    extraHeadTags.push(`  <meta property="article:section" content="${escapeHtmlAttr(r.section)}" />`);
+  }
   if (r.schema) {
-    html = html.replace(
-      '</head>',
-      `  <script id="jsonld-article-schema" type="application/ld+json">${JSON.stringify(r.schema)}</script>\n</head>`
-    );
+    extraHeadTags.push(`  <script id="jsonld-article-schema" type="application/ld+json">${JSON.stringify(r.schema)}</script>`);
+  }
+  if (extraHeadTags.length > 0) {
+    html = html.replace('</head>', `${extraHeadTags.join('\n')}\n</head>`);
   }
 
   html = html.replace('<div id="root"></div>', `<div id="root">${r.bodySnippet}</div>`);
@@ -825,3 +896,33 @@ ${sitemapEntries
 fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), sitemapXml, 'utf-8');
 fs.writeFileSync(path.join(DIST_DIR, 'sitemap.xml'), sitemapXml, 'utf-8');
 console.log(`Generated sitemap.xml with ${sitemapEntries.length} verified URLs.`);
+
+// Generate Google News Sitemap (news-sitemap.xml)
+const newsSitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+${newsList
+  .map((article) => {
+    const pubDate = article.publicationDate || latestDate;
+    const keywords = Array.isArray(article.tags) ? article.tags.slice(0, 8).join(', ') : '';
+    return `  <url>
+    <loc>${escapeHtmlText(`${DOMAIN}/news/${article.slug}`)}</loc>
+    <news:news>
+      <news:publication>
+        <news:name>UPCOS – UP Outsource Seva Nigam</news:name>
+        <news:language>hi</news:language>
+      </news:publication>
+      <news:publication_date>${escapeHtmlText(pubDate)}</news:publication_date>
+      <news:title>${escapeHtmlText(article.title)}</news:title>${
+        keywords ? `\n      <news:keywords>${escapeHtmlText(keywords)}</news:keywords>` : ''
+      }
+    </news:news>
+  </url>`;
+  })
+  .join('\n')}
+</urlset>
+`;
+
+fs.writeFileSync(path.join(PUBLIC_DIR, 'news-sitemap.xml'), newsSitemapXml, 'utf-8');
+fs.writeFileSync(path.join(DIST_DIR, 'news-sitemap.xml'), newsSitemapXml, 'utf-8');
+console.log(`Generated news-sitemap.xml with ${newsList.length} news articles.`);
