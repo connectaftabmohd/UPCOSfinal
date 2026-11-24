@@ -206,6 +206,11 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [tableCopied, setTableCopied] = useState(false);
+  const [isPortraitImage, setIsPortraitImage] = useState(false);
+
+  useEffect(() => {
+    setIsPortraitImage(false);
+  }, [article?.id]);
 
   // SEO & Social Tags Integration (applet-seo skill)
   useEffect(() => {
@@ -674,15 +679,33 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
             </div>
 
             {/* Featured Image */}
-            <div className="rounded-xl overflow-hidden mb-6 border border-slate-200 shadow-2xs aspect-16/9 bg-slate-100">
+            <div
+              className={`rounded-xl overflow-hidden mb-6 border border-slate-200 shadow-2xs ${
+                isPortraitImage
+                  ? 'bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex justify-center p-2 sm:p-4'
+                  : 'aspect-16/9 bg-slate-100'
+              }`}
+            >
               <img
                 src={article.featuredImage}
                 alt={article.title}
                 referrerPolicy="no-referrer"
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+                  if (img.naturalHeight > img.naturalWidth) {
+                    setIsPortraitImage(true);
+                  } else {
+                    setIsPortraitImage(false);
+                  }
+                }}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80';
                 }}
-                className="w-full h-full object-cover"
+                className={
+                  isPortraitImage
+                    ? 'max-h-[760px] w-auto max-w-full object-contain rounded-lg shadow-md'
+                    : 'w-full h-full object-cover'
+                }
               />
             </div>
 
