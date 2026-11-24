@@ -45,18 +45,27 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [designation, setDesignation] = useState(user?.designation || '');
   const [newPassword, setNewPassword] = useState('');
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'saved'>('profile');
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen || !user) return null;
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    authService.updateProfile({
+    setSaveError('');
+    setIsSaving(true);
+    const res = await authService.updateProfile({
       name,
       district,
       department,
       designation,
       ...(newPassword.trim() ? { password: newPassword.trim() } : {})
     });
+    setIsSaving(false);
+    if (!res.success) {
+      setSaveError(res.error || 'प्रोफ़ाइल सहेजने में त्रुटि आई।');
+      return;
+    }
     setNewPassword('');
     setIsEditing(false);
   };
@@ -224,6 +233,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 </>
               ) : (
                 <form onSubmit={handleSaveProfile} className="space-y-3 text-xs">
+                  {saveError && (
+                    <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-medium">
+                      {saveError}
+                    </div>
+                  )}
                   <div>
                     <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">पूरा नाम</label>
                     <input
@@ -300,10 +314,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-xl bg-blue-900 hover:bg-blue-950 text-white font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      disabled={isSaving}
+                      className="px-5 py-2 rounded-xl bg-blue-900 hover:bg-blue-950 text-white font-bold flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-60"
                     >
                       <Save className="w-4 h-4" />
-                      <span>सुरक्षित करें</span>
+                      <span>{isSaving ? 'सहेजा जा रहा है...' : 'सुरक्षित करें'}</span>
                     </button>
                   </div>
                 </form>

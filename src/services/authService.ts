@@ -97,9 +97,21 @@ export const UP_DEPARTMENTS = [
 ];
 
 const STORAGE_KEY_USER = 'up_portal_current_user';
-const STORAGE_KEY_TOKEN = 'uposn_auth_token';
 const STORAGE_KEY_SAVED_CREDS = 'uposn_saved_login_credentials';
-const STORAGE_KEY_ALL_USERS = 'up_portal_registered_users';
+const LEGACY_TOKEN_KEY = 'uposn_auth_token';
+const LEGACY_USERS_KEY = 'up_portal_registered_users';
+
+// Hold Bearer token strictly in JS memory (never localStorage/sessionStorage)
+let inMemoryAuthToken: string | null = null;
+
+// Clean up any legacy insecure storage keys on module init
+try {
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
+  sessionStorage.removeItem(LEGACY_TOKEN_KEY);
+  localStorage.removeItem(LEGACY_USERS_KEY);
+} catch {
+  // Ignored
+}
 
 type AuthListener = (user: UserProfile | null) => void;
 const listeners: Set<AuthListener> = new Set();
@@ -112,6 +124,19 @@ function notifyListeners(user: UserProfile | null) {
       console.error('Auth listener error:', e);
     }
   });
+}
+
+function saveUserProfile(user: UserProfile | null) {
+  try {
+    if (user) {
+      const { password: _omitted, ...safeProfile } = user;
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(safeProfile));
+    } else {
+      localStorage.removeItem(STORAGE_KEY_USER);
+    }
+  } catch {
+    // Ignored
+  }
 }
 
 export const authService = {
@@ -136,237 +161,344 @@ export const authService = {
   },
 
   getAuthToken(): string | null {
-    try {
-      return sessionStorage.getItem(STORAGE_KEY_TOKEN) || localStorage.getItem(STORAGE_KEY_TOKEN);
-    } catch (e) {
-      return null;
-    }
+    return inMemoryAuthToken;
   },
 
-  setAuthToken(token: string, persist: boolean = false): void {
+  setAuthToken(token: string | null): void {
+    inMemoryAuthToken = token;
+  },
+
+  async getAdminStatus(): Promise<{ needsSetup: boolean; otpConfigured: boolean; supabaseAuthConfigured: boolean }> {
     try {
-      sessionStorage.setItem(STORAGE_KEY_TOKEN, token);
-      if (persist) {
-        localStorage.setItem(STORAGE_KEY_TOKEN, token);
+      const res = await fetch('/api/admin/status', { credentials: 'include' });
+      if (res.ok) {
+        return await res.json();
       }
-    } catch (e) {
-      // Ignored
+    } catch {
+      // Fallback
+    }
+    return { needsSetup: false, otpConfigured: false, supabaseAuthConfigured: false };
+  },
+
+  async setupAdminPassword(
+    loginId: string,
+    passkey: string
+  ): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    try {
+      const res = await fetch('/api/admin/setup', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loginId, passkey })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'प्रशासक पासवर्ड सेट करने में त्रुटि।' };
+      }
+      this.setAuthToken(data.token || null);
+      saveUserProfile(data.user);
+      notifyListeners(data.user);
+      return { success: true, user: data.user };
+    } catch {
+      return { success: false, error: 'प्रमाणीकरण सर्वर से संपर्क नहीं हो सका।' };
     }
   },
 
   async verifyServerSession(): Promise<UserProfile | null> {
     const token = this.getAuthToken();
-    if (!token) return null;
+    const cachedUser = this.getCurrentUser();
 
     try {
-      const res = await fetch('/api/admin/verify', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      const res = await fetch('/api/auth/verify', {
+        credentials: 'include',
+        headers
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.valid && data.user) {
-          const user: UserProfile = {
-            id: data.user.id,
-            name: data.user.name,
-            email: data.user.email,
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-            role: 'admin',
-            isAdmin: true,
-            isVerified: true,
-            district: 'लखनऊ (Lucknow)',
-            department: 'प्रशासनिक व संपादकीय सेल (UPOSN)',
-            designation: 'मुख्य प्रशासक (Super Admin)',
-            joinedDate: 'जनवरी 2024'
-          };
-          localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-          notifyListeners(user);
-          return user;
+        if (data.valid) {
+          if (data.token) {
+            this.setAuthToken(data.token);
+          }
+          if (data.user) {
+            saveUserProfile(data.user);
+            notifyListeners(data.user);
+            return data.user;
+          }
+          if (cachedUser && data.userId === cachedUser.id) {
+            notifyListeners(cachedUser);
+            return cachedUser;
+          }
         }
       }
     } catch (e) {
       console.error('Session verification error:', e);
+      return cachedUser;
     }
 
-    // Token invalid or expired
-    this.logout();
+    // Session invalid or expired: clear local auth state cleanly
+    if (token || cachedUser) {
+      this.setAuthToken(null);
+      saveUserProfile(null);
+      notifyListeners(null);
+    }
     return null;
   },
 
-  async loginAdmin(loginId: string, passkey: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+  async loginAdmin(
+    loginId: string,
+    passkey: string
+  ): Promise<{ success: boolean; user?: UserProfile; needsSetup?: boolean; error?: string }> {
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ loginId, passkey })
       });
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        return { success: false, error: data.error || 'अमान्य प्रशासक क्रेडेंशियल्स।' };
+        return {
+          success: false,
+          needsSetup: Boolean(data.needsSetup),
+          error: data.error || 'अमान्य प्रशासक क्रेडेंशियल्स।'
+        };
       }
 
-      this.setAuthToken(data.token, true);
-      const adminUser: UserProfile = {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        role: 'admin',
-        isAdmin: true,
-        isVerified: true,
-        district: 'लखनऊ (Lucknow)',
-        department: 'प्रशासनिक व संपादकीय सेल (UPOSN)',
-        designation: 'मुख्य प्रशासक (Super Admin)',
-        joinedDate: 'जनवरी 2024'
-      };
-
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(adminUser));
-      notifyListeners(adminUser);
-      return { success: true, user: adminUser };
-    } catch (err: any) {
+      this.setAuthToken(data.token || null);
+      saveUserProfile(data.user);
+      notifyListeners(data.user);
+      return { success: true, user: data.user };
+    } catch {
       return { success: false, error: 'प्रमाणीकरण सर्वर से संपर्क नहीं हो सका।' };
     }
   },
 
   isAdminUser(user?: UserProfile | null): boolean {
-    if (!user) {
-      user = this.getCurrentUser();
-    }
-    if (!user) return false;
-    const hasToken = Boolean(this.getAuthToken());
-    return Boolean(user.isAdmin && user.role === 'admin' && hasToken);
+    const u = user || this.getCurrentUser();
+    if (!u) return false;
+    return Boolean(u.isAdmin && u.role === 'admin' && this.getAuthToken());
   },
 
-  // Normal Employee User Login
-  login(identifier: string, password?: string): { success: boolean; user?: UserProfile; error?: string; notRegistered?: boolean } {
-    const cleanId = identifier.trim().toLowerCase();
+  async login(
+    identifier: string,
+    password: string
+  ): Promise<{
+    success: boolean;
+    user?: UserProfile;
+    error?: string;
+    notRegistered?: boolean;
+    needsSetup?: boolean;
+  }> {
+    const cleanId = identifier.trim();
     if (!cleanId) {
       return { success: false, error: 'कृपया पंजीकृत मोबाइल नंबर या ईमेल दर्ज करें।' };
     }
 
-    // Admin login requires server passkey check
-    if (cleanId === 'admin' || cleanId === 'aftab.mohd9@gmail.com') {
-      return { 
-        success: false, 
-        error: 'व्यवस्थापक लॉगिन हेतु "प्रशासक प्रवेश" (Admin Access) बटन का उपयोग करें।' 
-      };
-    }
-
-    const allUsers = this.getAllRegisteredUsers();
-    const cleanMobile = cleanId.replace(/\D/g, '');
-
-    const found = allUsers.find(u => {
-      const userMobile = (u.mobile || '').replace(/\D/g, '');
-      if (cleanMobile.length === 10 && userMobile === cleanMobile) return true;
-      if (u.email && u.email.toLowerCase() === cleanId) return true;
-      return false;
-    });
-
-    if (found) {
-      if (found.password && password && found.password !== password.trim()) {
-        return { success: false, error: 'अमान्य पासवर्ड! कृपया सही पासवर्ड दर्ज करें।' };
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: cleanId, password: password || '' })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return {
+          success: false,
+          notRegistered: Boolean(data.notRegistered),
+          needsSetup: Boolean(data.needsSetup),
+          error: data.error || 'लॉगिन विफल रहा।'
+        };
       }
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(found));
-      notifyListeners(found);
-      return { success: true, user: found };
-    }
 
-    return {
-      success: false,
-      notRegistered: true,
-      error: 'यह खाता पंजीकृत नहीं है। कृपया पहले नया पंजीकरण करें।'
-    };
+      this.setAuthToken(data.token || null);
+      saveUserProfile(data.user);
+      notifyListeners(data.user);
+      return { success: true, user: data.user };
+    } catch {
+      return { success: false, error: 'प्रमाणीकरण सर्वर से संपर्क नहीं हो सका।' };
+    }
   },
 
-  // Normal Employee Registration
-  register(userData: {
+  async register(userData: {
     name: string;
     mobile: string;
     email?: string;
     district: string;
     department: string;
     designation: string;
-    password?: string;
-  }): { success: boolean; user?: UserProfile; error?: string } {
-    if (!userData.name.trim()) {
-      return { success: false, error: 'कृपया पूरा नाम दर्ज करें।' };
-    }
-    const cleanMobile = userData.mobile.trim().replace(/\D/g, '');
-    if (!cleanMobile || cleanMobile.length !== 10) {
-      return { success: false, error: 'कृपया 10 अंकों का मान्य मोबाइल नंबर दर्ज करें।' };
-    }
-
-    const allUsers = this.getAllRegisteredUsers();
-    const exists = allUsers.some(u => (u.mobile || '').replace(/\D/g, '') === cleanMobile);
-    if (exists) {
-      return { success: false, error: 'यह मोबाइल नंबर पहले से पंजीकृत है। कृपया लॉगिन करें।' };
-    }
-
-    const newUser: UserProfile = {
-      id: `usr-${Date.now()}`,
-      name: userData.name.trim(),
-      mobile: cleanMobile,
-      email: userData.email?.trim() || undefined,
-      password: userData.password?.trim() || undefined,
-      district: userData.district || 'लखनऊ (Lucknow)',
-      department: userData.department || 'चिकित्सा स्वास्थ्य एवं परिवार कल्याण (Health Dept)',
-      designation: userData.designation.trim() || 'डाटा एंट्री ऑपरेटर',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      isVerified: false,
-      role: 'user',
-      joinedDate: 'हाल ही में',
-      savedPostIds: [],
-      savedOrderIds: [],
-      savedNewsIds: []
-    };
-
-    allUsers.unshift(newUser);
-    localStorage.setItem(STORAGE_KEY_ALL_USERS, JSON.stringify(allUsers));
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(newUser));
-    notifyListeners(newUser);
-    return { success: true, user: newUser };
-  },
-
-  updateProfile(updates: Partial<UserProfile>): UserProfile | null {
-    const current = this.getCurrentUser();
-    if (!current) return null;
-    const updated: UserProfile = { ...current, ...updates };
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updated));
-
-    const allUsers = this.getAllRegisteredUsers().map(u => u.id === updated.id ? updated : u);
-    localStorage.setItem(STORAGE_KEY_ALL_USERS, JSON.stringify(allUsers));
-    notifyListeners(updated);
-    return updated;
-  },
-
-  getAllRegisteredUsers(): UserProfile[] {
+    password: string;
+  }): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY_ALL_USERS);
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      return [];
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'पंजीकरण विफल रहा।' };
+      }
+
+      this.setAuthToken(data.token || null);
+      saveUserProfile(data.user);
+      notifyListeners(data.user);
+      return { success: true, user: data.user };
+    } catch {
+      return { success: false, error: 'पंजीकरण सर्वर से संपर्क नहीं हो सका।' };
     }
   },
 
-  getSavedCredentials(): { loginId: string; password?: string; remember: boolean } | null {
+  async loginWithOtp(
+    mobile: string,
+    otp: string,
+    otpChallenge?: string
+  ): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    try {
+      const res = await fetch('/api/auth/otp-login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, otp, otpChallenge })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'OTP लॉगिन विफल रहा।' };
+      }
+
+      this.setAuthToken(data.token || null);
+      saveUserProfile(data.user);
+      notifyListeners(data.user);
+      return { success: true, user: data.user };
+    } catch {
+      return { success: false, error: 'सत्यापन सर्वर से संपर्क विफल रहा।' };
+    }
+  },
+
+  async requestEmailOtp(email: string): Promise<{
+    success: boolean;
+    message: string;
+    gatewayNotConfigured?: boolean;
+  }> {
+    try {
+      const res = await fetch('/api/auth/email-otp/request', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      return {
+        success: Boolean(data.success),
+        message: data.message || 'ईमेल OTP अनुरोध प्रेषित किया गया।',
+        gatewayNotConfigured: Boolean(data.gatewayNotConfigured)
+      };
+    } catch {
+      return { success: false, message: 'सर्वर से संपर्क विफल रहा।' };
+    }
+  },
+
+  async verifyEmailOtp(
+    email: string,
+    otp: string
+  ): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    try {
+      const res = await fetch('/api/auth/email-otp/verify', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'Email OTP लॉगिन विफल रहा।' };
+      }
+
+      this.setAuthToken(data.token || null);
+      saveUserProfile(data.user);
+      notifyListeners(data.user);
+      return { success: true, user: data.user };
+    } catch {
+      return { success: false, error: 'सत्यापन सर्वर से संपर्क विफल रहा।' };
+    }
+  },
+
+  async resetPasswordWithOtp(
+    mobile: string,
+    verificationToken: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, verificationToken, newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'पासवर्ड अपडेट विफल रहा।' };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'सर्वर से संपर्क विफल रहा।' };
+    }
+  },
+
+  async updateProfile(updates: Partial<UserProfile>): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    const token = this.getAuthToken();
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch('/api/auth/profile', {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.user) {
+        return { success: false, error: data.error || 'प्रोफ़ाइल अपडेट विफल रहा।' };
+      }
+      saveUserProfile(data.user);
+      notifyListeners(data.user);
+      return { success: true, user: data.user };
+    } catch {
+      return { success: false, error: 'सर्वर से संपर्क विफल रहा।' };
+    }
+  },
+
+  getSavedCredentials(): { loginId: string; remember: boolean } | null {
     try {
       const data = localStorage.getItem(STORAGE_KEY_SAVED_CREDS);
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+      const parsed = JSON.parse(data);
+      // Never retain any legacy saved password field
+      if (parsed && typeof parsed === 'object') {
+        return { loginId: parsed.loginId || '', remember: Boolean(parsed.remember) };
+      }
+      return null;
     } catch {
       return null;
     }
   },
 
-  saveCredentials(loginId: string, password?: string, remember: boolean = true): void {
+  saveCredentials(loginId: string, remember: boolean = true): void {
     try {
       if (remember && loginId.trim()) {
-        localStorage.setItem(STORAGE_KEY_SAVED_CREDS, JSON.stringify({
-          loginId: loginId.trim(),
-          password: password || '',
-          remember: true
-        }));
+        localStorage.setItem(
+          STORAGE_KEY_SAVED_CREDS,
+          JSON.stringify({
+            loginId: loginId.trim(),
+            remember: true
+          })
+        );
       } else {
         localStorage.removeItem(STORAGE_KEY_SAVED_CREDS);
       }
@@ -383,53 +515,66 @@ export const authService = {
     }
   },
 
-  async requestOtp(mobile: string): Promise<{ success: boolean; message: string; phoneMasked?: string }> {
+  async requestOtp(mobile: string): Promise<{
+    success: boolean;
+    message: string;
+    phoneMasked?: string;
+    otpChallenge?: string;
+    gatewayNotConfigured?: boolean;
+  }> {
     try {
       const res = await fetch('/api/request-otp', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile })
       });
       const data = await res.json();
       return {
-        success: data.success,
+        success: Boolean(data.success),
         message: data.message || 'OTP अनुरोध प्रेषित किया गया।',
-        phoneMasked: data.phoneMasked
+        phoneMasked: data.phoneMasked,
+        otpChallenge: data.otpChallenge,
+        gatewayNotConfigured: Boolean(data.gatewayNotConfigured)
       };
-    } catch (e) {
+    } catch {
       return { success: false, message: 'OTP गेटवे से संपर्क विफल रहा।' };
     }
   },
 
-  async verifyOtp(mobile: string, otp: string): Promise<{ success: boolean; verificationToken?: string; error?: string }> {
+  async verifyOtp(
+    mobile: string,
+    otp: string,
+    otpChallenge?: string
+  ): Promise<{ success: boolean; verificationToken?: string; error?: string }> {
     try {
       const res = await fetch('/api/verify-otp', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile, otp })
+        body: JSON.stringify({ mobile, otp, otpChallenge })
       });
-      const data = await res.json();
-      return data;
-    } catch (e) {
+      return await res.json();
+    } catch {
       return { success: false, error: 'सत्यापन सर्वर से संपर्क विफल रहा।' };
     }
   },
 
   async logout(): Promise<void> {
     const token = this.getAuthToken();
-    if (token) {
-      try {
-        await fetch('/api/admin/logout', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } catch (e) {
-        // Silently caught
-      }
+    try {
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers
+      });
+    } catch {
+      // Silently caught
     }
-    localStorage.removeItem(STORAGE_KEY_USER);
-    localStorage.removeItem(STORAGE_KEY_TOKEN);
-    sessionStorage.removeItem(STORAGE_KEY_TOKEN);
+    this.setAuthToken(null);
+    saveUserProfile(null);
     notifyListeners(null);
   },
 

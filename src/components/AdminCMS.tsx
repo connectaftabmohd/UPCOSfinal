@@ -68,14 +68,28 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const [isAuthorized, setIsAuthorized] = useState(() => {
     return authService.isAdminUser();
   });
+  const [isVerifyingSession, setIsVerifyingSession] = useState(true);
+  const [needsAdminSetup, setNeedsAdminSetup] = useState(false);
   const [passkeyInput, setPasskeyInput] = useState('');
+  const [confirmPasskeyInput, setConfirmPasskeyInput] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Validate server session on mount
+  // Validate server session & admin setup status on mount
   React.useEffect(() => {
-    authService.verifyServerSession().then((user) => {
-      setIsAuthorized(Boolean(user && user.isAdmin));
-    });
+    let mounted = true;
+    Promise.all([authService.verifyServerSession(), authService.getAdminStatus()])
+      .then(([user, status]) => {
+        if (!mounted) return;
+        setIsAuthorized(Boolean(user && user.isAdmin));
+        setNeedsAdminSetup(Boolean(status.needsSetup));
+        setIsVerifyingSession(false);
+      })
+      .catch(() => {
+        if (mounted) setIsVerifyingSession(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const [activeTab, setActiveTab] = useState<AdminTab>('DASHBOARD');
@@ -95,16 +109,37 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleAuthorize = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
+    if (!passkeyInput.trim()) {
+      setAuthError('कृपया पासवर्ड दर्ज करें।');
+      return;
+    }
+    if (needsAdminSetup) {
+      if (passkeyInput.trim().length < 6) {
+        setAuthError('प्रशासक पासवर्ड कम से कम 6 अक्षरों/अंकों का होना चाहिए।');
+        return;
+      }
+      if (passkeyInput.trim() !== confirmPasskeyInput.trim()) {
+        setAuthError('दोनों पासवर्ड मेल नहीं खाते। कृपया पुनः जांचें।');
+        return;
+      }
+    }
     try {
-      const res = await authService.loginAdmin('admin', passkeyInput);
+      const res = needsAdminSetup
+        ? await authService.setupAdminPassword('admin', passkeyInput)
+        : await authService.loginAdmin('admin', passkeyInput);
       if (res.success && res.user) {
         setIsAuthorized(true);
+        setNeedsAdminSetup(false);
         setPasskeyInput('');
+        setConfirmPasskeyInput('');
         showNotification('प्रशासक पोर्टल में स्वागत है! आप सभी अनुभागों को संपादित कर सकते हैं।');
       } else {
+        if ('needsSetup' in res && res.needsSetup) {
+          setNeedsAdminSetup(true);
+        }
         setAuthError(res.error || 'गलत पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड दर्ज करें।');
       }
-    } catch (err) {
+    } catch {
       setAuthError('प्रमाणीकरण सर्वर से संपर्क नहीं हो सका।');
     }
   };
@@ -550,6 +585,17 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   // -------------------------------------------------------------
   // AUTHENTICATION GUARD SCREEN
   // -------------------------------------------------------------
+  if (isVerifyingSession && !isAuthorized) {
+    return (
+      <div className="min-h-[85vh] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <div className="bg-white/10 border border-white/20 rounded-2xl px-8 py-6 text-white text-center space-y-3 backdrop-blur-xs">
+          <RefreshCw className="w-8 h-8 text-amber-400 animate-spin mx-auto" />
+          <p className="text-sm font-bold">प्रशासक सत्र सत्यापित किया जा रहा है...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-[85vh] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
@@ -562,7 +608,9 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
               प्रशासनिक पोर्टल (Admin Portal)
             </h2>
             <p className="text-xs text-blue-200/90 mt-1">
-              उत्तर प्रदेश आउटसोर्सिंग सेवा निगम पोर्टल प्रबंधन
+              {needsAdminSetup
+                ? 'प्रथम बार प्रशासक पासवर्ड सेट करें (First-Time Admin Setup)'
+                : 'उत्तर प्रदेश आउटसोर्सिंग सेवा निगम पोर्टल प्रबंधन'}
             </p>
           </div>
 
@@ -570,17 +618,35 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <KeyRound className="w-4 h-4 text-blue-700" />
-                <span>व्यवस्थापक पासवर्ड (Admin Password)</span>
+                <span>
+                  {needsAdminSetup ? 'नया प्रशासक पासवर्ड बनाएं (कम से कम 6 अक्षर)' : 'व्यवस्थापक पासवर्ड (Admin Password)'}
+                </span>
               </label>
               <input
                 type="password"
                 value={passkeyInput}
                 onChange={(e) => setPasskeyInput(e.target.value)}
-                placeholder="प्रशासक पासवर्ड दर्ज करें"
+                placeholder={needsAdminSetup ? 'नया सुरक्षित पासवर्ड दर्ज करें' : 'प्रशासक पासवर्ड दर्ज करें'}
                 className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-900 focus:outline-hidden font-mono tracking-widest text-center"
                 autoFocus
               />
             </div>
+
+            {needsAdminSetup && (
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>पासवर्ड की पुष्टि करें</span>
+                </label>
+                <input
+                  type="password"
+                  value={confirmPasskeyInput}
+                  onChange={(e) => setConfirmPasskeyInput(e.target.value)}
+                  placeholder="वही पासवर्ड दोबारा दर्ज करें"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-900 focus:outline-hidden font-mono tracking-widest text-center"
+                />
+              </div>
+            )}
 
             {authError && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium flex items-center gap-2">
@@ -594,7 +660,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
               className="w-full py-3 px-4 bg-blue-900 hover:bg-blue-800 active:bg-blue-950 text-white font-bold text-sm rounded-xl transition shadow-md cursor-pointer flex items-center justify-center gap-2"
             >
               <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>प्रशासनिक पोर्टल में प्रवेश करें</span>
+              <span>{needsAdminSetup ? 'पासवर्ड सेट करें व प्रवेश करें' : 'प्रशासनिक पोर्टल में प्रवेश करें'}</span>
             </button>
 
             <div className="pt-2 text-center">

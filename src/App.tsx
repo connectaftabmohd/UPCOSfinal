@@ -500,7 +500,7 @@ function MainApp() {
     return { type: 'home' };
   }, [location.pathname]);
 
-  // Lifecycle listeners
+  // Lifecycle listeners (run once on mount)
   useEffect(() => {
     refreshData();
 
@@ -525,7 +525,7 @@ function MainApp() {
         (e.altKey && (e.key === 'a' || e.key === 'A'))
       ) {
         e.preventDefault();
-        if (authService.isAdminUser(currentUser)) {
+        if (authService.isAdminUser()) {
           navigate('/admin');
         } else {
           setIsAdminAccessModalOpen(true);
@@ -535,7 +535,7 @@ function MainApp() {
 
     const checkAdminHash = () => {
       if (window.location.hash === '#admin') {
-        if (authService.isAdminUser(currentUser)) {
+        if (authService.isAdminUser()) {
           navigate('/admin');
         } else {
           setIsAdminAccessModalOpen(true);
@@ -553,7 +553,7 @@ function MainApp() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('hashchange', checkAdminHash);
     };
-  }, [currentUser]);
+  }, []);
 
   // Update Dynamic SEO per pathname
   useEffect(() => {

@@ -35,6 +35,29 @@ export interface CommunityPostRecord {
   isBlocked?: boolean;
 }
 
+export interface StoredUserRecord {
+  id: string;
+  name: string;
+  mobile: string;
+  email?: string;
+  passwordHash?: string;
+  salt?: string;
+  district: string;
+  department: string;
+  designation: string;
+  avatar?: string;
+  isVerified?: boolean;
+  role: 'admin' | 'user';
+  joinedDate: string;
+}
+
+export interface AdminCredentialRecord {
+  email: string;
+  hash: string;
+  salt: string;
+  updatedAt: string;
+}
+
 export interface DatabaseSchema {
   news: NewsItem[];
   orders: GovernmentOrder[];
@@ -42,37 +65,35 @@ export interface DatabaseSchema {
   faqs: FAQItem[];
   communityPosts: CommunityPostRecord[];
   contacts: ContactMessage[];
-  users: Array<{
-    id: string;
-    name: string;
-    mobile: string;
-    email?: string;
-    passwordHash?: string;
-    salt?: string;
-    district: string;
-    department: string;
-    designation: string;
-    role: 'admin' | 'user';
-    joinedDate: string;
-  }>;
+  users: StoredUserRecord[];
+  adminCredential?: AdminCredentialRecord;
 }
 
 const DB_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.resolve(DB_DIR, 'db.json');
+const TMP_DB_FILE = path.resolve('/tmp', 'upcos-db.json');
 
 let cachedDb: DatabaseSchema | null = null;
 
 function ensureInitialDatabase(): DatabaseSchema {
   if (cachedDb) return cachedDb;
 
-  try {
-    if (fs.existsSync(DB_FILE)) {
-      const raw = fs.readFileSync(DB_FILE, 'utf-8');
-      cachedDb = JSON.parse(raw);
-      return cachedDb!;
+  for (const candidate of [TMP_DB_FILE, DB_FILE]) {
+    try {
+      if (fs.existsSync(candidate)) {
+        const raw = fs.readFileSync(candidate, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          if (!Array.isArray(parsed.users)) parsed.users = [];
+          if (!Array.isArray(parsed.contacts)) parsed.contacts = [];
+          if (!Array.isArray(parsed.communityPosts)) parsed.communityPosts = [];
+          cachedDb = parsed;
+          return cachedDb!;
+        }
+      }
+    } catch (err) {
+      console.error(`Error loading ${candidate}:`, err);
     }
-  } catch (err) {
-    console.error('Error loading db.json:', err);
   }
 
   // Seed default data
@@ -104,8 +125,12 @@ function ensureInitialDatabase(): DatabaseSchema {
       fs.mkdirSync(DB_DIR, { recursive: true });
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf-8');
-  } catch (e) {
-    // In serverless / read-only environment, keep in memory
+  } catch {
+    try {
+      fs.writeFileSync(TMP_DB_FILE, JSON.stringify(initial, null, 2), 'utf-8');
+    } catch {
+      // Pure in-memory fallback
+    }
   }
 
   cachedDb = initial;
@@ -114,13 +139,18 @@ function ensureInitialDatabase(): DatabaseSchema {
 
 function persistDb(): void {
   if (!cachedDb) return;
+  const serialized = JSON.stringify(cachedDb, null, 2);
   try {
     if (!fs.existsSync(DB_DIR)) {
       fs.mkdirSync(DB_DIR, { recursive: true });
     }
-    fs.writeFileSync(DB_FILE, JSON.stringify(cachedDb, null, 2), 'utf-8');
-  } catch (e) {
-    // In serverless environment, memory fallback
+    fs.writeFileSync(DB_FILE, serialized, 'utf-8');
+  } catch {
+    try {
+      fs.writeFileSync(TMP_DB_FILE, serialized, 'utf-8');
+    } catch {
+      // In-memory fallback
+    }
   }
 }
 
@@ -234,5 +264,81 @@ export const dbService = {
   getContacts(): ContactMessage[] {
     const db = ensureInitialDatabase();
     return db.contacts;
+  },
+
+  getAdminCredential(): AdminCredentialRecord | undefined {
+    const db = ensureInitialDatabase();
+    return db.adminCredential;
+  },
+
+  setAdminCredential(cred: AdminCredentialRecord): AdminCredentialRecord {
+    const db = ensureInitialDatabase();
+    db.adminCredential = cred;
+    persistDb();
+    return cred;
+  },
+
+  findUserByIdentifier(identifier: string): StoredUserRecord | undefined {
+    const db = ensureInitialDatabase();
+    const clean = (identifier || '').trim().toLowerCase();
+    const cleanMobile = clean.replace(/\D/g, '').slice(-10);
+    return db.users.find(u => {
+      const userMobile = (u.mobile || '').replace(/\D/g, '').slice(-10);
+      if (cleanMobile.length === 10 && userMobile === cleanMobile) return true;
+      if (u.email && u.email.toLowerCase() === clean) return true;
+      return false;
+    });
+  },
+
+  findUserById(id: string): StoredUserRecord | undefined {
+    const db = ensureInitialDatabase();
+    return db.users.find(u => u.id === id);
+  },
+
+  createUser(user: StoredUserRecord): StoredUserRecord {
+    const db = ensureInitialDatabase();
+    db.users.unshift(user);
+    persistDb();
+    return user;
+  },
+
+  updateUser(id: string, updates: Partial<StoredUserRecord>): StoredUserRecord | undefined {
+    const db = ensureInitialDatabase();
+    const idx = db.users.findIndex(u => u.id === id);
+    if (idx < 0) return undefined;
+    db.users[idx] = { ...db.users[idx], ...updates };
+    persistDb();
+    return db.users[idx];
+  },
+
+  updateUserPasswordByMobile(mobile: string, passwordHash: string, salt: string): StoredUserRecord | undefined {
+    const db = ensureInitialDatabase();
+    const cleanMobile = mobile.replace(/\D/g, '').slice(-10);
+    const idx = db.users.findIndex(u => (u.mobile || '').replace(/\D/g, '').slice(-10) === cleanMobile);
+    if (idx < 0) return undefined;
+    db.users[idx] = { ...db.users[idx], passwordHash, salt };
+    persistDb();
+    return db.users[idx];
+  },
+
+  toSafeUserProfile(u: StoredUserRecord): UserProfile {
+    return {
+      id: u.id,
+      name: u.name,
+      mobile: u.mobile,
+      email: u.email,
+      district: u.district,
+      department: u.department,
+      designation: u.designation,
+      avatar: u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      isVerified: Boolean(u.isVerified),
+      isAdmin: u.role === 'admin',
+      role: u.role,
+      joinedDate: u.joinedDate,
+      savedPostIds: [],
+      savedOrderIds: [],
+      savedNewsIds: []
+    };
   }
 };
+

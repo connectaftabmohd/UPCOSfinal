@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  ShieldCheck, 
-  KeyRound, 
-  Lock, 
-  AlertCircle, 
-  Command
+import {
+  X,
+  ShieldCheck,
+  KeyRound,
+  Lock,
+  AlertCircle,
+  Command,
+  CheckCircle2
 } from 'lucide-react';
 import { authService } from '../services/authService';
 import { UserProfile, PageView } from '../types';
@@ -24,14 +25,19 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
   onNavigate
 }) => {
   const [passkey, setPasskey] = useState('');
+  const [confirmPasskey, setConfirmPasskey] = useState('');
+  const [needsSetup, setNeedsSetup] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [rememberPasskey, setRememberPasskey] = useState(true);
 
   React.useEffect(() => {
     if (isOpen) {
       setError('');
       setPasskey('');
+      setConfirmPasskey('');
+      authService.getAdminStatus().then((status) => {
+        setNeedsSetup(Boolean(status.needsSetup));
+      });
     }
   }, [isOpen]);
 
@@ -43,33 +49,50 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
       setError('प्रशासक लॉगिन हेतु पासवर्ड दर्ज करना अनिवार्य है।');
       return;
     }
+
+    if (needsSetup) {
+      if (passkey.trim().length < 6) {
+        setError('प्रशासक पासवर्ड कम से कम 6 अक्षरों/अंकों का होना चाहिए।');
+        return;
+      }
+      if (passkey.trim() !== confirmPasskey.trim()) {
+        setError('दोनों पासवर्ड मेल नहीं खाते। कृपया पुनः जांचें।');
+        return;
+      }
+    }
+
     setError('');
     setIsLoading(true);
 
     try {
-      const res = await authService.loginAdmin('admin', passkey);
+      const res = needsSetup
+        ? await authService.setupAdminPassword('admin', passkey)
+        : await authService.loginAdmin('admin', passkey);
       setIsLoading(false);
       if (res.success && res.user) {
         onSuccess(res.user);
         onClose();
         onNavigate({ type: 'admin' });
       } else {
+        if ('needsSetup' in res && res.needsSetup) {
+          setNeedsSetup(true);
+        }
         setError(res.error || 'गलत पासवर्ड! कृपया सही व्यवस्थापक पासवर्ड प्रविष्ट करें।');
       }
-    } catch (err: any) {
+    } catch {
       setIsLoading(false);
       setError('प्रमाणीकरण सर्वर से संपर्क नहीं हो सका।');
     }
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden my-auto"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white p-5 sm:p-6 relative border-b border-amber-500/30">
@@ -112,7 +135,9 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-amber-950">
-              आफताब मोहम्मद (Admin/Me) — व्यवस्थापक पोर्टल अनलॉक करने के लिए अपना पासवर्ड दर्ज करें।
+              {needsSetup
+                ? 'प्रथम बार प्रशासक पासवर्ड सेट करें (First-Time Admin Setup) — यह पासवर्ड सुरक्षित रूप से सर्वर पर हैश होकर सेव होगा।'
+                : 'आफताब मोहम्मद (Admin/Me) — व्यवस्थापक पोर्टल अनलॉक करने के लिए अपना पासवर्ड दर्ज करें।'}
             </p>
           </div>
 
@@ -127,29 +152,54 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                व्यवस्थापक पासवर्ड (Admin Password)
+                {needsSetup ? 'नया प्रशासक पासवर्ड बनाएं (कम से कम 6 अक्षर)' : 'व्यवस्थापक पासवर्ड (Admin Password)'}
               </label>
               <div className="relative">
                 <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   value={passkey}
-                  onChange={e => setPasskey(e.target.value)}
-                  autoComplete="current-password"
-                  placeholder="प्रशासक पासवर्ड प्रविष्ट करें"
+                  onChange={(e) => setPasskey(e.target.value)}
+                  autoComplete={needsSetup ? 'new-password' : 'current-password'}
+                  placeholder={needsSetup ? 'नया सुरक्षित पासवर्ड दर्ज करें' : 'प्रशासक पासवर्ड प्रविष्ट करें'}
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition"
                   autoFocus
                 />
               </div>
             </div>
 
+            {needsSetup && (
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  पासवर्ड की पुष्टि करें (Confirm Password)
+                </label>
+                <div className="relative">
+                  <CheckCircle2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="password"
+                    value={confirmPasskey}
+                    onChange={(e) => setConfirmPasskey(e.target.value)}
+                    autoComplete="new-password"
+                    placeholder="वही पासवर्ड दोबारा दर्ज करें"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition"
+                  />
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs transition"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs transition disabled:opacity-60"
             >
               <Lock className="w-4 h-4 text-amber-400" />
-              <span>{isLoading ? 'सत्यापित किया जा रहा है...' : 'पासवर्ड सत्यापित करें व एडमिन पोर्टल खोलें'}</span>
+              <span>
+                {isLoading
+                  ? 'सत्यापित किया जा रहा है...'
+                  : needsSetup
+                  ? 'पासवर्ड सेट करें व एडमिन पोर्टल खोलें'
+                  : 'पासवर्ड सत्यापित करें व एडमिन पोर्टल खोलें'}
+              </span>
             </button>
           </form>
 

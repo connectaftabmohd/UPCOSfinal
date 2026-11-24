@@ -2,15 +2,26 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
-import { 
-  verifyAdminCredentials, 
-  createSessionToken, 
-  validateSessionToken, 
-  invalidateSessionToken, 
-  requestSecureOtp, 
-  verifySecureOtp 
-} from "./src/server/securityService";
+import {
+  handleAdminLogin,
+  handleAdminSetup,
+  handleAdminStatus,
+  handleAdminVerify,
+  handleAuthLogin,
+  handleAuthOtpLogin,
+  handleAuthProfileUpdate,
+  handleAuthRegister,
+  handleAuthResetPassword,
+  handleAuthVerify,
+  handleEmailOtpRequest,
+  handleEmailOtpVerify,
+  handleLogout,
+  handleRequestOtp,
+  handleVerifyOtp,
+  AuthRouteResponse
+} from "./src/server/authHandlers";
 import { dbService } from "./src/server/dbService";
+import { supabaseService } from "./src/server/supabaseService";
 
 dotenv.config();
 
@@ -18,7 +29,26 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.set("trust proxy", 1);
   app.use(express.json());
+
+  const isReqHttps = (req: express.Request) => {
+    const xfProto = (req.headers["x-forwarded-proto"] as string) || "";
+    return req.secure || xfProto.split(",")[0].trim().toLowerCase() === "https";
+  };
+
+  const toAuthReq = (req: express.Request) => ({
+    body: req.body || {},
+    headers: req.headers as Record<string, string | string[] | undefined>,
+    isHttps: isReqHttps(req)
+  });
+
+  const sendAuthRes = (res: express.Response, result: AuthRouteResponse) => {
+    if (result.cookie) {
+      res.setHeader("Set-Cookie", result.cookie);
+    }
+    return res.status(result.status).json(result.body);
+  };
 
   // API Health Endpoint
   app.get("/api/health", (_req, res) => {
@@ -66,80 +96,29 @@ async function startServer() {
   });
 
   // 1. Admin Authentication Endpoints
-  app.post("/api/admin/login", (req, res) => {
-    const { loginId, passkey } = req.body;
-    const verifyRes = verifyAdminCredentials(loginId, passkey);
-    if (!verifyRes.success) {
-      return res.status(401).json({ success: false, error: verifyRes.error });
-    }
-    const token = createSessionToken("admin-aftab", "admin");
-    res.cookie("uposn_session", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 86400 * 1000
-    });
-    return res.json({
-      success: true,
-      token,
-      user: {
-        id: "admin-aftab",
-        name: "आफताब मोहम्मद (Admin)",
-        email: "aftab.mohd9@gmail.com",
-        role: "admin",
-        isAdmin: true
-      }
-    });
-  });
+  app.get("/api/admin/status", async (_req, res) => sendAuthRes(res, await handleAdminStatus()));
+  app.post("/api/admin/setup", async (req, res) => sendAuthRes(res, await handleAdminSetup(toAuthReq(req))));
+  app.post("/api/admin/login", async (req, res) => sendAuthRes(res, await handleAdminLogin(toAuthReq(req))));
+  app.get("/api/admin/verify", (req, res) => sendAuthRes(res, handleAdminVerify(toAuthReq(req))));
+  app.post("/api/admin/logout", (req, res) => sendAuthRes(res, handleLogout(toAuthReq(req))));
 
-  app.get("/api/admin/verify", (req, res) => {
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.replace(/^Bearer\s+/i, "") || req.cookies?.uposn_session;
-    const session = validateSessionToken(token);
-    if (!session.valid || session.role !== "admin") {
-      return res.status(401).json({ valid: false, error: "Unauthorized session" });
-    }
-    return res.json({
-      valid: true,
-      user: {
-        id: "admin-aftab",
-        name: "आफताब मोहम्मद (Admin)",
-        email: "aftab.mohd9@gmail.com",
-        role: "admin",
-        isAdmin: true
-      }
-    });
-  });
+  // 2. Employee User Authentication Endpoints
+  app.get("/api/auth/verify", async (req, res) => sendAuthRes(res, await handleAuthVerify(toAuthReq(req))));
+  app.post("/api/auth/register", async (req, res) => sendAuthRes(res, await handleAuthRegister(toAuthReq(req))));
+  app.post("/api/auth/login", async (req, res) => sendAuthRes(res, await handleAuthLogin(toAuthReq(req))));
+  app.post("/api/auth/otp-login", async (req, res) => sendAuthRes(res, await handleAuthOtpLogin(toAuthReq(req))));
+  app.post("/api/auth/email-otp/request", async (req, res) => sendAuthRes(res, await handleEmailOtpRequest(toAuthReq(req))));
+  app.post("/api/auth/email-otp/verify", async (req, res) => sendAuthRes(res, await handleEmailOtpVerify(toAuthReq(req))));
+  app.post("/api/auth/reset-password", async (req, res) => sendAuthRes(res, await handleAuthResetPassword(toAuthReq(req))));
+  app.post("/api/auth/profile", async (req, res) => sendAuthRes(res, await handleAuthProfileUpdate(toAuthReq(req))));
+  app.post("/api/auth/logout", (req, res) => sendAuthRes(res, handleLogout(toAuthReq(req))));
 
-  app.post("/api/admin/logout", (req, res) => {
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.replace(/^Bearer\s+/i, "") || req.cookies?.uposn_session;
-    invalidateSessionToken(token);
-    res.clearCookie("uposn_session");
-    res.json({ success: true });
-  });
+  // 3. Cryptographically Secure OTP Endpoints
+  app.post("/api/request-otp", async (req, res) => sendAuthRes(res, await handleRequestOtp(toAuthReq(req))));
+  app.post("/api/verify-otp", (req, res) => sendAuthRes(res, handleVerifyOtp(toAuthReq(req))));
 
-  // 2. Cryptographically Secure OTP Endpoints
-  app.post("/api/request-otp", (req, res) => {
-    const { mobile } = req.body;
-    const result = requestSecureOtp(mobile || "");
-    if (!result.success) {
-      return res.status(400).json(result);
-    }
-    res.json(result);
-  });
-
-  app.post("/api/verify-otp", (req, res) => {
-    const { mobile, otp } = req.body;
-    const result = verifySecureOtp(mobile || "", otp || "");
-    if (!result.success) {
-      return res.status(400).json(result);
-    }
-    res.json(result);
-  });
-
-  // 3. Contact Form Submission (Honeypot anti-spam protected)
-  app.post("/api/contact", (req, res) => {
+  // 4. Contact Form Submission (Honeypot anti-spam protected)
+  app.post("/api/contact", async (req, res) => {
     const { name, email, phone, subject, message, honeypot } = req.body;
     if (honeypot) {
       return res.json({ success: true });
@@ -148,6 +127,9 @@ async function startServer() {
       return res.status(400).json({ success: false, error: "कृपया नाम, ईमेल और संदेश अवश्य भरें।" });
     }
     const record = dbService.saveContact({ name, email, phone, subject: subject || "सामान्य पूछताछ", message });
+    if (supabaseService.isConfigured()) {
+      await supabaseService.saveContact(record);
+    }
     res.json({ success: true, id: record.id });
   });
 

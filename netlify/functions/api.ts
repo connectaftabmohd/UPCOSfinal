@@ -1,157 +1,177 @@
-import { 
-  verifyAdminCredentials, 
-  createSessionToken, 
-  validateSessionToken, 
-  invalidateSessionToken, 
-  requestSecureOtp, 
-  verifySecureOtp 
-} from '../../src/server/securityService';
+import {
+  handleAdminLogin,
+  handleAdminSetup,
+  handleAdminStatus,
+  handleAdminVerify,
+  handleAuthLogin,
+  handleAuthOtpLogin,
+  handleAuthProfileUpdate,
+  handleAuthRegister,
+  handleAuthResetPassword,
+  handleAuthVerify,
+  handleEmailOtpRequest,
+  handleEmailOtpVerify,
+  handleLogout,
+  handleRequestOtp,
+  handleVerifyOtp,
+  AuthRouteResponse
+} from '../../src/server/authHandlers';
 import { dbService } from '../../src/server/dbService';
+import { supabaseService } from '../../src/server/supabaseService';
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Content-Type': 'application/json; charset=utf-8'
-};
+function buildResponseHeaders(event: any): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Content-Type': 'application/json; charset=utf-8',
+    'X-Robots-Tag': 'noindex, nofollow'
+  };
+
+  const origin = event.headers?.origin || event.headers?.Origin || '';
+  const host = (event.headers?.['x-forwarded-host'] || event.headers?.host || event.headers?.Host || '')
+    .split(',')[0]
+    .trim()
+    .toLowerCase();
+
+  if (origin) {
+    try {
+      const originHost = new URL(origin).host.toLowerCase();
+      if (originHost === host || originHost === 'upcos.netlify.app') {
+        headers['Access-Control-Allow-Origin'] = origin;
+        headers['Access-Control-Allow-Credentials'] = 'true';
+        headers['Vary'] = 'Origin';
+      }
+    } catch {
+      // Ignore malformed Origin header
+    }
+  }
+
+  return headers;
+}
+
+function formatAuthResponse(baseHeaders: Record<string, string>, result: AuthRouteResponse) {
+  const headers = { ...baseHeaders };
+  if (result.cookie) {
+    headers['Set-Cookie'] = result.cookie;
+  }
+  return {
+    statusCode: result.status,
+    headers,
+    body: JSON.stringify(result.body)
+  };
+}
 
 export const handler = async (event: any) => {
+  const baseHeaders = buildResponseHeaders(event);
+
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
-      headers: CORS_HEADERS,
+      headers: baseHeaders,
       body: ''
     };
   }
 
   const path = event.path.replace(/^\/\.netlify\/functions\/api/, '').replace(/^\/api/, '') || '/';
   const method = event.httpMethod;
+  const xfProto = (event.headers?.['x-forwarded-proto'] || 'https').split(',')[0].trim().toLowerCase();
+  const isHttps = xfProto === 'https';
 
   try {
     const body = event.body ? JSON.parse(event.body) : {};
+    const authReq = {
+      body,
+      headers: (event.headers || {}) as Record<string, string | string[] | undefined>,
+      isHttps
+    };
 
     // 1. Admin Authentication
+    if (path === '/admin/status' && method === 'GET') {
+      return formatAuthResponse(baseHeaders, await handleAdminStatus());
+    }
+    if (path === '/admin/setup' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleAdminSetup(authReq));
+    }
     if (path === '/admin/login' && method === 'POST') {
-      const { loginId, passkey } = body;
-      const verifyRes = verifyAdminCredentials(loginId, passkey);
-      if (!verifyRes.success) {
-        return {
-          statusCode: 401,
-          headers: CORS_HEADERS,
-          body: JSON.stringify({ success: false, error: verifyRes.error })
-        };
-      }
-      const token = createSessionToken('admin-aftab', 'admin');
-      return {
-        statusCode: 200,
-        headers: {
-          ...CORS_HEADERS,
-          'Set-Cookie': `uposn_session=${token}; HttpOnly; Path=/; SameSite=Strict; Max-Age=86400`
-        },
-        body: JSON.stringify({
-          success: true,
-          token,
-          user: {
-            id: 'admin-aftab',
-            name: 'आफताब मोहम्मद (Admin)',
-            email: 'aftab.mohd9@gmail.com',
-            role: 'admin',
-            isAdmin: true
-          }
-        })
-      };
+      return formatAuthResponse(baseHeaders, await handleAdminLogin(authReq));
     }
-
     if (path === '/admin/verify' && method === 'GET') {
-      const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      const token = authHeader.replace(/^Bearer\s+/i, '');
-      const session = validateSessionToken(token);
-      if (!session.valid || session.role !== 'admin') {
-        return {
-          statusCode: 401,
-          headers: CORS_HEADERS,
-          body: JSON.stringify({ valid: false, error: 'Unauthorized or expired session' })
-        };
-      }
-      return {
-        statusCode: 200,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          valid: true,
-          user: {
-            id: 'admin-aftab',
-            name: 'आफताब मोहम्मद (Admin)',
-            email: 'aftab.mohd9@gmail.com',
-            role: 'admin',
-            isAdmin: true
-          }
-        })
-      };
+      return formatAuthResponse(baseHeaders, handleAdminVerify(authReq));
     }
-
     if (path === '/admin/logout' && method === 'POST') {
-      const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      const token = authHeader.replace(/^Bearer\s+/i, '');
-      invalidateSessionToken(token);
-      return {
-        statusCode: 200,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ success: true })
-      };
+      return formatAuthResponse(baseHeaders, handleLogout(authReq));
     }
 
-    // 2. Secure OTP Endpoints
+    // 2. Employee User Authentication
+    if (path === '/auth/verify' && method === 'GET') {
+      return formatAuthResponse(baseHeaders, await handleAuthVerify(authReq));
+    }
+    if (path === '/auth/register' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleAuthRegister(authReq));
+    }
+    if (path === '/auth/login' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleAuthLogin(authReq));
+    }
+    if (path === '/auth/otp-login' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleAuthOtpLogin(authReq));
+    }
+    if (path === '/auth/email-otp/request' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleEmailOtpRequest(authReq));
+    }
+    if (path === '/auth/email-otp/verify' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleEmailOtpVerify(authReq));
+    }
+    if (path === '/auth/reset-password' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleAuthResetPassword(authReq));
+    }
+    if (path === '/auth/profile' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleAuthProfileUpdate(authReq));
+    }
+    if (path === '/auth/logout' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, handleLogout(authReq));
+    }
+
+    // 3. Secure OTP Endpoints
     if (path === '/request-otp' && method === 'POST') {
-      const { mobile } = body;
-      const res = requestSecureOtp(mobile || '');
-      return {
-        statusCode: res.success ? 200 : 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify(res)
-      };
+      return formatAuthResponse(baseHeaders, await handleRequestOtp(authReq));
     }
-
     if (path === '/verify-otp' && method === 'POST') {
-      const { mobile, otp } = body;
-      const res = verifySecureOtp(mobile || '', otp || '');
-      return {
-        statusCode: res.success ? 200 : 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify(res)
-      };
+      return formatAuthResponse(baseHeaders, handleVerifyOtp(authReq));
     }
 
-    // 3. Contact Form Submission
+    // 4. Contact Form Submission
     if (path === '/contact' && method === 'POST') {
       const { name, email, phone, subject, message, honeypot } = body;
       if (honeypot) {
-        // Anti-spam bot trap
         return {
           statusCode: 200,
-          headers: CORS_HEADERS,
+          headers: baseHeaders,
           body: JSON.stringify({ success: true })
         };
       }
       if (!name || !email || !message) {
         return {
           statusCode: 400,
-          headers: CORS_HEADERS,
+          headers: baseHeaders,
           body: JSON.stringify({ success: false, error: 'कृपया नाम, ईमेल और संदेश अवश्य भरें।' })
         };
       }
       const record = dbService.saveContact({ name, email, phone, subject: subject || 'सामान्य पूछताछ', message });
+      if (supabaseService.isConfigured()) {
+        await supabaseService.saveContact(record);
+      }
       return {
         statusCode: 200,
-        headers: CORS_HEADERS,
+        headers: baseHeaders,
         body: JSON.stringify({ success: true, id: record.id })
       };
     }
 
-    // 4. Public Content Read APIs
+    // 5. Public Content Read APIs
     if (path === '/content/news' && method === 'GET') {
       return {
         statusCode: 200,
-        headers: CORS_HEADERS,
+        headers: baseHeaders,
         body: JSON.stringify(dbService.getNews())
       };
     }
@@ -159,7 +179,7 @@ export const handler = async (event: any) => {
     if (path === '/content/orders' && method === 'GET') {
       return {
         statusCode: 200,
-        headers: CORS_HEADERS,
+        headers: baseHeaders,
         body: JSON.stringify(dbService.getOrders())
       };
     }
@@ -167,7 +187,7 @@ export const handler = async (event: any) => {
     if (path === '/content/community' && method === 'GET') {
       return {
         statusCode: 200,
-        headers: CORS_HEADERS,
+        headers: baseHeaders,
         body: JSON.stringify(dbService.getCommunityPosts())
       };
     }
@@ -177,7 +197,7 @@ export const handler = async (event: any) => {
       if (!authorName || !content || !content.trim()) {
         return {
           statusCode: 400,
-          headers: CORS_HEADERS,
+          headers: baseHeaders,
           body: JSON.stringify({ success: false, error: 'संदेश सामग्री रिक्त नहीं हो सकती।' })
         };
       }
@@ -191,7 +211,7 @@ export const handler = async (event: any) => {
       });
       return {
         statusCode: 201,
-        headers: CORS_HEADERS,
+        headers: baseHeaders,
         body: JSON.stringify({ success: true, post: created })
       };
     }
@@ -201,20 +221,20 @@ export const handler = async (event: any) => {
       const ok = dbService.reportCommunityPost(postId || '');
       return {
         statusCode: 200,
-        headers: CORS_HEADERS,
+        headers: baseHeaders,
         body: JSON.stringify({ success: ok })
       };
     }
 
     return {
       statusCode: 404,
-      headers: CORS_HEADERS,
+      headers: baseHeaders,
       body: JSON.stringify({ error: `Not Found: ${method} ${path}` })
     };
   } catch (err: any) {
     return {
       statusCode: 500,
-      headers: CORS_HEADERS,
+      headers: baseHeaders,
       body: JSON.stringify({ error: err?.message || 'Internal Server Error' })
     };
   }

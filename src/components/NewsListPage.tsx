@@ -24,6 +24,7 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
   const [selectedCategory] = useState(initialCategory || 'ALL');
   const [selectedDept] = useState(initialDepartment || 'ALL');
   const [currentPage, setCurrentPage] = useState(1);
+  const [portraitMap, setPortraitMap] = useState<Record<string, boolean>>({});
   const itemsPerPage = 9;
 
   const safeNews = news || [];
@@ -83,23 +84,40 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {paginatedItems.map((item) => (
+            {paginatedItems.map((item, idx) => {
+              const isFirstCardPortrait = idx === 0 && (portraitMap[item.id] ?? true);
+              return (
               <article
                 key={item.id}
                 className="bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group"
               >
                 <div 
-                  className="relative overflow-hidden aspect-16/10 bg-slate-100 cursor-pointer"
+                  className={`relative overflow-hidden aspect-16/10 cursor-pointer ${
+                    isFirstCardPortrait
+                      ? 'bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-1.5'
+                      : 'bg-slate-100'
+                  }`}
                   onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
                 >
                   <img
                     src={item.featuredImage}
                     alt={item.title}
                     referrerPolicy="no-referrer"
+                    onLoad={(e) => {
+                      if (idx === 0) {
+                        const img = e.currentTarget;
+                        const portrait = img.naturalHeight > img.naturalWidth;
+                        setPortraitMap((prev) => (prev[item.id] === portrait ? prev : { ...prev, [item.id]: portrait }));
+                      }
+                    }}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
                     }}
-                    className="w-full h-full object-cover group-hover:scale-104 transition duration-500"
+                    className={
+                      isFirstCardPortrait
+                        ? 'w-full h-full object-contain rounded-md group-hover:scale-103 transition duration-500'
+                        : 'w-full h-full object-cover group-hover:scale-104 transition duration-500'
+                    }
                   />
                   <div className="absolute top-3 left-3">
                     <span className="bg-blue-900/90 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-0.5 rounded shadow-2xs">
@@ -146,7 +164,8 @@ export const NewsListPage: React.FC<NewsListPageProps> = ({
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         )}
 
