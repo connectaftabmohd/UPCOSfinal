@@ -18,6 +18,8 @@ export interface JobPostingMetadata {
   region?: string;
   country?: string;
   salaryValue: number;
+  salaryMinValue?: number;
+  salaryMaxValue?: number;
   salaryCurrency?: string;
   salaryUnit?: 'MONTH' | 'YEAR' | 'DAY' | 'HOUR';
   datePosted?: string;

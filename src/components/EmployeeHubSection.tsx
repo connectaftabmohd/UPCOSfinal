@@ -295,6 +295,8 @@ export const EmployeeHubSection: React.FC<EmployeeHubSectionProps> = ({
               return (
                 <div key={index} className="pt-3 first:pt-0">
                   <button
+                    type="button"
+                    aria-expanded={isOpen}
                     onClick={() => setOpenFaqIndex(isOpen ? null : index)}
                     className="w-full py-2.5 flex items-center justify-between text-left gap-3 group cursor-pointer"
                   >
@@ -311,11 +313,15 @@ export const EmployeeHubSection: React.FC<EmployeeHubSectionProps> = ({
                     </div>
                   </button>
 
-                  {isOpen && (
-                    <div className="pb-3 text-xs sm:text-sm text-slate-600 leading-relaxed pl-2 sm:pl-4 border-l-2 border-blue-900 ml-1 mt-1 animate-in fade-in duration-200">
-                      {faq.answer}
-                    </div>
-                  )}
+                  <div
+                    className={
+                      isOpen
+                        ? 'pb-3 text-xs sm:text-sm text-slate-600 leading-relaxed pl-2 sm:pl-4 border-l-2 border-blue-900 ml-1 mt-1 animate-in fade-in duration-200'
+                        : 'hidden'
+                    }
+                  >
+                    {faq.answer}
+                  </div>
                 </div>
               );
             })}

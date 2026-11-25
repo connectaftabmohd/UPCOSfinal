@@ -15,7 +15,7 @@ import {
 } from 'react-router-dom';
 import { PageView, NewsItem, GovernmentOrder, Department, FAQItem } from './types';
 import { contentStore } from './data/contentStore';
-import { DEPARTMENTS_DATA } from './data/mockData';
+import { DEPARTMENTS_DATA, FAQS_DATA } from './data/mockData';
 
 // Core UI Components
 import { Header } from './components/Header';
@@ -52,7 +52,72 @@ import { initializeAutoSyncEngine } from './services/sewayojanSyncService';
 import { authService } from './services/authService';
 import { UserProfile } from './types';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { updatePageSEO, getCanonicalUrl } from './utils/seo';
+import {
+  updatePageSEO,
+  getCanonicalUrl,
+  resolveAbsoluteImageUrl,
+  buildJobPostingJsonLd
+} from './utils/seo';
+
+const buildArticleJobPostingNodes = (article: NewsItem) => {
+  const fallbackPrayagrajJob =
+    article.id === 'post-sb-staff-nurse-prayagraj'
+      ? [
+          {
+            identifier: article.id,
+            title: article.title,
+            description: article.shortDescription,
+            hiringOrganization: 'महिला कल्याण विभाग (उत्तर प्रदेश शासन) / SB ENTERPRISES',
+            sameAs: 'https://sewayojan.up.nic.in',
+            locality: 'Prayagraj',
+            region: 'Uttar Pradesh',
+            country: 'IN',
+            salaryValue: 27000,
+            salaryCurrency: 'INR',
+            salaryUnit: 'MONTH' as const,
+            datePosted: article.publicationDate,
+            validThrough: '2026-09-27T23:59:59+05:30',
+            employmentType: 'CONTRACTOR',
+            qualifications: 'B.Sc. Nursing',
+            experienceRequirements: '3 Years'
+          }
+        ]
+      : [];
+
+  const activeJobs =
+    article.jobPostings && article.jobPostings.length > 0
+      ? article.jobPostings
+      : fallbackPrayagrajJob;
+
+  return activeJobs.map((job, idx) =>
+    buildJobPostingJsonLd(job, {
+      articleId: article.id,
+      articleSlug: article.slug,
+      publicationDate: article.publicationDate,
+      sourceUrl: article.sourceUrl,
+      index: idx
+    })
+  );
+};
+
+const buildEmployeeHubFaqJsonLd = (faqsList: FAQItem[], pageUrl: string) => {
+  const activeFaqs = faqsList && faqsList.length > 0 ? faqsList : FAQS_DATA;
+  return {
+    '@type': 'FAQPage',
+    '@id': `${pageUrl}#faq`,
+    url: pageUrl,
+    inLanguage: 'hi-IN',
+    name: 'कर्मचारी सूचना हब – अक्सर पूछे जाने वाले प्रश्न (FAQ)',
+    mainEntity: activeFaqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer
+      }
+    }))
+  };
+};
 
 // -------------------------------------------------------------
 // Route Wrappers with parameter resolution & 404 validation
@@ -72,12 +137,78 @@ function ArticleRouteWrapper({
 
   useEffect(() => {
     if (article) {
+      const canonicalHref = getCanonicalUrl(`/news/${article.slug}`);
+      const absoluteOgImage = resolveAbsoluteImageUrl(article.featuredImage);
+      const jobPostingNodes = buildArticleJobPostingNodes(article);
+
       updatePageSEO({
         title: `${article.title} – UP Outsource Seva Nigam`,
         description: article.shortDescription,
-        canonicalUrl: getCanonicalUrl(`/news/${article.slug}`),
+        keywords: article.tags,
+        canonicalUrl: canonicalHref,
         ogType: 'article',
-        image: article.featuredImage
+        image: article.featuredImage,
+        publishedTime: article.publicationDate,
+        author: article.author,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'NewsArticle',
+              mainEntityOfPage: {
+                '@type': 'WebPage',
+                '@id': canonicalHref
+              },
+              headline: article.title,
+              alternativeHeadline: article.englishTitle || article.title,
+              image: [absoluteOgImage],
+              datePublished: article.publicationDate,
+              dateModified: article.publicationDate,
+              inLanguage: 'hi-IN',
+              isAccessibleForFree: true,
+              articleSection: article.category,
+              wordCount: (article.fullContent || []).join(' ').trim().split(/\s+/).filter(Boolean).length,
+              keywords: article.tags?.join(', '),
+              author: [{ '@type': 'Person', name: article.author, url: getCanonicalUrl('/about-us') }],
+              publisher: {
+                '@type': 'NewsMediaOrganization',
+                name: 'UPCOS – UP Outsource Seva Nigam News & Information',
+                url: 'https://upcos.netlify.app',
+                logo: {
+                  '@type': 'ImageObject',
+                  url: getCanonicalUrl('/logo.png'),
+                  width: 1024,
+                  height: 1024
+                }
+              },
+              description: article.shortDescription
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: 'Home',
+                  item: 'https://upcos.netlify.app/'
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 2,
+                  name: 'News',
+                  item: 'https://upcos.netlify.app/news'
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 3,
+                  name: article.title,
+                  item: canonicalHref
+                }
+              ]
+            },
+            ...jobPostingNodes
+          ]
+        }
       });
     }
   }, [article]);
@@ -184,9 +315,19 @@ function DepartmentRouteWrapper({
   const { id } = useParams<{ id: string }>();
   const dept = departments.find((d) => d.id === id);
 
+  const deptNews = useMemo(
+    () => news.filter((n) => n.departmentId === dept?.id || n.department.includes(dept?.name.substring(0, 4) || '')),
+    [news, dept]
+  );
+  const deptOrders = useMemo(
+    () => orders.filter((o) => o.departmentId === dept?.id || o.department.includes(dept?.name.substring(0, 4) || '')),
+    [orders, dept]
+  );
+
   useEffect(() => {
     if (dept) {
       const deptUrl = getCanonicalUrl(`/departments/${dept.id}`);
+      const deptJobPostings = deptNews.flatMap((article) => buildArticleJobPostingNodes(article));
       updatePageSEO({
         title: `${dept.name} (${dept.englishName}) – आउटसोर्स समाचार व शासनादेश | UPCOS`,
         description: dept.description,
@@ -209,12 +350,13 @@ function DepartmentRouteWrapper({
                 { '@type': 'ListItem', position: 2, name: 'Departments', item: 'https://upcos.netlify.app/departments' },
                 { '@type': 'ListItem', position: 3, name: dept.name, item: deptUrl }
               ]
-            }
+            },
+            ...deptJobPostings
           ]
         }
       });
     }
-  }, [dept]);
+  }, [dept, deptNews]);
 
   if (!dept) {
     return (
@@ -225,9 +367,6 @@ function DepartmentRouteWrapper({
       />
     );
   }
-
-  const deptNews = news.filter((n) => n.departmentId === dept.id || n.department.includes(dept.name.substring(0, 4)));
-  const deptOrders = orders.filter((o) => o.departmentId === dept.id || o.department.includes(dept.name.substring(0, 4)));
 
   return (
     <DepartmentDetailPage
@@ -567,7 +706,11 @@ function MainApp() {
       ]
     });
 
+    const activeJobPostings = (news || []).flatMap((article) => buildArticleJobPostingNodes(article));
+
     if (p === '/') {
+      const homeUrl = getCanonicalUrl('/');
+      const homeFaqSchema = buildEmployeeHubFaqJsonLd(faqs, homeUrl);
       updatePageSEO({
         title: isEn
           ? 'UPCOS – UP Outsource Seva Nigam Portal | News, Shasanadesh & Jobs'
@@ -575,7 +718,20 @@ function MainApp() {
         description: isEn
           ? 'Independent information and awareness portal for outsourced and contractual workers across Uttar Pradesh government departments.'
           : 'उत्तर प्रदेश राज्य सरकार के विभिन्न विभागों में कार्यरत आउटसोर्स एवं संविदा कर्मचारियों के लिए आधिकारिक समाचार, सेवायोजन भर्ती, शासनादेश, न्यूनतम वेतन और सेवा संबंधी जानकारी का प्रमुख स्वतंत्र मंच।',
-        canonicalUrl: getCanonicalUrl('/')
+        canonicalUrl: homeUrl,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'CollectionPage',
+              name: 'UPCOS – UP Outsource Seva Nigam News & Job Updates',
+              url: homeUrl,
+              inLanguage: 'hi-IN'
+            },
+            homeFaqSchema,
+            ...activeJobPostings
+          ]
+        }
       });
     } else if (p === '/news') {
       const url = getCanonicalUrl('/news');
@@ -592,7 +748,8 @@ function MainApp() {
               url,
               inLanguage: 'hi-IN'
             },
-            makeBreadcrumbs('News', '/news')
+            makeBreadcrumbs('News', '/news'),
+            ...activeJobPostings
           ]
         }
       });
@@ -643,14 +800,7 @@ function MainApp() {
         structuredData: {
           '@context': 'https://schema.org',
           '@graph': [
-            {
-              '@type': 'FAQPage',
-              mainEntity: (faqs || []).map((f) => ({
-                '@type': 'Question',
-                name: f.question,
-                acceptedAnswer: { '@type': 'Answer', text: f.answer }
-              }))
-            },
+            buildEmployeeHubFaqJsonLd(faqs, url),
             makeBreadcrumbs('Employee Hub', '/employee-hub')
           ]
         }
@@ -771,7 +921,7 @@ function MainApp() {
         noindex: true
       });
     }
-  }, [location.pathname, language, faqs]);
+  }, [location.pathname, language, faqs, news]);
 
   const featuredNews = contentStore.getFeaturedNews() || news[0];
 

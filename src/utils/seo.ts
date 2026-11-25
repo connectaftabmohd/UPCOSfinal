@@ -87,6 +87,12 @@ export function updatePageSEO(config: SEOConfig): void {
   setMetaTag('property', 'og:image:alt', fullTitle);
   setMetaTag('property', 'og:url', currentUrl);
 
+  if (config.publishedTime) {
+    setMetaTag('property', 'article:published_time', config.publishedTime);
+  } else {
+    removeMetaTag('property', 'article:published_time');
+  }
+
   if (ogImage === DEFAULT_OG_IMAGE) {
     setMetaTag('property', 'og:image:type', 'image/jpeg');
     setMetaTag('property', 'og:image:width', '1376');
@@ -139,4 +145,98 @@ export function updatePageSEO(config: SEOConfig): void {
     script.text = JSON.stringify(config.structuredData);
     document.head.appendChild(script);
   }
+}
+
+export interface JobPostingJsonLdInput {
+  identifier?: string;
+  title: string;
+  description: string;
+  hiringOrganization: string;
+  sameAs?: string;
+  locality: string;
+  region?: string;
+  country?: string;
+  salaryValue: number;
+  salaryMinValue?: number;
+  salaryMaxValue?: number;
+  salaryCurrency?: string;
+  salaryUnit?: 'MONTH' | 'YEAR' | 'DAY' | 'HOUR';
+  datePosted?: string;
+  validThrough: string;
+  employmentType?: string;
+  qualifications?: string;
+  experienceRequirements?: string;
+}
+
+export function buildJobPostingJsonLd(
+  job: JobPostingJsonLdInput,
+  options: {
+    articleId: string;
+    articleSlug: string;
+    publicationDate: string;
+    sourceUrl?: string;
+    index: number;
+  }
+): Record<string, unknown> {
+  const canonicalHref = getCanonicalUrl(`/news/${options.articleSlug}`);
+  const hasSalaryRange =
+    typeof job.salaryMinValue === 'number' &&
+    typeof job.salaryMaxValue === 'number' &&
+    job.salaryMaxValue > job.salaryMinValue;
+
+  const baseSalaryValue: Record<string, unknown> = hasSalaryRange
+    ? {
+        '@type': 'QuantitativeValue',
+        minValue: job.salaryMinValue,
+        maxValue: job.salaryMaxValue,
+        unitText: job.salaryUnit || 'MONTH'
+      }
+    : {
+        '@type': 'QuantitativeValue',
+        value: job.salaryValue,
+        unitText: job.salaryUnit || 'MONTH'
+      };
+
+  return {
+    '@type': 'JobPosting',
+    '@id': `${canonicalHref}#job-${job.identifier || options.index + 1}`,
+    title: job.title,
+    description: job.description,
+    url: canonicalHref,
+    directApply: false,
+    identifier: {
+      '@type': 'PropertyValue',
+      name: 'UP Sewayojan Outsource',
+      value: job.identifier || `${options.articleId}-${options.index + 1}`
+    },
+    datePosted: job.datePosted || options.publicationDate,
+    validThrough: job.validThrough,
+    employmentType: job.employmentType || 'CONTRACTOR',
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: job.hiringOrganization,
+      sameAs: job.sameAs || options.sourceUrl || 'https://sewayojan.up.nic.in',
+      logo: `${SITE_DOMAIN}/logo.png`
+    },
+    jobLocation: {
+      '@type': 'Place',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: job.locality,
+        addressRegion: job.region || 'Uttar Pradesh',
+        addressCountry: job.country || 'IN'
+      }
+    },
+    applicantLocationRequirements: {
+      '@type': 'State',
+      name: job.region || 'Uttar Pradesh'
+    },
+    baseSalary: {
+      '@type': 'MonetaryAmount',
+      currency: job.salaryCurrency || 'INR',
+      value: baseSalaryValue
+    },
+    ...(job.qualifications ? { qualifications: job.qualifications } : {}),
+    ...(job.experienceRequirements ? { experienceRequirements: job.experienceRequirements } : {})
+  };
 }

@@ -196,6 +196,14 @@ const homeBodySnippet = `
       </ul>
     </section>
     <section>
+      <h2>कर्मचारी सूचना हब – अक्सर पूछे जाने वाले प्रश्न (FAQ)</h2>
+      ${faqsList
+        .map(
+          (f) => `<div><h3>${escapeHtmlText(f.question)}</h3><p>${escapeHtmlText(f.answer)}</p></div>`
+        )
+        .join('\n      ')}
+    </section>
+    <section>
       <h2>स्वतंत्र सूचना अस्वीकरण</h2>
       <p>यह एक स्वतंत्र सूचना और जन-जागरूकता पोर्टल है और उत्तर प्रदेश सरकार या किसी सरकारी विभाग की आधिकारिक वेबसाइट नहीं है। आधिकारिक सत्यापन हेतु सदैव shasanadesh.up.gov.in एवं sewayojan.up.nic.in का उपयोग करें।</p>
     </section>
@@ -663,47 +671,65 @@ const staticRoutes = [
 const newsRoutes = newsList.map((article, idx) => {
   const canonicalUrl = `${DOMAIN}/news/${article.slug}`;
   const jobNodes = Array.isArray(article.jobPostings)
-    ? article.jobPostings.map((job, jIdx) => ({
-        '@type': 'JobPosting',
-        '@id': `${canonicalUrl}#job-${job.identifier || jIdx + 1}`,
-        title: job.title,
-        description: job.description,
-        url: canonicalUrl,
-        directApply: false,
-        identifier: {
-          '@type': 'PropertyValue',
-          name: 'UP Sewayojan Outsource',
-          value: job.identifier || `${article.id}-${jIdx + 1}`
-        },
-        datePosted: job.datePosted || article.publicationDate,
-        validThrough: job.validThrough,
-        employmentType: job.employmentType || 'CONTRACTOR',
-        hiringOrganization: {
-          '@type': 'Organization',
-          name: job.hiringOrganization,
-          sameAs: job.sameAs || article.sourceUrl || 'https://sewayojan.up.nic.in'
-        },
-        jobLocation: {
-          '@type': 'Place',
-          address: {
-            '@type': 'PostalAddress',
-            addressLocality: job.locality,
-            addressRegion: job.region || 'Uttar Pradesh',
-            addressCountry: job.country || 'IN'
-          }
-        },
-        baseSalary: {
-          '@type': 'MonetaryAmount',
-          currency: job.salaryCurrency || 'INR',
-          value: {
-            '@type': 'QuantitativeValue',
-            value: job.salaryValue,
-            unitText: job.salaryUnit || 'MONTH'
-          }
-        },
-        ...(job.qualifications ? { qualifications: job.qualifications } : {}),
-        ...(job.experienceRequirements ? { experienceRequirements: job.experienceRequirements } : {})
-      }))
+    ? article.jobPostings.map((job, jIdx) => {
+        const hasRange =
+          typeof job.salaryMinValue === 'number' &&
+          typeof job.salaryMaxValue === 'number' &&
+          job.salaryMaxValue > job.salaryMinValue;
+        return {
+          '@type': 'JobPosting',
+          '@id': `${canonicalUrl}#job-${job.identifier || jIdx + 1}`,
+          title: job.title,
+          description: job.description,
+          url: canonicalUrl,
+          directApply: false,
+          identifier: {
+            '@type': 'PropertyValue',
+            name: 'UP Sewayojan Outsource',
+            value: job.identifier || `${article.id}-${jIdx + 1}`
+          },
+          datePosted: job.datePosted || article.publicationDate,
+          validThrough: job.validThrough,
+          employmentType: job.employmentType || 'CONTRACTOR',
+          hiringOrganization: {
+            '@type': 'Organization',
+            name: job.hiringOrganization,
+            sameAs: job.sameAs || article.sourceUrl || 'https://sewayojan.up.nic.in',
+            logo: `${DOMAIN}/logo.png`
+          },
+          jobLocation: {
+            '@type': 'Place',
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: job.locality,
+              addressRegion: job.region || 'Uttar Pradesh',
+              addressCountry: job.country || 'IN'
+            }
+          },
+          applicantLocationRequirements: {
+            '@type': 'State',
+            name: job.region || 'Uttar Pradesh'
+          },
+          baseSalary: {
+            '@type': 'MonetaryAmount',
+            currency: job.salaryCurrency || 'INR',
+            value: hasRange
+              ? {
+                  '@type': 'QuantitativeValue',
+                  minValue: job.salaryMinValue,
+                  maxValue: job.salaryMaxValue,
+                  unitText: job.salaryUnit || 'MONTH'
+                }
+              : {
+                  '@type': 'QuantitativeValue',
+                  value: job.salaryValue,
+                  unitText: job.salaryUnit || 'MONTH'
+                }
+          },
+          ...(job.qualifications ? { qualifications: job.qualifications } : {}),
+          ...(job.experienceRequirements ? { experienceRequirements: job.experienceRequirements } : {})
+        };
+      })
     : [];
 
   const fullText = [article.shortDescription || '', ...(Array.isArray(article.fullContent) ? article.fullContent : [])].join(' ');
@@ -871,8 +897,26 @@ const deptRoutes = departmentsList.map((dept) => {
 
 const allRoutes = [...staticRoutes, ...newsRoutes, ...orderRoutes, ...deptRoutes];
 
-// Write updated root dist/index.html with crawlable homepage markup
-const rootHtml = template.replace('<div id="root"></div>', `<div id="root">${homeBodySnippet}</div>`);
+// Write updated root dist/index.html with crawlable homepage markup and EmployeeHub FAQPage JSON-LD
+const homeFaqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': `${DOMAIN}/#faq`,
+  url: `${DOMAIN}/`,
+  inLanguage: 'hi-IN',
+  name: 'कर्मचारी सूचना हब – अक्सर पूछे जाने वाले प्रश्न (FAQ)',
+  mainEntity: faqsList.map((f) => ({
+    '@type': 'Question',
+    name: f.question,
+    acceptedAnswer: { '@type': 'Answer', text: f.answer }
+  }))
+};
+const rootHtml = template
+  .replace(
+    '</head>',
+    `  <script id="jsonld-home-faq-schema" type="application/ld+json">${JSON.stringify(homeFaqSchema)}</script>\n</head>`
+  )
+  .replace('<div id="root"></div>', `<div id="root">${homeBodySnippet}</div>`);
 fs.writeFileSync(BASE_HTML, rootHtml, 'utf-8');
 console.log('Prerendered: /index.html');
 

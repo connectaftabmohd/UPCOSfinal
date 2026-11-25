@@ -111,7 +111,9 @@
           "validThrough": "2026-11-25T23:59:59+05:30",
           "employmentType": "CONTRACTOR",
           "qualifications": "BBA / BBM / BMS / BCA / B.Tech (Computer Science) with 60% marks OR MBA / MCA; Hindi & English proficiency and Computer literacy",
-          "experienceRequirements": "Minimum 1 year experience in Management / Project Coordination (Facility Management)"
+          "experienceRequirements": "Minimum 1 year experience in Management / Project Coordination (Facility Management)",
+          "salaryMinValue": 30001,
+          "salaryMaxValue": 40000
         },
         {
           "identifier": "sewayojan-upbocw-coordinator-351-2026",
@@ -129,7 +131,9 @@
           "validThrough": "2026-11-25T23:59:59+05:30",
           "employmentType": "CONTRACTOR",
           "qualifications": "Graduate (Any Stream) + Computer Diploma / CCC / O-Level + Hindi Typing 25 WPM & English Typing 30 WPM + MS Office proficiency",
-          "experienceRequirements": "1 year experience in IT-Software / Software Services"
+          "experienceRequirements": "1 year experience in IT-Software / Software Services",
+          "salaryMinValue": 15001,
+          "salaryMaxValue": 20000
         }
       ],
       "isFeatured": true,
