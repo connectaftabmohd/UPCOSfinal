@@ -775,11 +775,32 @@ function MainApp() {
 
   const featuredNews = contentStore.getFeaturedNews() || news[0];
 
+  const isAdEligible = useMemo(() => {
+    const p = location.pathname.replace(/\/+$/, '') || '/';
+    if (p === '/' || p === '/news' || p === '/shasanadesh' || p === '/departments' || p === '/employee-hub' || p === '/employee-community') {
+      return true;
+    }
+    if (p.startsWith('/news/')) {
+      const slug = p.replace('/news/', '');
+      return news.some((n) => n.slug === slug || n.id === slug);
+    }
+    if (p.startsWith('/shasanadesh/')) {
+      const slug = p.replace('/shasanadesh/', '');
+      return orders.some((o) => o.slug === slug || o.id === slug || o.orderNumber === slug);
+    }
+    if (p.startsWith('/departments/')) {
+      const id = p.replace('/departments/', '');
+      return departments.some((d) => d.id === id);
+    }
+    return false;
+  }, [location.pathname, news, orders, departments]);
+
   return (
     <div className="w-full min-h-screen flex flex-col bg-slate-100/60 font-['Noto_Sans_Devanagari','Plus_Jakarta_Sans',sans-serif] text-slate-900 selection:bg-amber-200 selection:text-slate-900 overflow-x-hidden">
       {/* 1. Urgent Notice / Breaking News Ticker */}
       <BreakingNewsTicker
         items={tickerItems}
+        news={news}
         onNavigate={handleNavigate}
       />
 
@@ -805,13 +826,15 @@ function MainApp() {
         onLogout={() => authService.logout()}
       />
 
-      {/* Google AdSense Top Leaderboard Slot (Only active when real slot configured) */}
-      <div className="w-full max-w-7xl mx-auto px-4 pt-3 pb-1">
-        <AdPlacement slotType="top-leaderboard" />
-      </div>
+      {/* Google AdSense Top Leaderboard Slot (Only on verified editorial pages when real slot configured) */}
+      {isAdEligible && (
+        <div className="w-full max-w-7xl mx-auto px-4 pt-3 pb-1">
+          <AdPlacement slotType="top-leaderboard" />
+        </div>
+      )}
 
       {/* Main Content Area - React Router Switch */}
-      <main className="w-full flex-1 overflow-x-hidden pb-16 lg:pb-0">
+      <main className="w-full flex-1 overflow-x-hidden">
         <Routes>
           {/* 1. Home View */}
           <Route

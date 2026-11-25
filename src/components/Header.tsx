@@ -82,11 +82,11 @@ export const Header: React.FC<HeaderProps> = ({
   const isAdmin = authService.isAdminUser(currentUser);
 
   const navLinks = [
-    { label: currentLang === 'hi' ? 'ताज़ा खबरें' : 'Latest News', view: { type: 'news-list' } as PageView, icon: Newspaper },
-    { label: currentLang === 'hi' ? 'विभाग' : 'Departments', view: { type: 'departments' } as PageView, icon: Building },
-    { label: currentLang === 'hi' ? 'शासनादेश' : 'Gov Orders', view: { type: 'gov-orders' } as PageView, icon: FileText },
-    { label: currentLang === 'hi' ? 'कर्मचारी केंद्र' : 'Employee Hub', view: { type: 'employee-hub' } as PageView, icon: HelpCircle },
-    { label: currentLang === 'hi' ? 'कम्युनिटी फोरम' : 'Community Forum', view: { type: 'talk-corner' } as PageView, icon: MessageSquareQuote },
+    { label: currentLang === 'hi' ? 'ताज़ा खबरें' : 'Latest News', path: '/news', view: { type: 'news-list' } as PageView, icon: Newspaper },
+    { label: currentLang === 'hi' ? 'विभाग' : 'Departments', path: '/departments', view: { type: 'departments' } as PageView, icon: Building },
+    { label: currentLang === 'hi' ? 'शासनादेश' : 'Gov Orders', path: '/shasanadesh', view: { type: 'gov-orders' } as PageView, icon: FileText },
+    { label: currentLang === 'hi' ? 'कर्मचारी केंद्र' : 'Employee Hub', path: '/employee-hub', view: { type: 'employee-hub' } as PageView, icon: HelpCircle },
+    { label: currentLang === 'hi' ? 'कम्युनिटी फोरम' : 'Community Forum', path: '/employee-community', view: { type: 'talk-corner' } as PageView, icon: MessageSquareQuote },
   ];
 
   const isActive = (view: PageView) => {
@@ -111,23 +111,31 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Main Navigation Bar */}
       <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-4">
         {/* Brand Logo & Name */}
-        <div 
-          onClick={() => handleNavClick({ type: 'home' })}
+        <a
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            handleNavClick({ type: 'home' });
+          }}
           className="cursor-pointer group flex items-center shrink-0"
         >
           <BrandLogo size={46} showText={true} />
-        </div>
+        </a>
 
         {/* Desktop Nav Links with Icons */}
-        <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+        <nav aria-label="Primary Navigation" className="hidden lg:flex items-center gap-1 xl:gap-2">
           {navLinks.map((item, idx) => {
             const active = isActive(item.view);
             const Icon = item.icon;
             return (
-              <button
+              <a
                 key={idx}
-                onClick={() => handleNavClick(item.view)}
-                className={`px-2.5 xl:px-3 py-1.5 rounded-xl text-xs xl:text-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none ${
+                href={item.path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavClick(item.view);
+                }}
+                className={`px-2.5 xl:px-3 py-1.5 rounded-xl text-xs xl:text-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap ${
                   active
                     ? 'bg-blue-900 text-white shadow-xs'
                     : 'text-slate-700 hover:text-blue-900 hover:bg-slate-100'
@@ -135,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Icon className={`w-4 h-4 shrink-0 transition-transform ${active ? 'text-amber-400' : 'text-slate-500'}`} />
                 <span>{item.label}</span>
-              </button>
+              </a>
             );
           })}
         </nav>
@@ -340,19 +348,16 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Right: Bell with badge 2, ID Card button, User Profile Avatar with green check */}
+        {/* Right: Notifications Bell, ID Card button, User Profile Avatar */}
         <div className="flex items-center gap-2">
-          {/* Notification Bell with red badge 2 */}
+          {/* Latest News & Updates Bell */}
           <button
-            onClick={() => handleNavClick({ type: 'news-list', category: 'ताजा खबर' })}
+            onClick={() => handleNavClick({ type: 'news-list' })}
             className="relative p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
-            title="सूचनाएं / Notifications"
-            aria-label="Notifications"
+            title={currentLang === 'hi' ? 'ताज़ा खबरें व सूचनाएं' : 'Latest News & Updates'}
+            aria-label={currentLang === 'hi' ? 'ताज़ा खबरें व सूचनाएं' : 'Latest News & Updates'}
           >
             <Bell className="w-4 h-4 text-slate-700" />
-            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-extrabold rounded-full w-4 h-4 flex items-center justify-center shadow-xs">
-              2
-            </span>
           </button>
 
           {/* ID Card button */}
@@ -450,9 +455,13 @@ export const Header: React.FC<HeaderProps> = ({
               const active = isActive(item.view);
               const Icon = item.icon;
               return (
-                <button
+                <a
                   key={idx}
-                  onClick={() => handleNavClick(item.view)}
+                  href={item.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick(item.view);
+                  }}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left text-sm font-semibold transition ${
                     active
                       ? 'bg-blue-900 text-white shadow-xs'
@@ -461,7 +470,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-slate-500'}`} />
                   <span>{item.label}</span>
-                </button>
+                </a>
               );
             })}
 

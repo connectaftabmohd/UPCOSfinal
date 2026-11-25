@@ -2,6 +2,7 @@ import React from 'react';
 import { Calendar, Clock, ArrowRight, TrendingUp, Sparkles, ShieldAlert, MessageSquareQuote } from 'lucide-react';
 import { NewsItem, PageView } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { NewsThumbnail } from './NewsThumbnail';
 
 interface HomeHeroProps {
   featuredNews?: NewsItem;
@@ -84,21 +85,16 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main Featured Card */}
           <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition duration-300 flex flex-col">
-            <div 
-              className="relative overflow-hidden cursor-pointer aspect-16/9 sm:aspect-21/9 lg:aspect-16/9 bg-slate-200"
+            <NewsThumbnail
+              src={activeFeatured.featuredImage}
+              alt={featuredTitle}
+              containerClassName="relative overflow-hidden cursor-pointer aspect-16/9 sm:aspect-21/9 lg:aspect-16/9 bg-slate-200"
+              portraitContainerClassName="relative overflow-hidden cursor-pointer aspect-16/9 sm:aspect-21/9 lg:aspect-16/9 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-2"
+              landscapeImgClassName="w-full h-full object-cover object-top group-hover:scale-103 transition-transform duration-500"
+              portraitImgClassName="w-full h-full object-contain rounded-md group-hover:scale-103 transition-transform duration-500"
               onClick={() => onNavigate({ type: 'news-detail', id: activeFeatured.id })}
             >
-              <img
-                src={activeFeatured.featuredImage}
-                alt={featuredTitle}
-                loading="lazy"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
-                }}
-                className="w-full h-full object-cover object-top group-hover:scale-103 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none" />
               
               {/* Floating Badges */}
               <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-2">
@@ -121,16 +117,22 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                   {activeFeatured.readTime}
                 </span>
               </div>
-            </div>
+            </NewsThumbnail>
 
             {/* Featured Content Body */}
             <div className="p-5 sm:p-6 flex-1">
               <div>
-                <h3
-                  onClick={() => onNavigate({ type: 'news-detail', id: activeFeatured.id })}
-                  className="text-lg sm:text-2xl font-bold text-slate-900 group-hover:text-blue-900 transition-colors leading-snug cursor-pointer mb-3"
-                >
-                  {featuredTitle}
+                <h3 className="text-lg sm:text-2xl font-bold text-slate-900 group-hover:text-blue-900 transition-colors leading-snug mb-3">
+                  <a
+                    href={`/news/${activeFeatured.slug}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate({ type: 'news-detail', id: activeFeatured.id });
+                    }}
+                    className="hover:text-blue-900"
+                  >
+                    {featuredTitle}
+                  </a>
                 </h3>
                 <p className="text-slate-600 text-sm sm:text-base leading-relaxed line-clamp-3">
                   {activeFeatured.shortDescription}
@@ -148,28 +150,38 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                   {isEnglish ? 'Top Important News' : 'महत्वपूर्ण शीर्ष समाचार'}
                 </h3>
               </div>
-              <button
-                onClick={() => onNavigate({ type: 'news-list' })}
+              <a
+                href="/news"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate({ type: 'news-list' });
+                }}
                 className="text-xs font-semibold text-blue-700 hover:underline cursor-pointer"
               >
                 {isEnglish ? 'View All →' : 'सभी देखें →'}
-              </button>
+              </a>
             </div>
 
             <div className="divide-y divide-slate-100 space-y-3 pt-1">
               {(feedItems || []).slice(0, 4).map((item) => {
                 const itemTitle = isEnglish && item.englishTitle ? item.englishTitle : item.title;
                 return (
-                  <div
+                  <a
                     key={item.id}
-                    onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
+                    href={`/news/${item.slug}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate({ type: 'news-detail', id: item.id });
+                    }}
                     className="pt-3 first:pt-0 cursor-pointer group flex items-start gap-3.5 hover:bg-slate-50/60 p-2 rounded-xl transition"
                   >
-                    <img
+                    <NewsThumbnail
                       src={item.featuredImage}
                       alt={itemTitle}
-                      loading="lazy"
-                      className="w-20 h-20 rounded-lg object-cover shrink-0 border border-slate-200"
+                      containerClassName="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-100"
+                      portraitContainerClassName="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-0.5"
+                      landscapeImgClassName="w-full h-full object-cover"
+                      portraitImgClassName="w-full h-full object-contain rounded-sm"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -190,7 +202,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                         </span>
                       </p>
                     </div>
-                  </div>
+                  </a>
                 );
               })}
             </div>

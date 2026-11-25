@@ -1,5 +1,8 @@
-/api/*       /.netlify/functions/api/:splat 200
-/ads.txt     /ads.txt                       200!
-/sitemap.xml /sitemap.xml                   200!
-/robots.txt  /robots.txt                    200!
-/*           /index.html                    200
+/api/*                        /.netlify/functions/api/:splat 200
+/ads.txt                      /ads.txt                       200!
+/app-ads.txt                  /ads.txt                       200!
+/sitemap.xml                  /sitemap.xml                   200!
+/news-sitemap.xml             /news-sitemap.xml              200!
+/robots.txt                   /robots.txt                    200!
+/google871fcd09be8827f9.html  /google871fcd09be8827f9.html  200!
+/*                            /index.html                    200

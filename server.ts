@@ -183,12 +183,16 @@ async function startServer() {
     const cleanPath = pathname.split("?")[0].replace(/\/+$/, "") || "/";
     const defaultImg = `${origin}/og-banner.jpg`;
     const meta = {
-      title: "UP Outsource Seva Nigam Portal – News, Shasanadesh & Bharti for UP Outsource Employees",
+      title: "UPCOS – UP Outsource Seva Nigam News, Shasanadesh & Jobs",
       description:
-        "उत्तर प्रदेश राज्य सरकार के आउटसोर्स व संविदा कर्मचारियों के लिए प्रामाणिक समाचार, शासनादेश, वेतन अपडेट व सेवायोजन पोर्टल भर्ती की हर जरूरी जानकारी।",
+        "यूपी आउटसोर्स एवं संविदा कर्मचारियों के लिए ताज़ा समाचार, सेवायोजन भर्ती, शासनादेश (Shasanadesh), मानदेय अपडेट और ईपीएफ-ईएसआई जानकारी का स्वतंत्र पोर्टल।",
       image: defaultImg,
+      defaultImage: defaultImg,
       url: `${origin}${cleanPath === "/" ? "/" : cleanPath}`,
-      ogType: "website" as "website" | "article"
+      ogType: "website" as "website" | "article",
+      statusCode: 200,
+      noindex: false,
+      robotsContent: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     };
 
     const resolveImg = (img?: string) => {
@@ -196,6 +200,116 @@ async function startServer() {
       if (/^https?:\/\//i.test(img)) return img;
       return `${origin}${img.startsWith("/") ? "" : "/"}${img}`;
     };
+
+    const staticPolicyMeta: Record<string, { title: string; description: string }> = {
+      "/": {
+        title: "UPCOS – UP Outsource Seva Nigam News, Shasanadesh & Jobs",
+        description:
+          "यूपी आउटसोर्स एवं संविदा कर्मचारियों के लिए ताज़ा समाचार, सेवायोजन भर्ती, शासनादेश (Shasanadesh), मानदेय अपडेट और ईपीएफ-ईएसआई जानकारी का स्वतंत्र पोर्टल।"
+      },
+      "/news": {
+        title: "ताज़ा खबरें एवं विभागीय समाचार – UPCOS",
+        description:
+          "उत्तर प्रदेश आउटसोर्सिंग एवं संविदा कर्मचारियों से जुड़े नवीनतम समाचार, मानदेय वृद्धि एवं सेवायोजन भर्ती सूचनाएं।"
+      },
+      "/shasanadesh": {
+        title: "शासनादेश एवं विधिक परिपत्र (Shasanadesh) – UPCOS",
+        description:
+          "उत्तर प्रदेश शासन के कार्मिक, वित्त एवं अन्य विभागों द्वारा जारी आउटसोर्सिंग संबंधी आधिकारिक शासनादेश।"
+      },
+      "/departments": {
+        title: "विभागीय मार्गदर्शिका एवं सूचना – UPCOS",
+        description:
+          "स्वास्थ्य, शिक्षा, पंचायती राज, ऊर्जा समेत उ.प्र. के सभी प्रमुख सरकारी विभागों के आउटसोर्स कर्मचारी आदेश।"
+      },
+      "/employee-hub": {
+        title: "कर्मचारी सूचना हब एवं वेतन कैलकुलेटर – UPCOS",
+        description:
+          "वेतन श्रेणियां, ईपीएफ-ईएसआई कैलकुलेटर, अवकाश नियम और कर्मचारी अधिकार संबंधी विस्तृत जानकारी।"
+      },
+      "/employee-community": {
+        title: "कर्मचारी संवाद एवं विचार मंच – UPCOS",
+        description:
+          "उत्तर प्रदेश के 75 जनपदों के आउटसोर्स कर्मचारियों का स्वतंत्र संवाद, समस्या साझा एवं सहायता मंच।"
+      },
+      "/about-us": {
+        title: "हमारे बारे में (About Us) – UPCOS",
+        description:
+          "UPCOS का परिचय, उद्देश्य, स्वतंत्र पहचान और उत्तर प्रदेश आउटसोर्सिंग कर्मचारियों के सशक्तिकरण का मिशन।"
+      },
+      "/contact-us": {
+        title: "संपर्क सूत्र एवं संपादकीय डेस्क (Contact Us) – UPCOS",
+        description:
+          "संपादकीय टीम से संपर्क, शिकायत निवारण, सूचना सत्यापन एवं सुझाव प्रेषण प्रपत्र।"
+      },
+      "/privacy-policy": {
+        title: "गोपनीयता नीति (Privacy Policy) – UPCOS",
+        description:
+          "डेटा गोपनीयता, कुकीज, Google AdSense अनुपालन एवं उपयोगकर्ता अधिकारों का संपूर्ण विवरण।"
+      },
+      "/disclaimer": {
+        title: "अस्वीकरण एवं विधिक नीति (Disclaimer) – UPCOS",
+        description:
+          "गैर-सरकारी स्पष्टीकरण, अनधिकृत सूचना निषेध एवं विधिक सूचना अस्वीकरण।"
+      },
+      "/terms-and-conditions": {
+        title: "नियम एवं शर्तें (Terms & Conditions) – UPCOS",
+        description:
+          "UPCOS वेबसाइट उपयोग की सामान्य शर्तें, बौद्धिक संपदा अधिकार एवं आचरण नियम।"
+      },
+      "/editorial-policy": {
+        title: "संपादकीय नीति (Editorial Policy) – UPCOS",
+        description:
+          "स्वतंत्रता, निष्पक्षता, स्रोत प्रमाणिकता एवं पत्रकारिता सत्यनिष्ठा के मानक।"
+      },
+      "/fact-checking-policy": {
+        title: "तथ्य-जांच नीति (Fact-Checking Policy) – UPCOS",
+        description:
+          "शासनादेशों एवं सरकारी परिपत्रों के सत्यापन की कठोर तथ्य-जांच प्रक्रिया।"
+      },
+      "/correction-policy": {
+        title: "संशोधन एवं अद्यतन नीति (Corrections Policy) – UPCOS",
+        description:
+          "पारदर्शी त्रुटि सुधार, सुधार समय-सारिणी एवं पाठक फीडबैक तंत्र।"
+      },
+      "/copyright-policy": {
+        title: "कॉपीराइट नीति (Copyright Policy) – UPCOS",
+        description:
+          "सार्वजनिक शासकीय परिपत्र, उचित उपयोग (Fair Use) एवं कॉपीराइट सुरक्षा दिशानिर्देश।"
+      },
+      "/advertise": {
+        title: "विज्ञापन नीति (Advertise With Us) – UPCOS",
+        description:
+          "कर्मचारी हितैषी विज्ञापन दिशानिर्देश एवं Google AdSense अनुपालन नीति।"
+      },
+      "/sitemap": {
+        title: "साइटमैप (Sitemap) – UPCOS",
+        description:
+          "UPCOS पोर्टल के सभी समाचार, शासनादेश, विभाग, भर्ती सूचनाएं एवं नीति पृष्ठों की संपूर्ण सूची।"
+      }
+    };
+
+    if (staticPolicyMeta[cleanPath]) {
+      meta.title = staticPolicyMeta[cleanPath].title;
+      meta.description = staticPolicyMeta[cleanPath].description;
+      return meta;
+    }
+
+    if (cleanPath === "/search") {
+      meta.title = "खोज पृष्ठ (Search) – UPCOS";
+      meta.description = "UPCOS पोर्टल पर समाचार, शासनादेश और विभागीय सूचना खोजें।";
+      meta.noindex = true;
+      meta.robotsContent = "noindex, follow";
+      return meta;
+    }
+
+    if (cleanPath === "/admin") {
+      meta.title = "Admin CMS – UPCOS";
+      meta.description = "संपादकीय प्रबंधन डैशबोर्ड";
+      meta.noindex = true;
+      meta.robotsContent = "noindex, nofollow";
+      return meta;
+    }
 
     if (cleanPath.startsWith("/news/")) {
       const slug = cleanPath.replace("/news/", "");
@@ -205,6 +319,7 @@ async function startServer() {
         meta.description = article.shortDescription || meta.description;
         meta.image = resolveImg(article.featuredImage);
         meta.ogType = "article";
+        return meta;
       }
     } else if (cleanPath.startsWith("/shasanadesh/")) {
       const slug = cleanPath.replace("/shasanadesh/", "");
@@ -213,6 +328,7 @@ async function startServer() {
         meta.title = `${order.orderNumber}: ${order.title} – UPCOS शासनादेश`;
         meta.description = order.summary || meta.description;
         meta.ogType = "article";
+        return meta;
       }
     } else if (cleanPath.startsWith("/departments/")) {
       const id = cleanPath.replace("/departments/", "");
@@ -220,27 +336,16 @@ async function startServer() {
       if (dept) {
         meta.title = `${dept.name} (${dept.englishName}) – आउटसोर्स समाचार व शासनादेश | UPCOS`;
         meta.description = dept.description || meta.description;
+        return meta;
       }
-    } else if (cleanPath === "/news") {
-      meta.title = "ताज़ा खबरें एवं विभागीय समाचार – UPCOS";
-      meta.description = "उत्तर प्रदेश आउटसोर्सिंग एवं संविदा कर्मचारियों से जुड़े नवीनतम समाचार, मानदेय वृद्धि एवं सेवायोजन भर्ती सूचनाएं।";
-    } else if (cleanPath === "/shasanadesh") {
-      meta.title = "शासनादेश एवं विधिक परिपत्र (Shasanadesh) – UPCOS";
-      meta.description = "उत्तर प्रदेश शासन के कार्मिक, वित्त एवं अन्य विभागों द्वारा जारी आउटसोर्सिंग संबंधी आधिकारिक शासनादेश।";
-    } else if (cleanPath === "/departments") {
-      meta.title = "विभागीय मार्गदर्शिका एवं सूचना – UPCOS";
-      meta.description = "स्वास्थ्य, शिक्षा, पंचायती राज, ऊर्जा समेत उ.प्र. के सभी प्रमुख सरकारी विभागों के आउटसोर्स कर्मचारी आदेश।";
-    } else if (cleanPath === "/employee-hub") {
-      meta.title = "कर्मचारी सूचना हब एवं वेतन कैलकुलेटर – UPCOS";
-      meta.description = "वेतन श्रेणियां, ईपीएफ-ईएसआई कैलकुलेटर, अवकाश नियम और कर्मचारी अधिकार संबंधी विस्तृत जानकारी।";
-    } else if (cleanPath === "/employee-community") {
-      meta.title = "कर्मचारी संवाद एवं विचार मंच – UPCOS";
-      meta.description = "उत्तर प्रदेश के 75 जनपदों के आउटसोर्स कर्मचारियों का स्वतंत्र संवाद, समस्या साझा एवं सहायता मंच।";
-    } else if (cleanPath === "/sitemap") {
-      meta.title = "साइटमैप (Sitemap) – UPCOS";
-      meta.description = "UPCOS पोर्टल के सभी समाचार, शासनादेश, विभाग, भर्ती सूचनाएं एवं नीति पृष्ठों की संपूर्ण सूची।";
     }
 
+    // Any other unknown path -> HTTP 404 (prevents Google Soft 404 penalties)
+    meta.statusCode = 404;
+    meta.noindex = true;
+    meta.robotsContent = "noindex, nofollow";
+    meta.title = "पृष्ठ उपलब्ध नहीं है (404) – UPCOS";
+    meta.description = "अनुरोधित पृष्ठ UPCOS पोर्टल पर उपलब्ध नहीं है।";
     return meta;
   };
 
@@ -249,11 +354,16 @@ async function startServer() {
     const safeDesc = escapeAttr(meta.description);
     const safeImg = escapeAttr(meta.image);
     const safeUrl = escapeAttr(meta.url);
-    return html
+    const safeRobots = escapeAttr(meta.robotsContent);
+    let output = html
       .replace(/<title>.*?<\/title>/i, `<title>${safeTitle}</title>`)
       .replace(/<meta name="title" content=".*?" \/>/i, `<meta name="title" content="${safeTitle}" />`)
       .replace(/<meta name="description" content=".*?" \/>/i, `<meta name="description" content="${safeDesc}" />`)
+      .replace(/<meta name="robots" content=".*?" \/>/i, `<meta name="robots" content="${safeRobots}" />`)
+      .replace(/<meta name="googlebot" content=".*?" \/>/i, `<meta name="googlebot" content="${safeRobots}" />`)
       .replace(/<link rel="canonical" href=".*?" \/>/i, `<link rel="canonical" href="${safeUrl}" />`)
+      .replace(/<link rel="alternate" hreflang="hi-IN" href=".*?" \/>/i, `<link rel="alternate" hreflang="hi-IN" href="${safeUrl}" />`)
+      .replace(/<link rel="alternate" hreflang="x-default" href=".*?" \/>/i, `<link rel="alternate" hreflang="x-default" href="${safeUrl}" />`)
       .replace(/<meta property="og:type" content=".*?" \/>/i, `<meta property="og:type" content="${meta.ogType}" />`)
       .replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${safeTitle}" />`)
       .replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${safeDesc}" />`)
@@ -266,6 +376,17 @@ async function startServer() {
       .replace(/<meta name="twitter:description" content=".*?" \/>/i, `<meta name="twitter:description" content="${safeDesc}" />`)
       .replace(/<meta name="twitter:image" content=".*?" \/>/i, `<meta name="twitter:image" content="${safeImg}" />`)
       .replace(/<meta name="twitter:image:alt" content=".*?" \/>/i, `<meta name="twitter:image:alt" content="${safeTitle}" />`);
+
+    if (meta.image !== meta.defaultImage) {
+      output = output
+        .replace(/\s*<meta property="og:image:type" content=".*?" \/>/i, "")
+        .replace(/\s*<meta property="og:image:width" content=".*?" \/>/i, "")
+        .replace(/\s*<meta property="og:image:height" content=".*?" \/>/i, "");
+    }
+    if (meta.noindex) {
+      output = output.replace(/\s*<link rel="canonical" href=".*?" \/>/i, "");
+    }
+    return output;
   };
 
   // Vite middleware for development
@@ -278,7 +399,7 @@ async function startServer() {
     // Inject dynamic OpenGraph/Twitter tags for social link scrapers & browser navigation in dev/preview
     app.use(async (req, res, next) => {
       if (
-        req.method !== "GET" ||
+        (req.method !== "GET" && req.method !== "HEAD") ||
         req.path.startsWith("/api/") ||
         req.path.startsWith("/@") ||
         req.path.startsWith("/src/") ||
@@ -289,7 +410,7 @@ async function startServer() {
       }
       const accept = req.headers.accept || "";
       const ua = req.headers["user-agent"] || "";
-      const isSocialBot = /WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot|Pinterest|Googlebot|bingbot/i.test(ua);
+      const isSocialBot = /WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot|Pinterest|Googlebot|bingbot|Mediapartners-Google/i.test(ua);
       if (!accept.includes("text/html") && !isSocialBot) {
         return next();
       }
@@ -298,7 +419,10 @@ async function startServer() {
         html = await vite.transformIndexHtml(req.originalUrl, html);
         const meta = buildRouteSocialMeta(req.path, resolveRequestOrigin(req));
         html = applySocialMetaToHtml(html, meta);
-        res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).end(html);
+        if (meta.noindex) {
+          res.setHeader("X-Robots-Tag", meta.robotsContent);
+        }
+        res.status(meta.statusCode).set({ "Content-Type": "text/html; charset=utf-8" }).end(html);
       } catch (e) {
         next(e);
       }
@@ -309,9 +433,17 @@ async function startServer() {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
+      const cleanPath = req.path.split("?")[0].replace(/\/+$/, "").replace(/^\//, "");
+      const prerenderedPath = cleanPath ? path.join(distPath, cleanPath, "index.html") : path.join(distPath, "index.html");
+      if (fs.existsSync(prerenderedPath)) {
+        return res.status(200).sendFile(prerenderedPath);
+      }
       const indexHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
       const meta = buildRouteSocialMeta(req.path, resolveRequestOrigin(req));
-      res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).end(applySocialMetaToHtml(indexHtml, meta));
+      if (meta.noindex) {
+        res.setHeader("X-Robots-Tag", meta.robotsContent);
+      }
+      res.status(meta.statusCode).set({ "Content-Type": "text/html; charset=utf-8" }).end(applySocialMetaToHtml(indexHtml, meta));
     });
   }
 

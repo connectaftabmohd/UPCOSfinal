@@ -48,7 +48,7 @@ export const Footer: React.FC<FooterProps> = ({
   } catch {}
 
   return (
-    <footer className="w-full bg-slate-950 text-slate-300 pt-12 pb-8 border-t border-slate-800">
+    <footer className="w-full bg-slate-950 text-slate-300 pt-12 pb-28 lg:pb-8 border-t border-slate-800">
       <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Weekly Newsletter Section */}
         <Newsletter className="mb-10" />
@@ -145,67 +145,95 @@ export const Footer: React.FC<FooterProps> = ({
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'home' })}
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'home' });
+                  }}
                   className="hover:text-amber-300 text-amber-400 font-semibold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <Home className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>{isEnglish ? 'Home Page' : 'मुख्य पृष्ठ (Home)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'news-list' })}
+                <a
+                  href="/news"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'news-list' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Latest News' : 'ताज़ा समाचार (Latest News)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'gov-orders' })}
+                <a
+                  href="/shasanadesh"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'gov-orders' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Gov Orders & Circulars' : 'शासनादेश व परिपत्र (Gov Orders)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'departments' })}
+                <a
+                  href="/departments"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'departments' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Departments List' : 'विभागवार सूची (Departments)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'employee-hub' })}
+                <a
+                  href="/employee-hub"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'employee-hub' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Employee Hub & Salary Tool' : 'कर्मचारी जानकारी केंद्र (Employee Hub)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'talk-corner' })}
+                <a
+                  href="/employee-community"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'talk-corner' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 font-bold text-amber-300/95 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-amber-400" />
                   <span>{isEnglish ? 'Community Forum' : 'कम्युनिटी फोरम (Community Forum)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'sitemap' })}
+                <a
+                  href="/sitemap"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'sitemap' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Sitemap (All Pages)' : 'साइटमैप (Sitemap)'}</span>
-                </button>
+                </a>
               </li>
               <li>
                 <a
@@ -228,94 +256,134 @@ export const Footer: React.FC<FooterProps> = ({
             </h4>
             <ul className="space-y-1.5 text-xs">
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'about' })}
+                <a
+                  href="/about-us"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'about' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'About Us' : 'हमारे बारे में (About Us)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'contact' })}
+                <a
+                  href="/contact-us"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'contact' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Contact Us' : 'संपर्क एवं सुझाव (Contact Us)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'privacy' })}
+                <a
+                  href="/privacy-policy"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'privacy' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Privacy Policy' : 'गोपनीयता नीति (Privacy Policy)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'disclaimer' })}
+                <a
+                  href="/disclaimer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'disclaimer' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Disclaimer' : 'अस्वीकरण (Disclaimer)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'terms' })}
+                <a
+                  href="/terms-and-conditions"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'terms' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Terms & Conditions' : 'नियम एवं शर्तें (Terms)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'editorial-policy' })}
+                <a
+                  href="/editorial-policy"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'editorial-policy' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Editorial Policy' : 'संपादकीय नीति (Editorial Policy)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'fact-checking' })}
+                <a
+                  href="/fact-checking-policy"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'fact-checking' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Fact-Checking' : 'तथ्य-जांच नीति (Fact-Check)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'corrections-policy' })}
+                <a
+                  href="/correction-policy"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'corrections-policy' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Correction Policy' : 'संशोधन नीति (Corrections)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'copyright-policy' })}
+                <a
+                  href="/copyright-policy"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'copyright-policy' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Copyright Policy' : 'कॉपीराइट नीति (Copyright)'}</span>
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate({ type: 'advertise' })}
+                <a
+                  href="/advertise"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate({ type: 'advertise' });
+                  }}
                   className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-slate-600" />
                   <span>{isEnglish ? 'Advertise With Us' : 'विज्ञापन नीति (Advertise)'}</span>
-                </button>
+                </a>
               </li>
               {isAdmin && (
                 <li>

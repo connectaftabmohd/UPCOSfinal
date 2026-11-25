@@ -115,6 +115,154 @@ export const DEPARTMENTS_DATA: Department[] = [
 
 export const NEWS_DATA: NewsItem[] = [
   {
+    id: 'post-upbocw-district-coordinator-coordinator-426-posts-2026',
+    slug: 'upbocw-district-coordinator-coordinator-outsourcing-vacancy-2026-426-posts',
+    title: 'उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड (UPBOCW) भर्ती 2026: District Coordinator (75) व Coordinator (351) कुल 426 पदों पर आवेदन (अंतिम तिथि 25-11-2026)',
+    englishTitle: 'UPBOCW Recruitment 2026: District Coordinator (75 Posts) & Coordinator (351 Posts) Outsourcing Vacancy Across All UP Districts (Last Date 25-11-2026)',
+    category: 'भर्ती एवं तैनाती',
+    department: 'उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड (UPBOCW)',
+    departmentId: 'social-welfare',
+    featuredImage: '/assets/upbocw-coordinator-recruitment-2026.jpg',
+    shortDescription: 'उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड (UPBOCW) में District Coordinator (75 पद, वेतन ₹40,000/माह) और Coordinator (351 पद, वेतन ₹16,870/माह) कुल 426 पदों पर समस्त उ.प्र. में आउटसोर्सिंग भर्ती 2026। आयु 21–45 वर्ष, अंतिम तिथि 25-11-2026।',
+    fullContent: [
+      'उत्तर प्रदेश के सभी जनपदों में स्नातक, मैनेजमेंट (BBA/MBA) और कंप्यूटर (BCA/MCA/B.Tech CS/CCC/O-Level) योग्यता रखने वाले युवाओं के लिए रोजगार का बड़ा अवसर सामने आया है। उत्तर प्रदेश सेवायोजन पोर्टल पर **उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड (UPBOCW)** के अंतर्गत **District Coordinator के 75 पदों** तथा **Coordinator के 351 पदों** (कुल **426 रिक्तियां**) पर थर्ड-पार्टी आउटसोर्सिंग भर्ती प्रकाशित की गई है। ये रिक्तियां **17-11-2026** को पोस्ट की गईं और ऑनलाइन आवेदन करने की **अंतिम तिथि 25-11-2026** निर्धारित है।',
+
+      '> **भर्ती प्रकृति स्पष्टीकरण (Important Clarification):** यह स्थायी सरकारी नौकरी (Permanent Government Job) नहीं है, बल्कि उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड के अंतर्गत **थर्ड पार्टी / आउटसोर्सिंग भर्ती (Third-Party Outsourcing Recruitment)** है। यह लेख केवल जन-सूचना और अभ्यर्थी मार्गदर्शन के लिए है; UPCOS (upcos.netlify.app) एक स्वतंत्र समाचार पोर्टल है, कोई सरकारी वेबसाइट नहीं।',
+
+      '### 📋 1. भर्ती का संक्षिप्त विवरण (Recruitment Overview)',
+      '| विवरण (Particulars) | सत्यापित जानकारी (Verified Details) |',
+      '| :--- | :--- |',
+      '| **विभाग / संस्थान का नाम** | उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड (UPBOCW) |',
+      '| **सेवा प्रदाता एजेंसी (Third Party)** | जानकारी उपलब्ध नहीं है (सेवायोजन पोर्टल लॉगिन से जांचें) |',
+      '| **भर्ती का नाम** | यूपी सेवायोजन UPBOCW District Coordinator एवं Coordinator भर्ती 2026 |',
+      '| **विभाग / श्रेणी** | श्रम एवं निर्माण कर्मकार कल्याण (आउटसोर्सिंग / थर्ड पार्टी भर्ती) |',
+      '| **पदों के नाम** | 1. District Coordinator (75 पद)<br>2. Coordinator (351 पद) |',
+      '| **कार्य स्थल (Job Location)** | उत्तर प्रदेश — समस्त जनपद (All Districts of UP) |',
+      '| **कुल रिक्तियां (Total Vacancies)** | **426 पद** (75 + 351) |',
+      '| **नियुक्ति का प्रकार** | थर्ड पार्टी / आउटसोर्सिंग भर्ती (Outsourcing Recruitment) |',
+      '| **मासिक वेतन / मानदेय** | District Coordinator: **₹40,000/माह** (सीमा ₹30,001–₹40,000)<br>Coordinator: **₹16,870/माह** (सीमा ₹10,001–₹20,000) |',
+      '| **शैक्षिक योग्यता** | BBA/BBM/BMS/BCA/B.Tech CS (60%) या MBA/MCA एवं Graduate + CCC / O-Level / कंप्यूटर डिप्लोमा (पदवार अलग-अलग) |',
+      '| **आयु सीमा (सामान्य)** | **न्यूनतम 21 वर्ष — अधिकतम 45 वर्ष** |',
+      '| **रिक्ति पोस्ट करने की तिथि** | **17-11-2026** |',
+      '| **आवेदन की अंतिम तिथि** | **25-11-2026** |',
+      '| **आवेदन का माध्यम** | ऑनलाइन (UP Sewayojan Portal) |',
+      '| **आधिकारिक वेबसाइट** | [sewayojan.up.nic.in/jobs.aspx](https://sewayojan.up.nic.in/jobs.aspx) |',
+
+      '### 📌 2. पदवार रिक्ति एवं पात्र वर्ग विवरण (Vacancy Details)',
+      'सेवायोजन पोर्टल के रिक्ति विवरण के अनुसार दोनों पदों की संख्या, कार्य स्थल, अपेक्षित सेक्टर अनुभव और पात्र वर्ग इस प्रकार हैं:',
+      '| क्र.सं. | पदनाम (Post Name) | कुल रिक्तियां | कार्य स्थल | मासिक वेतन | अनुभव सेक्टर व अवधि | अपेक्षित वर्ग |',
+      '| :---: | :--- | :---: | :--- | :---: | :--- | :--- |',
+      '| **1** | **District Coordinator** | **75** | उत्तर प्रदेश (समस्त जनपद) | **₹40,000** (सीमा: ₹30,001–₹40,000) | Facility Management (1 वर्ष 0 माह) | पुरुष, महिला, विकलांग, भूतपूर्व सैनिक, खिलाड़ी |',
+      '| **2** | **Coordinator** | **351** | उत्तर प्रदेश (समस्त जनपद) | **₹16,870** (सीमा: ₹10,001–₹20,000) | IT-Software / Software Services (1 वर्ष 0 माह) | पुरुष, महिला, विकलांग, भूतपूर्व सैनिक, खिलाड़ी |',
+
+      '### 🎓 3. पदवार अनिवार्य शैक्षिक योग्यता, अनुभव एवं कौशल (Educational Qualification)',
+      '**1. District Coordinator (कुल 75 पद):**',
+      '- **शैक्षिक योग्यता:** अभ्यर्थी के पास **BBA (Bachelor of Business Administration), BBM (Bachelor of Business Management), BMS (Bachelor of Management Studies), BCA (Bachelor of Computer Application)** अथवा **B.Tech (Computer Science)** कम से कम **60 प्रतिशत अंकों** के साथ उत्तीर्ण होना चाहिए; **अथवा** अभ्यर्थी **MBA (Master of Business Administration)** या **MCA (Master of Computer Application)** उत्तीर्ण हो (पोर्टल स्ट्रीम: Commerce / Management / Computer Science / Engineering - Computer Science)।',
+      '- **अनिवार्य अनुभव:** अभ्यर्थी को **Facility Management** सेक्टर के अंतर्गत प्रबंधन (Management) अथवा परियोजना समन्वयन (Project Coordination) से संबंधित कार्यों का कम से कम **1 वर्ष (1 वर्ष 0 माह)** का अनुभव होना आवश्यक है।',
+      '- **भाषा व कार्य कौशल:** हिंदी एवं अंग्रेजी भाषा का अच्छा ज्ञान होना चाहिए तथा कार्यालयीन पत्राचार, अभिलेखों के संधारण एवं कंप्यूटर आधारित कार्य करने में दक्ष होना आवश्यक है।',
+      '**2. Coordinator (कुल 351 पद):**',
+      '- **शैक्षिक योग्यता:** अभ्यर्थी किसी मान्यता प्राप्त विश्वविद्यालय से किसी भी स्ट्रीम/विषय में **स्नातक (Graduate — सभी डिग्री/सभी स्ट्रीम)** उत्तीर्ण हो।',
+      '- **कंप्यूटर योग्यता:** अभ्यर्थी के पास कंप्यूटर में डिप्लोमा अथवा **ट्रिपल-सी (CCC)** प्रमाणपत्र या **O-Level** प्रमाणपत्र होना अनिवार्य है।',
+      '- **टाइपिंग एवं एम.एस. ऑफिस दक्षता:** हिंदी में न्यूनतम **25 शब्द प्रति मिनट (WPM)** एवं अंग्रेजी में न्यूनतम **30 शब्द प्रति मिनट (WPM)** की टाइपिंग गति अनिवार्य है। साथ ही **MS Office** का समुचित व व्यावहारिक ज्ञान होना चाहिए ताकि अभिलेखों का संधारण, आंकड़ों का संकलन, विश्लेषण एवं प्रतिवेदन तैयार करने के कार्य दक्षतापूर्वक किए जा सकें।',
+      '- **अनिवार्य अनुभव:** सेक्टर **IT-Software / Software Services** में **1 वर्ष (1 वर्ष 0 माह)** का अनुभव।',
+
+      '### ⏳ 4. आयु सीमा (Age Limit) एवं 💰 वेतन विवरण (Salary Details)',
+      '**आयु सीमा:** दोनों पदों (District Coordinator व Coordinator) के लिए सामान्य वर्ग की **न्यूनतम आयु 21 वर्ष और अधिकतम आयु 45 वर्ष** निर्धारित है (आवेदन की अंतिम तिथि **25-11-2026** को आयु 21 से 45 वर्ष के मध्य होनी चाहिए)। आरक्षित श्रेणी के लिए अतिरिक्त आयु छूट संबंधी विवरण अलग से उपलब्ध नहीं है।',
+      '**वेतन विवरण:** पोर्टल पर District Coordinator के लिए वेतन सीमा **₹30,001 – ₹40,000** और मासिक वेतन **₹40,000** प्रदर्शित है, जबकि Coordinator के लिए वेतन सीमा **₹10,001 – ₹20,000** और मासिक वेतन **₹16,870** दर्शाया गया है। थर्ड-पार्टी आउटसोर्सिंग नियुक्तियों में EPF (12%) या ESI (0.75% — ₹21,000 तक के वेतन पर लागू) कटौतियों और इन-हैंड राशि का विवरण सेवा प्रदाता एजेंसी व अनुबंध शर्तों के अनुसार तय होता है। वेतन कटौतियों का अनुमान लगाने के लिए [UPCOS कर्मचारी सूचना हब एवं वेतन कैलकुलेटर](https://upcos.netlify.app/employee-hub) देखें।',
+
+      '### 🔍 5. चयन प्रक्रिया एवं आवेदन कैसे करें? (Selection Process & How to Apply)',
+      'उत्तर प्रदेश सेवायोजन पोर्टल के माध्यम से प्राप्त ऑनलाइन आवेदनों की शॉर्टलिस्टिंग निर्धारित शैक्षिक योग्यता, प्रतिशत/डिप्लोमा, टाइपिंग व कंप्यूटर दक्षता तथा 1 वर्ष के कार्य अनुभव के आधार पर की जाती है। लिखित परीक्षा, कौशल/टाइपिंग परीक्षण अथवा साक्षात्कार से जुड़ा अतिरिक्त विवरण अलग से उपलब्ध नहीं है।',
+      '1. सबसे पहले उत्तर प्रदेश सेवायोजन पोर्टल की आधिकारिक वेबसाइट [sewayojan.up.nic.in](https://sewayojan.up.nic.in/) पर जाएं।\n2. यदि आप नए अभ्यर्थी हैं तो **Jobseeker** के रूप में पंजीकरण करें और अपनी स्नातक/परास्नातक डिग्री, अंक प्रतिशत (BBA/BCA/B.Tech हेतु ≥60%), CCC/O-Level प्रमाणपत्र, टाइपिंग कौशल व 1 वर्ष का अनुभव विवरण प्रोफाइल में अपडेट करें।\n3. [Jobs अनुभाग (sewayojan.up.nic.in/jobs.aspx)](https://sewayojan.up.nic.in/jobs.aspx) में लॉगिन करके विभाग में **"उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड"** सर्च करें।\n4. District Coordinator (75 पद) या Coordinator (351 पद) के सामने **"रिक्ति विवरण"** जांचें और **25-11-2026** की अंतिम तिथि समाप्त होने से पूर्व **"आवेदन करें"** बटन पर क्लिक कर फॉर्म सबमिट करें।',
+
+      '### 📅 6. महत्वपूर्ण तिथियां एवं लिंक (Important Dates & Links)',
+      '| महत्वपूर्ण गतिविधि | तिथि / विवरण |',
+      '| :--- | :--- |',
+      '| **रिक्ति पोस्ट करने की तिथि** | **17-11-2026** |',
+      '| **ऑनलाइन आवेदन की अंतिम तिथि** | **25-11-2026** |',
+      '| **UPCOS सूचना सत्यापन तिथि** | 25-11-2026 |',
+
+      '- **आधिकारिक सेवायोजन जॉब्स पोर्टल (Apply Online):** [sewayojan.up.nic.in/jobs.aspx](https://sewayojan.up.nic.in/jobs.aspx)\n- **आधिकारिक सेवायोजन होमपेज:** [sewayojan.up.nic.in](https://sewayojan.up.nic.in/)\n- **संबंधित बोर्ड पोर्टल:** [upbocw.in](https://upbocw.in/)\n- **प्रत्यक्ष अधिसूचना PDF लिंक:** अलग से उपलब्ध नहीं है (पूर्ण विवरण सेवायोजन लॉगिन पर उपलब्ध है)।\n- **UPCOS आंतरिक श्रेणियां:** [ताज़ा यूपी आउटसोर्सिंग भर्तियां](https://upcos.netlify.app/news) | [उत्तर प्रदेश शासनादेश](https://upcos.netlify.app/shasanadesh) | [कर्मचारी सूचना हब](https://upcos.netlify.app/employee-hub)',
+
+      '> **अभ्यर्थियों के लिए जरूरी निर्देश व सावधानियां:**\n> 1. सभी शैक्षिक अंकपत्र (60% अर्हता सत्यापन हेतु), CCC/O-Level सर्टिफिकेट, अनुभव प्रमाणपत्र और पहचान पत्र की मूल प्रतियां तैयार रखें।\n> 2. **25-11-2026** आवेदन की अंतिम तिथि है—अंतिम समय के सर्वर लोड से बचने के लिए तुरंत ऑनलाइन आवेदन पूरा करें।\n> 3. **धोखाधड़ी से बचाव:** यूपी सेवायोजन पोर्टल पर आवेदन पूर्णतः निःशुल्क होता है। किसी भी व्यक्ति, दलाल या एजेंसी को नौकरी लगवाने के नाम पर कोई शुल्क, कमीशन या सिक्योरिटी राशि न दें।\n> 4. **अस्वीकरण:** UPCOS उत्तर प्रदेश सरकार या UPBOCW की आधिकारिक वेबसाइट नहीं है। आवेदन से पूर्व आधिकारिक पोर्टल [sewayojan.up.nic.in](https://sewayojan.up.nic.in/jobs.aspx) से सभी शर्तें अवश्य सत्यापित करें।',
+
+      '### ❓ 7. अक्सर पूछे जाने वाले प्रश्न (FAQs)',
+      '**प्रश्न 1: क्या UPBOCW District Coordinator और Coordinator भर्ती स्थायी सरकारी नौकरी है?**\nउत्तर: नहीं, यह स्थायी सरकारी नौकरी नहीं है। यह उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड के अंतर्गत **थर्ड पार्टी (आउटसोर्सिंग)** भर्ती है।',
+      '**प्रश्न 2: दोनों पदों पर कुल कितनी रिक्तियां हैं और किन जिलों में तैनाती होगी?**\nउत्तर: कुल **426 रिक्तियां** हैं — District Coordinator के **75 पद** और Coordinator के **351 पद**। कार्य स्थल **उत्तर प्रदेश के समस्त जनपद** दर्शाया गया है।',
+      '**प्रश्न 3: दोनों पदों में मासिक वेतन कितना मिलेगा?**\nउत्तर: पोर्टल विवरण के अनुसार District Coordinator के लिए **₹40,000 प्रति माह** (सीमा ₹30,001–₹40,000) तथा Coordinator के लिए **₹16,870 प्रति माह** (सीमा ₹10,001–₹20,000) निर्धारित है।',
+      '**प्रश्न 4: इन पदों के लिए आयु सीमा और अनुभव क्या मांगा गया है?**\nउत्तर: दोनों पदों के लिए आयु **21 से 45 वर्ष** होनी चाहिए और संबंधित क्षेत्र (District Coordinator हेतु Facility Management/Project Coordination तथा Coordinator हेतु IT-Software/Software Services) में **1 वर्ष का अनुभव** अनिवार्य है।',
+      '**प्रश्न 5: क्या Coordinator पद के लिए टाइपिंग और CCC/O-Level जरूरी है?**\nउत्तर: जी हां, Coordinator के लिए किसी भी स्ट्रीम से स्नातक के साथ कंप्यूटर डिप्लोमा/CCC/O-Level प्रमाणपत्र, MS Office का ज्ञान और हिंदी (25 WPM) व अंग्रेजी (30 WPM) टाइपिंग दक्षता अनिवार्य है।',
+      '**प्रश्न 6: आवेदन की अंतिम तिथि क्या है और आवेदन कैसे करना है?**\nउत्तर: रिक्ति **17-11-2026** को पोस्ट की गई थी और ऑनलाइन आवेदन की अंतिम तिथि **25-11-2026** है। आवेदन केवल [sewayojan.up.nic.in](https://sewayojan.up.nic.in/) पर Jobseeker पंजीकरण के माध्यम से किया जा सकता है।',
+
+      '### 📝 निष्कर्ष (Conclusion)',
+      'उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड में **426 पदों (District Coordinator व Coordinator)** पर प्रदेश के सभी जनपदों में कार्य करने का यह महत्वपूर्ण अवसर है। चूंकि **25-11-2026** आवेदन की अंतिम तिथि है, इसलिए पात्र अभ्यर्थी तुरंत आधिकारिक सेवायोजन पोर्टल [sewayojan.up.nic.in/jobs.aspx](https://sewayojan.up.nic.in/jobs.aspx) पर विवरण सत्यापित कर ऑनलाइन आवेदन पूरा करें।'
+    ],
+    keyHighlights: [
+      '🏛️ विभाग: उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड (UPBOCW) — थर्ड पार्टी भर्ती',
+      '📍 कार्य स्थल व कुल पद: उत्तर प्रदेश (समस्त जनपद) | कुल 426 पद (75 + 351)',
+      '⏰ महत्वपूर्ण तिथियां: पोस्ट तिथि 17-11-2026 | अंतिम तिथि 25-11-2026',
+      '💼 District Coordinator (75 पद): BBA/BBM/BMS/BCA/B.Tech CS (60%) या MBA/MCA + 1 वर्ष अनुभव | वेतन ₹40,000/माह',
+      '💻 Coordinator (351 पद): Graduate + CCC/O-Level/डिप्लोमा + हिंदी 25 / अंग्रेजी 30 WPM टाइपिंग + 1 वर्ष अनुभव | वेतन ₹16,870/माह',
+      '🎂 आयु सीमा (दोनों पदों हेतु): न्यूनतम 21 वर्ष — अधिकतम 45 वर्ष (पुरुष, महिला, दिव्यांग, भूतपूर्व सैनिक, खिलाड़ी)'
+    ],
+    source: 'उत्तर प्रदेश सेवायोजन पोर्टल (उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड)',
+    sourceUrl: 'https://sewayojan.up.nic.in/jobs.aspx',
+    publicationDate: '2026-11-25',
+    publishedTime: '08:40 AM',
+    author: 'रोजगार डेस्क, UPCOS',
+    tags: [
+      'UPBOCW Recruitment 2026',
+      'UP District Coordinator Vacancy 2026',
+      'UP Sewayojan Vacancy 2026',
+      'UPBOCW Coordinator 351 Posts',
+      'UP Outsourcing Vacancy 2026',
+      'Graduate Jobs in UP',
+      'MBA BCA MCA Jobs UP',
+      'Latest Jobs in Uttar Pradesh'
+    ],
+    jobPostings: [
+      {
+        identifier: 'sewayojan-upbocw-district-coordinator-75-2026',
+        title: 'District Coordinator (75 Posts) — उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड',
+        description: 'उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड में उत्तर प्रदेश के समस्त जनपदों में थर्ड-पार्टी आउटसोर्सिंग के माध्यम से District Coordinator के 75 पदों पर भर्ती। योग्यता: BBA/BBM/BMS/BCA/B.Tech CS (न्यूनतम 60%) अथवा MBA/MCA, हिंदी-अंग्रेजी व कंप्यूटर दक्षता तथा प्रबंधन/परियोजना समन्वयन (Facility Management) में 1 वर्ष का अनुभव। आयु: 21-45 वर्ष। वेतन ₹40,000/माह।',
+        hiringOrganization: 'उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड (UPBOCW) — थर्ड पार्टी आउटसोर्सिंग',
+        sameAs: 'https://sewayojan.up.nic.in/jobs.aspx',
+        locality: 'All Districts',
+        region: 'Uttar Pradesh',
+        country: 'IN',
+        salaryValue: 40000,
+        salaryCurrency: 'INR',
+        salaryUnit: 'MONTH',
+        datePosted: '2026-11-17',
+        validThrough: '2026-11-25T23:59:59+05:30',
+        employmentType: 'CONTRACTOR',
+        qualifications: 'BBA / BBM / BMS / BCA / B.Tech (Computer Science) with 60% marks OR MBA / MCA; Hindi & English proficiency and Computer literacy',
+        experienceRequirements: 'Minimum 1 year experience in Management / Project Coordination (Facility Management)'
+      },
+      {
+        identifier: 'sewayojan-upbocw-coordinator-351-2026',
+        title: 'Coordinator (351 Posts) — उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड',
+        description: 'उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड में उत्तर प्रदेश के समस्त जनपदों में थर्ड-पार्टी आउटसोर्सिंग के माध्यम से Coordinator के 351 पदों पर भर्ती। योग्यता: किसी भी स्ट्रीम में स्नातक (Graduate), कंप्यूटर डिप्लोमा / CCC / O-Level, हिंदी टाइपिंग 25 WPM एवं अंग्रेजी टाइपिंग 30 WPM, MS Office ज्ञान तथा IT-Software/Software Services सेक्टर में 1 वर्ष का अनुभव। आयु: 21-45 वर्ष। वेतन ₹16,870/माह।',
+        hiringOrganization: 'उ० प्र० भवन एवं अन्य सन्निर्माण कर्मकार कल्याण बोर्ड (UPBOCW) — थर्ड पार्टी आउटसोर्सिंग',
+        sameAs: 'https://sewayojan.up.nic.in/jobs.aspx',
+        locality: 'All Districts',
+        region: 'Uttar Pradesh',
+        country: 'IN',
+        salaryValue: 16870,
+        salaryCurrency: 'INR',
+        salaryUnit: 'MONTH',
+        datePosted: '2026-11-17',
+        validThrough: '2026-11-25T23:59:59+05:30',
+        employmentType: 'CONTRACTOR',
+        qualifications: 'Graduate (Any Stream) + Computer Diploma / CCC / O-Level + Hindi Typing 25 WPM & English Typing 30 WPM + MS Office proficiency',
+        experienceRequirements: '1 year experience in IT-Software / Software Services'
+      }
+    ],
+    isFeatured: true,
+    isBreaking: true,
+    isMostRead: true,
+    readTime: '6 मिनट'
+  },
+  {
     id: 'post-lucknow-kgmu-cancer-institute-outsourcing-2026',
     slug: 'lucknow-kgmu-cancer-institute-outsourcing-bharti-2026-staff-nurse-lab-ecg-iti',
     title: 'लखनऊ KGMU व सुपर स्पेशलिस्टी कैंसर संस्थान भर्ती 2026: Staff Nurse, Lab, ECG, X-Ray Technician, Carpenter व Plumber पदों पर आवेदन (अंतिम तिथि 24-11-2026)',
@@ -1765,6 +1913,7 @@ export const FAQS_DATA: FAQItem[] = [
 ];
 
 export const BREAKING_NEWS_ITEMS = [
+  '📢 UPBOCW बड़ी भर्ती 2026 (अंतिम तिथि 25-11-2026): समस्त यूपी में District Coordinator (75 पद, ₹40,000/माह) व Coordinator (351 पद, ₹16,870/माह) कुल 426 पदों पर आवेदन।',
   '🏥 लखनऊ भर्ती 2026 (अंतिम तिथि 24-11-2026): KGMU व सुपर स्पेशलिस्टी कैंसर संस्थान में Staff Nurse, Lab, ECG, X-Ray Technician, Carpenter व Plumber पदों पर आवेदन (वेतन ₹16,250–₹19,223/माह)।',
   '🚨 सीएम योगी का बड़ा आदेश: यूपी के 88 विभागों के 3,10,437 (3.10 लाख) आउटसोर्सिंग कर्मचारियों को समय पर और पूरा बढ़ा हुआ मानदेय हर हाल में मिले — लापरवाही बर्दाश्त नहीं।',
   '📢 संत कबीर नगर भर्ती 2026: बेसिक शिक्षा विभाग में NIT Computer Centre द्वारा Educator व ITI Instructor पदों पर आवेदन (वेतन ₹10,313/माह, अंतिम तिथि 22-11-2026)।',

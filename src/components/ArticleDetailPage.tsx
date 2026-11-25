@@ -25,6 +25,7 @@ import { NewsSidebar } from './NewsSidebar';
 import { AdPlacement } from './AdPlacement';
 import { useLanguage } from '../context/LanguageContext';
 import { getCanonicalUrl, resolveAbsoluteImageUrl } from '../utils/seo';
+import { NewsThumbnail } from './NewsThumbnail';
 
 interface ArticleDetailPageProps {
   article: NewsItem;
@@ -360,17 +361,25 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
           },
           headline: article.title,
           alternativeHeadline: article.englishTitle || article.title,
-          image: [article.featuredImage],
+          image: [absoluteOgImage],
           datePublished: article.publicationDate,
           dateModified: article.publicationDate,
           inLanguage: 'hi-IN',
+          isAccessibleForFree: true,
+          articleSection: article.category,
+          wordCount: (article.fullContent || []).join(' ').trim().split(/\s+/).filter(Boolean).length,
           keywords: article.tags?.join(', '),
-          author: [{ '@type': 'Person', name: article.author }],
+          author: [{ '@type': 'Person', name: article.author, url: getCanonicalUrl('/about-us') }],
           publisher: {
-            '@type': 'Organization',
+            '@type': 'NewsMediaOrganization',
             name: 'UPCOS – UP Outsource Seva Nigam News & Information',
             url: 'https://upcos.netlify.app',
-            logo: { '@type': 'ImageObject', url: getCanonicalUrl('/logo.png') }
+            logo: {
+              '@type': 'ImageObject',
+              url: getCanonicalUrl('/logo.png'),
+              width: 1024,
+              height: 1024
+            }
           },
           description: article.shortDescription
         },
@@ -494,27 +503,39 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     <div className="w-full py-6 sm:py-8 bg-slate-50 min-h-screen">
       <div className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-5 overflow-x-auto whitespace-nowrap pb-1">
-          <button
-            onClick={() => onNavigate({ type: 'home' })}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 mb-5 overflow-x-auto whitespace-nowrap pb-1">
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate({ type: 'home' });
+            }}
             className="hover:text-blue-900 font-medium cursor-pointer"
           >
             {isEnglish ? 'Home' : 'होम'}
-          </button>
+          </a>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <button
-            onClick={() => onNavigate({ type: 'news-list' })}
+          <a
+            href="/news"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate({ type: 'news-list' });
+            }}
             className="hover:text-blue-900 font-medium cursor-pointer"
           >
             {isEnglish ? 'Latest News' : 'ताज़ा खबरें'}
-          </button>
+          </a>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <button
-            onClick={() => onNavigate({ type: 'news-list', category: article.category })}
+          <a
+            href={`/news?category=${encodeURIComponent(article.category)}`}
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate({ type: 'news-list', category: article.category });
+            }}
             className="hover:text-blue-900 font-medium cursor-pointer"
           >
             {article.category}
-          </button>
+          </a>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="text-slate-800 font-bold truncate max-w-[220px] sm:max-w-md">
             {displayTitle}
@@ -976,18 +997,23 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {finalRelated.map((rel) => (
-                  <div
+                  <a
                     key={rel.id}
-                    onClick={() => {
+                    href={`/news/${rel.slug}`}
+                    onClick={(e) => {
+                      e.preventDefault();
                       onNavigate({ type: 'news-detail', id: rel.id });
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     className="bg-slate-50 hover:bg-blue-50/50 rounded-xl p-3 border border-slate-200 hover:border-blue-300 cursor-pointer transition flex flex-col justify-between group"
                   >
-                    <img
+                    <NewsThumbnail
                       src={rel.featuredImage}
                       alt={rel.title}
-                      className="w-full h-24 object-cover rounded-lg mb-2"
+                      containerClassName="w-full aspect-16/10 rounded-lg overflow-hidden mb-2 bg-slate-100"
+                      portraitContainerClassName="w-full aspect-16/10 rounded-lg overflow-hidden mb-2 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-1"
+                      landscapeImgClassName="w-full h-full object-cover"
+                      portraitImgClassName="w-full h-full object-contain rounded-sm"
                     />
                     <div>
                       <span className="text-[10px] font-bold text-blue-800 block mb-1">
@@ -1000,7 +1026,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                     <span className="text-[10px] text-slate-400 mt-2 block">
                       {rel.publicationDate}
                     </span>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>

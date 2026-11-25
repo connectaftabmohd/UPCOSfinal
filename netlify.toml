@@ -67,6 +67,31 @@
   from = "/app-ads.txt"
   to = "/ads.txt"
   status = 200
+  force = true
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/news-sitemap.xml"
+  to = "/news-sitemap.xml"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "/robots.txt"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/google871fcd09be8827f9.html"
+  to = "/google871fcd09be8827f9.html"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"

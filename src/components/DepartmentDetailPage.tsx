@@ -12,6 +12,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Department, NewsItem, GovernmentOrder, PageView } from '../types';
+import { NewsThumbnail } from './NewsThumbnail';
 
 interface DepartmentDetailPageProps {
   department: Department;
@@ -116,10 +117,13 @@ export const DepartmentDetailPage: React.FC<DepartmentDetailPageProps> = ({
                     onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
                     className="p-3.5 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-slate-50 cursor-pointer transition flex items-start gap-3.5 group"
                   >
-                    <img
+                    <NewsThumbnail
                       src={item.featuredImage}
                       alt={item.title}
-                      className="w-20 h-20 rounded-lg object-cover shrink-0"
+                      containerClassName="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-100"
+                      portraitContainerClassName="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-0.5"
+                      landscapeImgClassName="w-full h-full object-cover"
+                      portraitImgClassName="w-full h-full object-contain rounded-sm"
                     />
                     <div className="flex-1 min-w-0">
                       <span className="text-[10px] font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded mr-2">

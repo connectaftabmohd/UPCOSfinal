@@ -4,6 +4,7 @@ Allow: /ads.txt
 
 User-agent: Googlebot
 Allow: /
+Allow: /assets/
 Allow: /ads.txt
 Allow: /sitemap.xml
 Allow: /news-sitemap.xml
@@ -13,6 +14,7 @@ Disallow: /api/
 
 User-agent: *
 Allow: /
+Allow: /assets/
 Allow: /ads.txt
 Allow: /sitemap.xml
 Allow: /news-sitemap.xml

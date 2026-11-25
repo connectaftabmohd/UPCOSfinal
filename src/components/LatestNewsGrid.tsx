@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, Calendar, Clock, Newspaper, ArrowUpRight } from 'lucide-react';
 import { NewsItem, PageView } from '../types';
+import { NewsThumbnail } from './NewsThumbnail';
 
 interface LatestNewsGridProps {
   news: NewsItem[];
@@ -67,20 +68,13 @@ export const LatestNewsGrid: React.FC<LatestNewsGridProps> = ({
               className="bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group"
             >
               {/* Thumbnail */}
-              <div 
-                className="relative overflow-hidden aspect-16/10 bg-slate-100 cursor-pointer"
+              <NewsThumbnail
+                src={item.featuredImage}
+                alt={item.title}
+                containerClassName="relative overflow-hidden aspect-16/10 bg-slate-100 cursor-pointer"
+                portraitContainerClassName="relative overflow-hidden aspect-16/10 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-1.5 cursor-pointer"
                 onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
               >
-                <img
-                  src={item.featuredImage}
-                  alt={item.title}
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
-                  }}
-                  className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-500"
-                />
                 <div className="absolute top-3 left-3 flex items-center gap-1.5">
                   <span className="bg-blue-900/90 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-0.5 rounded shadow-2xs">
                     {item.category}
@@ -89,7 +83,7 @@ export const LatestNewsGrid: React.FC<LatestNewsGridProps> = ({
                 <div className="absolute bottom-2 right-2 bg-slate-950/70 text-white text-[10px] px-2 py-0.5 rounded font-mono">
                   {item.readTime}
                 </div>
-              </div>
+              </NewsThumbnail>
 
               {/* Card Body */}
               <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
@@ -104,11 +98,16 @@ export const LatestNewsGrid: React.FC<LatestNewsGridProps> = ({
                     </span>
                   </div>
 
-                  <h3
-                    onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
-                    className="text-base font-bold text-slate-900 group-hover:text-blue-800 transition line-clamp-2 leading-snug cursor-pointer mb-2"
-                  >
-                    {item.title}
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-800 transition line-clamp-2 leading-snug mb-2">
+                    <a
+                      href={`/news/${item.slug}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate({ type: 'news-detail', id: item.id });
+                      }}
+                    >
+                      {item.title}
+                    </a>
                   </h3>
 
                   <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed mb-4">
@@ -120,13 +119,17 @@ export const LatestNewsGrid: React.FC<LatestNewsGridProps> = ({
                   <span className="text-[11px] text-slate-400 font-medium">
                     स्रोत: {item.source.split(',')[0]}
                   </span>
-                  <button
-                    onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
+                  <a
+                    href={`/news/${item.slug}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate({ type: 'news-detail', id: item.id });
+                    }}
                     className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-900 group-hover:underline"
                   >
                     <span>विस्तार से पढ़ें</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
-                  </button>
+                  </a>
                 </div>
               </div>
             </article>

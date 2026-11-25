@@ -1,11 +1,11 @@
 /**
  * SEO Management Utility for UP Outsource Seva Nigam
  * Dynamically manages document title, meta descriptions, OpenGraph, Twitter cards,
- * canonical links, and Schema.org JSON-LD structured data.
+ * canonical & hreflang links, and Schema.org JSON-LD structured data.
  */
 
-export const SITE_DOMAIN = (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-  ? window.location.origin 
+export const SITE_DOMAIN = (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+  ? window.location.origin
   : (((import.meta as any).env && (import.meta as any).env.VITE_SITE_URL) || 'https://upcos.netlify.app')).replace(/\/+$/, '');
 
 export function getCanonicalUrl(pathname: string): string {
@@ -40,9 +40,10 @@ export function resolveAbsoluteImageUrl(img?: string): string {
 export function updatePageSEO(config: SEOConfig): void {
   // 1. Update Document Title
   const baseTitle = 'UP Outsource Seva Nigam';
-  const fullTitle = config.title.includes(baseTitle) || config.title.includes('UPCOS')
-    ? config.title
-    : `${config.title} | ${baseTitle}`;
+  const fullTitle =
+    config.title.includes(baseTitle) || config.title.includes('UPCOS')
+      ? config.title
+      : `${config.title} | ${baseTitle}`;
   document.title = fullTitle;
 
   // 2. Helper to set or create meta tag
@@ -54,6 +55,11 @@ export function updatePageSEO(config: SEOConfig): void {
       document.head.appendChild(element);
     }
     element.setAttribute('content', content);
+  };
+
+  const removeMetaTag = (attribute: string, attributeValue: string) => {
+    const element = document.querySelector(`meta[${attribute}="${attributeValue}"]`);
+    if (element) element.remove();
   };
 
   // 3. Robots / Indexing Control
@@ -81,6 +87,16 @@ export function updatePageSEO(config: SEOConfig): void {
   setMetaTag('property', 'og:image:alt', fullTitle);
   setMetaTag('property', 'og:url', currentUrl);
 
+  if (ogImage === DEFAULT_OG_IMAGE) {
+    setMetaTag('property', 'og:image:type', 'image/jpeg');
+    setMetaTag('property', 'og:image:width', '1376');
+    setMetaTag('property', 'og:image:height', '768');
+  } else {
+    removeMetaTag('property', 'og:image:type');
+    removeMetaTag('property', 'og:image:width');
+    removeMetaTag('property', 'og:image:height');
+  }
+
   // 6. Twitter Card Tags
   setMetaTag('name', 'twitter:card', 'summary_large_image');
   setMetaTag('name', 'twitter:title', fullTitle);
@@ -89,14 +105,26 @@ export function updatePageSEO(config: SEOConfig): void {
   setMetaTag('name', 'twitter:image:alt', fullTitle);
   setMetaTag('name', 'twitter:url', currentUrl);
 
-  // 7. Canonical Link Tag
-  let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-  if (!canonicalEl) {
-    canonicalEl = document.createElement('link');
-    canonicalEl.setAttribute('rel', 'canonical');
-    document.head.appendChild(canonicalEl);
+  // 7. Canonical & Hreflang Link Tags
+  const setLinkTag = (rel: string, href: string, extraAttr?: [string, string]) => {
+    const selector = extraAttr
+      ? `link[rel="${rel}"][${extraAttr[0]}="${extraAttr[1]}"]`
+      : `link[rel="${rel}"]`;
+    let linkEl = document.querySelector(selector) as HTMLLinkElement | null;
+    if (!linkEl) {
+      linkEl = document.createElement('link');
+      linkEl.setAttribute('rel', rel);
+      if (extraAttr) linkEl.setAttribute(extraAttr[0], extraAttr[1]);
+      document.head.appendChild(linkEl);
+    }
+    linkEl.setAttribute('href', href);
+  };
+
+  setLinkTag('canonical', currentUrl);
+  if (!config.noindex) {
+    setLinkTag('alternate', currentUrl, ['hreflang', 'hi-IN']);
+    setLinkTag('alternate', currentUrl, ['hreflang', 'x-default']);
   }
-  canonicalEl.setAttribute('href', currentUrl);
 
   // 8. Dynamic JSON-LD Structured Data
   const existingDynamicSchema = document.getElementById('dynamic-jsonld-schema');

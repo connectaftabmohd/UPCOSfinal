@@ -105,9 +105,13 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
             const secondaryName = isEnglish ? dept.name : dept.englishName;
 
             return (
-              <div
+              <a
                 key={dept.id}
-                onClick={() => onNavigate({ type: 'department-detail', id: dept.id })}
+                href={`/departments/${dept.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate({ type: 'department-detail', id: dept.id });
+                }}
                 className="bg-slate-50/70 hover:bg-blue-50/50 rounded-xl p-5 border border-slate-200 hover:border-blue-300 transition-all duration-200 cursor-pointer flex flex-col justify-between group shadow-2xs hover:shadow-xs"
               >
                 <div>
@@ -145,7 +149,7 @@ export const DepartmentsSection: React.FC<DepartmentsSectionProps> = ({
                     {isEnglish ? 'View' : 'देखें'} <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition" />
                   </span>
                 </div>
-              </div>
+              </a>
             );
           })}
         </div>

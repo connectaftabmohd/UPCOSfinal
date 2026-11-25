@@ -42,6 +42,77 @@ const resolveAbsoluteImageUrl = (img = '') => {
   return `${DOMAIN}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
 };
 
+const renderInlineFormatting = (text = '') =>
+  escapeHtmlText(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+const renderFullContentHtml = (lines = []) => {
+  if (!Array.isArray(lines) || lines.length === 0) return '';
+  const chunks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const raw = String(lines[i] || '').trim();
+    if (!raw) {
+      i++;
+      continue;
+    }
+
+    if (raw.startsWith('#### ')) {
+      chunks.push(`<h4>${renderInlineFormatting(raw.slice(5))}</h4>`);
+      i++;
+    } else if (raw.startsWith('### ')) {
+      chunks.push(`<h3>${renderInlineFormatting(raw.slice(4))}</h3>`);
+      i++;
+    } else if (raw.startsWith('## ')) {
+      chunks.push(`<h2>${renderInlineFormatting(raw.slice(3))}</h2>`);
+      i++;
+    } else if (raw.startsWith('# ')) {
+      chunks.push(`<h2>${renderInlineFormatting(raw.slice(2))}</h2>`);
+      i++;
+    } else if (raw.startsWith('|')) {
+      const tableRows = [];
+      while (i < lines.length && String(lines[i] || '').trim().startsWith('|')) {
+        const rowStr = String(lines[i]).trim();
+        const isSeparator = /^\|[\s\-:|]+\|$/.test(rowStr);
+        if (!isSeparator) {
+          const cells = rowStr
+            .split('|')
+            .slice(1, -1)
+            .map((c) => c.trim());
+          tableRows.push(cells);
+        }
+        i++;
+      }
+      if (tableRows.length > 0) {
+        const [header, ...bodyRows] = tableRows;
+        const thead = `<thead><tr>${header.map((h) => `<th>${renderInlineFormatting(h)}</th>`).join('')}</tr></thead>`;
+        const tbody =
+          bodyRows.length > 0
+            ? `<tbody>${bodyRows.map((row) => `<tr>${row.map((c) => `<td>${renderInlineFormatting(c)}</td>`).join('')}</tr>`).join('')}</tbody>`
+            : '';
+        chunks.push(`<table>${thead}${tbody}</table>`);
+      }
+    } else if (raw.startsWith('- ') || raw.startsWith('* ') || raw.startsWith('• ')) {
+      const listItems = [];
+      while (i < lines.length) {
+        const cur = String(lines[i] || '').trim();
+        if (cur.startsWith('- ') || cur.startsWith('* ') || cur.startsWith('• ')) {
+          listItems.push(`<li>${renderInlineFormatting(cur.slice(2))}</li>`);
+          i++;
+        } else {
+          break;
+        }
+      }
+      chunks.push(`<ul>${listItems.join('')}</ul>`);
+    } else {
+      chunks.push(`<p>${renderInlineFormatting(raw)}</p>`);
+      i++;
+    }
+  }
+
+  return chunks.join('\n');
+};
+
 let dbData = { news: [], orders: [], departments: [], faqs: [] };
 if (fs.existsSync(DB_PATH)) {
   try {
@@ -635,6 +706,9 @@ const newsRoutes = newsList.map((article, idx) => {
       }))
     : [];
 
+  const fullText = [article.shortDescription || '', ...(Array.isArray(article.fullContent) ? article.fullContent : [])].join(' ');
+  const wordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
+
   const schema = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -647,13 +721,17 @@ const newsRoutes = newsList.map((article, idx) => {
         datePublished: article.publicationDate,
         dateModified: article.publicationDate,
         inLanguage: 'hi-IN',
+        isAccessibleForFree: true,
+        articleSection: article.category,
+        wordCount,
         keywords: Array.isArray(article.tags) ? article.tags.join(', ') : '',
-        author: [{ '@type': 'Person', name: article.author }],
+        author: [{ '@type': 'Person', name: article.author, url: `${DOMAIN}/about-us` }],
         publisher: {
-          '@type': 'Organization',
-          name: 'UPCOS – UP Outsource Seva Nigam News & Information',
+          '@type': 'NewsMediaOrganization',
+          '@id': `${DOMAIN}/#organization`,
+          name: 'UPCOS – UP Outsource Seva Nigam',
           url: DOMAIN,
-          logo: { '@type': 'ImageObject', url: `${DOMAIN}/logo.png` }
+          logo: { '@type': 'ImageObject', url: `${DOMAIN}/logo.png`, width: 1024, height: 1024 }
         },
         description: article.shortDescription
       },
@@ -669,12 +747,7 @@ const newsRoutes = newsList.map((article, idx) => {
   const highlightsHtml = Array.isArray(article.keyHighlights)
     ? `<ul>${article.keyHighlights.map((h) => `<li>${escapeHtmlText(h)}</li>`).join('')}</ul>`
     : '';
-  const bodyHtml = Array.isArray(article.fullContent)
-    ? article.fullContent
-        .slice(0, 8)
-        .map((line) => `<p>${escapeHtmlText(line)}</p>`)
-        .join('\n')
-    : '';
+  const bodyHtml = renderFullContentHtml(article.fullContent);
 
   return {
     path: `news/${article.slug}`,
@@ -820,6 +893,8 @@ allRoutes.forEach((r) => {
   html = html.replace(/<meta name="title" content=".*?" \/>/i, `<meta name="title" content="${safeTitle}" />`);
   html = html.replace(/<meta name="description" content=".*?" \/>/i, `<meta name="description" content="${safeDesc}" />`);
   html = html.replace(/<link rel="canonical" href=".*?" \/>/i, `<link rel="canonical" href="${canonicalUrl}" />`);
+  html = html.replace(/<link rel="alternate" hreflang="hi-IN" href=".*?" \/>/i, `<link rel="alternate" hreflang="hi-IN" href="${canonicalUrl}" />`);
+  html = html.replace(/<link rel="alternate" hreflang="x-default" href=".*?" \/>/i, `<link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />`);
   html = html.replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${safeTitle}" />`);
   html = html.replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${safeDesc}" />`);
   html = html.replace(/<meta property="og:url" content=".*?" \/>/i, `<meta property="og:url" content="${canonicalUrl}" />`);

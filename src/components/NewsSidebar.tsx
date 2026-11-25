@@ -1,5 +1,5 @@
-import React from 'react';
-import { TrendingUp, Clock, FileText, ChevronRight, Sparkles, ExternalLink } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { TrendingUp, FileText, ChevronRight, Sparkles, ExternalLink } from 'lucide-react';
 import { NewsItem, GovernmentOrder, PageView } from '../types';
 import { AdPlacement } from './AdPlacement';
 
@@ -11,6 +11,16 @@ interface NewsSidebarProps {
   currentArticleId?: string;
 }
 
+const DEFAULT_CATEGORIES = [
+  'भर्ती एवं तैनाती',
+  'वेतन अपडेट',
+  'शासनादेश',
+  'ताजा खबर',
+  'पीएफ एवं ईएसआई',
+  'विभागीय सूचना',
+  'कर्मचारी समाचार',
+];
+
 export const NewsSidebar: React.FC<NewsSidebarProps> = ({
   latestNews,
   mostReadNews,
@@ -18,14 +28,18 @@ export const NewsSidebar: React.FC<NewsSidebarProps> = ({
   onNavigate,
   currentArticleId,
 }) => {
-  const categories = [
-    { label: 'शासनादेश', count: 18 },
-    { label: 'वेतन अपडेट', count: 24 },
-    { label: 'पीएफ एवं ईएसआई', count: 15 },
-    { label: 'कर्मचारी समाचार', count: 32 },
-    { label: 'भर्ती एवं तैनाती', count: 12 },
-    { label: 'विभागीय सूचना', count: 29 },
-  ];
+  const categories = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of latestNews || []) {
+      if (item.category) {
+        counts[item.category] = (counts[item.category] || 0) + 1;
+      }
+    }
+    const ordered = Array.from(new Set([...DEFAULT_CATEGORIES, ...Object.keys(counts)]));
+    return ordered
+      .filter((label) => (counts[label] || 0) > 0)
+      .map((label) => ({ label, count: counts[label] || 0 }));
+  }, [latestNews]);
 
   return (
     <aside className="space-y-6">
@@ -43,9 +57,13 @@ export const NewsSidebar: React.FC<NewsSidebarProps> = ({
             .filter((n) => n.id !== currentArticleId)
             .slice(0, 4)
             .map((item, idx) => (
-              <div
+              <a
                 key={item.id}
-                onClick={() => onNavigate({ type: 'news-detail', id: item.id })}
+                href={`/news/${item.slug}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate({ type: 'news-detail', id: item.id });
+                }}
                 className="pt-3 first:pt-0 cursor-pointer group flex items-start gap-3"
               >
                 <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 text-xs font-mono font-bold flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-blue-900 group-hover:text-white transition">
@@ -61,7 +79,7 @@ export const NewsSidebar: React.FC<NewsSidebarProps> = ({
                     <span>{item.readTime}</span>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
         </div>
       </div>
@@ -75,20 +93,28 @@ export const NewsSidebar: React.FC<NewsSidebarProps> = ({
               नवीनतम शासनादेश
             </h3>
           </div>
-          <button
-            onClick={() => onNavigate({ type: 'gov-orders' })}
+          <a
+            href="/shasanadesh"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate({ type: 'gov-orders' });
+            }}
             className="text-xs font-bold text-amber-800 hover:underline"
           >
             सभी →
-          </button>
+          </a>
         </div>
 
         <div className="space-y-3">
           {(govOrders || []).slice(0, 3).map((order) => (
-            <div
+            <a
               key={order.id}
-              onClick={() => onNavigate({ type: 'gov-order-detail', id: order.id })}
-              className="bg-white p-3 rounded-xl border border-amber-200/60 hover:border-amber-400 cursor-pointer transition group"
+              href={`/shasanadesh/${order.slug}`}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate({ type: 'gov-order-detail', id: order.id });
+              }}
+              className="block bg-white p-3 rounded-xl border border-amber-200/60 hover:border-amber-400 cursor-pointer transition group"
             >
               <span className="text-[10px] font-mono font-semibold text-amber-900 block truncate">
                 {order.orderNumber}
@@ -100,7 +126,7 @@ export const NewsSidebar: React.FC<NewsSidebarProps> = ({
                 <span>{order.department}</span>
                 <span>{order.date}</span>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </div>
@@ -111,20 +137,24 @@ export const NewsSidebar: React.FC<NewsSidebarProps> = ({
           लोकप्रिय श्रेणियां (Categories)
         </h3>
         <div className="space-y-1.5">
-          {categories.map((cat, i) => (
-            <button
-              key={i}
-              onClick={() => onNavigate({ type: 'news-list', category: cat.label })}
+          {categories.map((cat) => (
+            <a
+              key={cat.label}
+              href={`/news?category=${encodeURIComponent(cat.label)}`}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate({ type: 'news-list', category: cat.label });
+              }}
               className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-blue-900 transition"
             >
               <div className="flex items-center gap-2">
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 <span>{cat.label}</span>
               </div>
-              <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px]">
+              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">
                 {cat.count}
               </span>
-            </button>
+            </a>
           ))}
         </div>
       </div>
