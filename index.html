@@ -43,6 +43,15 @@
       })();
     </script>
     
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
     <!-- Google AdSense -->
     <meta name="google-adsense-account" content="ca-pub-1591506487952599" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1591506487952599"
@@ -61,6 +70,11 @@
     <meta name="googlebot" content="index, follow" />
     <meta name="author" content="UPCOS Editorial Team" />
     <meta name="publisher" content="UP Outsource Seva Nigam" />
+    <meta name="publish_date" content="2026-11-26" />
+    <meta name="date" content="2026-11-26" />
+    <meta property="article:published_time" content="2026-11-26T09:30:00+05:30" />
+    <meta property="article:modified_time" content="2026-11-26T09:30:00+05:30" />
+    <meta property="og:updated_time" content="2026-11-26T09:30:00+05:30" />
     <meta name="theme-color" content="#1e3a8a" />
     <link rel="canonical" href="https://upcos.netlify.app/" />
     <link rel="alternate" hreflang="hi-IN" href="https://upcos.netlify.app/" />
@@ -109,6 +123,8 @@
           "alternateName": "UPCOS",
           "description": "उत्तर प्रदेश आउटसोर्स एवं संविदा कर्मचारियों के लिए प्रामाणिक समाचार, शासनादेश और सेवा संबंधी जानकारी का मंच",
           "inLanguage": ["hi-IN", "en-IN"],
+          "datePublished": "2026-01-15T00:00:00+05:30",
+          "dateModified": "2026-11-26T09:30:00+05:30",
           "publisher": {
             "@id": "https://upcos.netlify.app/#organization"
           },
@@ -119,6 +135,23 @@
               "urlTemplate": "https://upcos.netlify.app/search?q={search_term_string}"
             },
             "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://upcos.netlify.app/#webpage",
+          "url": "https://upcos.netlify.app/",
+          "name": "UPCOS – UP Outsource Seva Nigam News, Shasanadesh & Jobs",
+          "isPartOf": { "@id": "https://upcos.netlify.app/#website" },
+          "about": { "@id": "https://upcos.netlify.app/#organization" },
+          "datePublished": "2026-01-15T00:00:00+05:30",
+          "dateModified": "2026-11-26T09:30:00+05:30",
+          "inLanguage": "hi-IN",
+          "primaryImageOfPage": {
+            "@type": "ImageObject",
+            "url": "https://upcos.netlify.app/og-banner.jpg",
+            "width": 1376,
+            "height": 768
           }
         },
         {
@@ -135,6 +168,13 @@
             "width": 1024,
             "height": 1024
           },
+          "sameAs": [
+            "https://www.facebook.com/people/UP-outsource-Seva-Nigam-News-and-Information/61580301641301/",
+            "https://x.com/UPOutsource",
+            "https://t.me/UPOutsource",
+            "https://www.youtube.com/@UPOutsource",
+            "https://www.instagram.com/upoutsource"
+          ],
           "publishingPrinciples": "https://upcos.netlify.app/editorial-policy",
           "correctionsPolicy": "https://upcos.netlify.app/correction-policy",
           "verificationFactCheckingPolicy": "https://upcos.netlify.app/fact-checking-policy",
@@ -151,10 +191,13 @@
     }
     </script>
 
-    <!-- Google Fonts Preconnect -->
+    <!-- Google Fonts Preconnect & Non-Blocking Async Load -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,700;0,6..72,800;1,6..72,700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rozha+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,700;0,6..72,800;1,6..72,700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,700;0,6..72,800;1,6..72,700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

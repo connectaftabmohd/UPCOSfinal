@@ -4,8 +4,21 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
+  const gaId = process.env.VITE_GA_MEASUREMENT_ID;
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        name: 'inject-ga-measurement-id',
+        transformIndexHtml(html) {
+          if (gaId && gaId !== 'G-XXXXXXXXXX') {
+            return html.replace(/G-XXXXXXXXXX/g, gaId);
+          }
+          return html;
+        },
+      },
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

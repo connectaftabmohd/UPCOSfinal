@@ -182,6 +182,7 @@ async function startServer() {
   const buildRouteSocialMeta = (pathname: string, origin: string) => {
     const cleanPath = pathname.split("?")[0].replace(/\/+$/, "") || "/";
     const defaultImg = `${origin}/og-banner.jpg`;
+    const latestNewsDate = dbService.getNews()[0]?.publicationDate || "2026-11-26";
     const meta = {
       title: "UPCOS – UP Outsource Seva Nigam News, Shasanadesh & Jobs",
       description:
@@ -190,6 +191,8 @@ async function startServer() {
       defaultImage: defaultImg,
       url: `${origin}${cleanPath === "/" ? "/" : cleanPath}`,
       ogType: "website" as "website" | "article",
+      publishedDate: latestNewsDate,
+      author: "UPCOS Editorial Team",
       statusCode: 200,
       noindex: false,
       robotsContent: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
@@ -319,6 +322,8 @@ async function startServer() {
         meta.description = article.shortDescription || meta.description;
         meta.image = resolveImg(article.featuredImage);
         meta.ogType = "article";
+        meta.publishedDate = article.publicationDate || meta.publishedDate;
+        meta.author = article.author || meta.author;
         return meta;
       }
     } else if (cleanPath.startsWith("/shasanadesh/")) {
@@ -328,6 +333,7 @@ async function startServer() {
         meta.title = `${order.orderNumber}: ${order.title} – UPCOS शासनादेश`;
         meta.description = order.summary || meta.description;
         meta.ogType = "article";
+        meta.publishedDate = order.date || meta.publishedDate;
         return meta;
       }
     } else if (cleanPath.startsWith("/departments/")) {
@@ -355,10 +361,19 @@ async function startServer() {
     const safeImg = escapeAttr(meta.image);
     const safeUrl = escapeAttr(meta.url);
     const safeRobots = escapeAttr(meta.robotsContent);
+    const pubDateShort = escapeAttr((meta.publishedDate || "2026-11-26").slice(0, 10));
+    const pubDateIso = escapeAttr(meta.publishedDate?.includes("T") ? meta.publishedDate : `${pubDateShort}T09:30:00+05:30`);
+    const safeAuthor = escapeAttr(meta.author || "UPCOS Editorial Team");
     let output = html
       .replace(/<title>.*?<\/title>/i, `<title>${safeTitle}</title>`)
       .replace(/<meta name="title" content=".*?" \/>/i, `<meta name="title" content="${safeTitle}" />`)
       .replace(/<meta name="description" content=".*?" \/>/i, `<meta name="description" content="${safeDesc}" />`)
+      .replace(/<meta name="author" content=".*?" \/>/i, `<meta name="author" content="${safeAuthor}" />`)
+      .replace(/<meta name="publish_date" content=".*?" \/>/i, `<meta name="publish_date" content="${pubDateShort}" />`)
+      .replace(/<meta name="date" content=".*?" \/>/i, `<meta name="date" content="${pubDateShort}" />`)
+      .replace(/<meta property="article:published_time" content=".*?" \/>/i, `<meta property="article:published_time" content="${pubDateIso}" />`)
+      .replace(/<meta property="article:modified_time" content=".*?" \/>/i, `<meta property="article:modified_time" content="${pubDateIso}" />`)
+      .replace(/<meta property="og:updated_time" content=".*?" \/>/i, `<meta property="og:updated_time" content="${pubDateIso}" />`)
       .replace(/<meta name="robots" content=".*?" \/>/i, `<meta name="robots" content="${safeRobots}" />`)
       .replace(/<meta name="googlebot" content=".*?" \/>/i, `<meta name="googlebot" content="${safeRobots}" />`)
       .replace(/<link rel="canonical" href=".*?" \/>/i, `<link rel="canonical" href="${safeUrl}" />`)
@@ -385,6 +400,10 @@ async function startServer() {
     }
     if (meta.noindex) {
       output = output.replace(/\s*<link rel="canonical" href=".*?" \/>/i, "");
+    }
+    if (output.includes('<div id="root"></div>')) {
+      const ssrShell = `<header role="banner"><a href="/"><img src="/logo.png" alt="UPCOS – UP Outsource Seva Nigam Logo" width="48" height="48" /><span>UP Outsource Seva Nigam (UPCOS)</span></a><nav aria-label="Primary Navigation"><a href="/">Home</a> | <a href="/news">News</a> | <a href="/shasanadesh">Gov Orders</a> | <a href="/departments">Departments</a> | <a href="/employee-hub">Employee Hub</a> | <a href="/about-us">About Us</a> | <a href="/contact-us">Contact Us</a></nav></header><main><h1>${safeTitle}</h1><p>Author: <strong>${safeAuthor}</strong> | Published: <time datetime="${pubDateIso}">${pubDateShort}</time></p><img src="${safeImg}" alt="${safeTitle}" width="1200" height="675" /><p>${safeDesc}</p></main><footer role="contentinfo"><p><a href="https://www.facebook.com/people/UP-outsource-Seva-Nigam-News-and-Information/61580301641301/" target="_blank" rel="noopener noreferrer me">Facebook</a> | <a href="https://x.com/UPOutsource" target="_blank" rel="noopener noreferrer me">X (Twitter)</a> | <a href="https://t.me/UPOutsource" target="_blank" rel="noopener noreferrer me">Telegram</a> | <a href="https://www.youtube.com/@UPOutsource" target="_blank" rel="noopener noreferrer me">YouTube</a> | <a href="https://www.instagram.com/upoutsource" target="_blank" rel="noopener noreferrer me">Instagram</a></p><p><a href="/privacy-policy">Privacy Policy</a> | <a href="/disclaimer">Disclaimer</a> | <a href="/terms-and-conditions">Terms</a> | <a href="/sitemap">Sitemap</a></p></footer>`;
+      output = output.replace('<div id="root"></div>', `<div id="root">${ssrShell}</div>`);
     }
     return output;
   };

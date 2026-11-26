@@ -127,7 +127,28 @@ const ordersList = Array.isArray(dbData.orders) ? dbData.orders : [];
 const departmentsList = Array.isArray(dbData.departments) ? dbData.departments : [];
 const faqsList = Array.isArray(dbData.faqs) ? dbData.faqs : [];
 
-const latestDate = newsList[0]?.publicationDate || '2026-11-22';
+const latestDate = newsList[0]?.publicationDate || '2026-11-26';
+
+const SITE_HEADER = `
+  <header role="banner" style="background:#ffffff;border-bottom:1px solid #e2e8f0;padding:12px 16px;">
+    <div style="max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
+      <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#0f172a;font-weight:800;">
+        <img src="/logo.png" alt="UPCOS – UP Outsource Seva Nigam Official Logo" width="48" height="48" style="border-radius:9999px;object-fit:cover;" />
+        <span>UP Outsource Seva Nigam (UPCOS) — News &amp; Information</span>
+      </a>
+      <nav aria-label="Primary Navigation" style="display:flex;flex-wrap:wrap;gap:12px;font-size:0.9rem;font-weight:600;">
+        <a href="/">मुख्य पृष्ठ (Home)</a>
+        <a href="/news">ताज़ा खबरें (News)</a>
+        <a href="/shasanadesh">शासनादेश (Gov Orders)</a>
+        <a href="/departments">विभाग (Departments)</a>
+        <a href="/employee-hub">कर्मचारी हब (Employee Hub)</a>
+        <a href="/employee-community">कर्मचारी संवाद (Community)</a>
+        <a href="/about-us">हमारे बारे में (About Us)</a>
+        <a href="/contact-us">संपर्क करें (Contact)</a>
+      </nav>
+    </div>
+  </header>
+`;
 
 const NAV_LINKS = `
   <nav aria-label="Primary Portal Navigation" style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e2e8f0;font-size:0.9rem;">
@@ -146,6 +167,39 @@ const NAV_LINKS = `
   </nav>
 `;
 
+const SITE_FOOTER = `
+  <footer role="contentinfo" style="background:#0f172a;color:#cbd5e1;padding:2rem 1rem;margin-top:2rem;border-top:1px solid #1e293b;font-family:sans-serif;font-size:0.9rem;line-height:1.7;">
+    <div style="max-width:1100px;margin:0 auto;">
+      <p><strong>UP Outsource Seva Nigam News &amp; Information (UPCOS)</strong> — उत्तर प्रदेश आउटसोर्स एवं संविदा कर्मचारियों के लिए स्वतंत्र समाचार, शासनादेश एवं सेवा सूचना मंच।</p>
+      <p>
+        <strong>सोशल मीडिया पर जुड़ें (Follow Us):</strong>
+        <a href="https://www.facebook.com/people/UP-outsource-Seva-Nigam-News-and-Information/61580301641301/" target="_blank" rel="noopener noreferrer me" style="color:#93c5fd;">Facebook</a> |
+        <a href="https://x.com/UPOutsource" target="_blank" rel="noopener noreferrer me" style="color:#93c5fd;">X (Twitter)</a> |
+        <a href="https://t.me/UPOutsource" target="_blank" rel="noopener noreferrer me" style="color:#93c5fd;">Telegram</a> |
+        <a href="https://www.youtube.com/@UPOutsource" target="_blank" rel="noopener noreferrer me" style="color:#93c5fd;">YouTube</a> |
+        <a href="https://www.instagram.com/upoutsource" target="_blank" rel="noopener noreferrer me" style="color:#93c5fd;">Instagram</a> |
+        <a href="https://whatsapp.com/channel/0029VaUPOutsource" target="_blank" rel="noopener noreferrer me" style="color:#93c5fd;">WhatsApp</a>
+      </p>
+      <p>
+        <strong>नीति एवं वैधानिक पृष्ठ:</strong>
+        <a href="/about-us" style="color:#fde68a;">About Us</a> |
+        <a href="/contact-us" style="color:#fde68a;">Contact Us</a> |
+        <a href="/privacy-policy" style="color:#fde68a;">Privacy Policy</a> |
+        <a href="/disclaimer" style="color:#fde68a;">Disclaimer</a> |
+        <a href="/terms-and-conditions" style="color:#fde68a;">Terms &amp; Conditions</a> |
+        <a href="/editorial-policy" style="color:#fde68a;">Editorial Policy</a> |
+        <a href="/fact-checking-policy" style="color:#fde68a;">Fact-Checking</a> |
+        <a href="/correction-policy" style="color:#fde68a;">Corrections</a> |
+        <a href="/copyright-policy" style="color:#fde68a;">Copyright</a> |
+        <a href="/advertise" style="color:#fde68a;">Advertise</a> |
+        <a href="/sitemap" style="color:#fde68a;">Sitemap</a>
+      </p>
+      <p>संपर्क ईमेल: <a href="mailto:contact@uposn.in" style="color:#93c5fd;">contact@uposn.in</a> | स्थान: लखनऊ, उत्तर प्रदेश</p>
+      <p>© 2026 UP Outsource Seva Nigam News &amp; Information. All Rights Reserved. यह उत्तर प्रदेश सरकार की आधिकारिक वेबसाइट नहीं है।</p>
+    </div>
+  </footer>
+`;
+
 const makeBreadcrumbList = (crumbs) => ({
   '@type': 'BreadcrumbList',
   itemListElement: crumbs.map((c, idx) => ({
@@ -157,8 +211,16 @@ const makeBreadcrumbList = (crumbs) => ({
 });
 
 const homeBodySnippet = `
-  <main style="max-width:900px;margin:2rem auto;padding:1.5rem;font-family:sans-serif;line-height:1.7;">
+  ${SITE_HEADER}
+  <main style="max-width:960px;margin:2rem auto;padding:1.5rem;font-family:sans-serif;line-height:1.7;">
     <h1>UPCOS – उत्तर प्रदेश आउटसोर्स सेवा एवं कर्मचारी सूचना पोर्टल</h1>
+    <p style="font-size:0.9rem;color:#475569;">
+      प्रकाशक: <strong>UPCOS Editorial Team</strong> |
+      अद्यतन तिथि: <time datetime="${escapeHtmlAttr(latestDate)}T09:30:00+05:30">${escapeHtmlText(latestDate)}</time>
+    </p>
+    <figure style="margin:1rem 0;">
+      <img src="/og-banner.jpg" alt="UPCOS – उत्तर प्रदेश आउटसोर्स सेवा एवं कर्मचारी सूचना पोर्टल मुख्य बैनर" width="1376" height="768" style="max-width:100%;height:auto;border-radius:12px;" />
+    </figure>
     <p><strong>UP Outsource Seva Nigam News &amp; Information</strong> उत्तर प्रदेश के सरकारी विभागों एवं निगमों में कार्यरत आउटसोर्सिंग एवं संविदा कर्मचारियों के लिए समर्पित एक स्वतंत्र समाचार एवं सूचना मंच है।</p>
     <section>
       <h2>नवीनतम समाचार एवं भर्ती अपडेट</h2>
@@ -167,7 +229,13 @@ const homeBodySnippet = `
           .slice(0, 8)
           .map(
             (n) =>
-              `<li><a href="/news/${escapeHtmlAttr(n.slug)}">${escapeHtmlText(n.title)}</a> (${escapeHtmlText(n.publicationDate)})</li>`
+              `<li style="margin-bottom:1rem;">
+                <a href="/news/${escapeHtmlAttr(n.slug)}">
+                  <img src="${escapeHtmlAttr(n.featuredImage || '/og-banner.jpg')}" alt="${escapeHtmlAttr(n.title)}" width="320" height="180" style="max-width:320px;height:auto;border-radius:8px;display:block;margin-bottom:0.4rem;" />
+                  <strong>${escapeHtmlText(n.title)}</strong>
+                </a>
+                — <time datetime="${escapeHtmlAttr(n.publicationDate || latestDate)}">${escapeHtmlText(n.publicationDate || latestDate)}</time>
+              </li>`
           )
           .join('\n        ')}
       </ul>
@@ -179,7 +247,7 @@ const homeBodySnippet = `
           .slice(0, 5)
           .map(
             (o) =>
-              `<li><a href="/shasanadesh/${escapeHtmlAttr(o.slug)}">${escapeHtmlText(o.orderNumber)}: ${escapeHtmlText(o.title)}</a></li>`
+              `<li><a href="/shasanadesh/${escapeHtmlAttr(o.slug)}">${escapeHtmlText(o.orderNumber)}: ${escapeHtmlText(o.title)}</a> (<time datetime="${escapeHtmlAttr(o.date || latestDate)}">${escapeHtmlText(o.date || latestDate)}</time>)</li>`
           )
           .join('\n        ')}
       </ul>
@@ -209,6 +277,7 @@ const homeBodySnippet = `
     </section>
     ${NAV_LINKS}
   </main>
+  ${SITE_FOOTER}
 `;
 
 const staticRoutes = [
@@ -790,6 +859,13 @@ const newsRoutes = newsList.map((article, idx) => {
     bodySnippet: `
       <article style="max-width:850px;margin:2rem auto;padding:1rem;font-family:sans-serif;line-height:1.7;">
         <h1>${escapeHtmlText(article.title)}</h1>
+        <p style="font-size:0.9rem;color:#475569;">
+          लेखक: <strong>${escapeHtmlText(article.author || 'रोजगार डेस्क, UPCOS')}</strong> |
+          प्रकाशन तिथि: <time datetime="${escapeHtmlAttr(article.publicationDate || latestDate)}">${escapeHtmlText(article.publicationDate || latestDate)}</time>
+        </p>
+        <figure style="margin:1rem 0;">
+          <img src="${escapeHtmlAttr(article.featuredImage || '/og-banner.jpg')}" alt="${escapeHtmlAttr(article.title)}" width="1200" height="675" style="max-width:100%;height:auto;border-radius:10px;" />
+        </figure>
         <p>${escapeHtmlText(article.shortDescription)}</p>
         ${highlightsHtml}
         ${bodyHtml}
@@ -912,6 +988,11 @@ const homeFaqSchema = {
   }))
 };
 const rootHtml = template
+  .replace(/<meta name="publish_date" content=".*?" \/>/i, `<meta name="publish_date" content="${escapeHtmlAttr(latestDate)}" />`)
+  .replace(/<meta name="date" content=".*?" \/>/i, `<meta name="date" content="${escapeHtmlAttr(latestDate)}" />`)
+  .replace(/<meta property="article:published_time" content=".*?" \/>/i, `<meta property="article:published_time" content="${escapeHtmlAttr(latestDate)}T09:30:00+05:30" />`)
+  .replace(/<meta property="article:modified_time" content=".*?" \/>/i, `<meta property="article:modified_time" content="${escapeHtmlAttr(latestDate)}T09:30:00+05:30" />`)
+  .replace(/<meta property="og:updated_time" content=".*?" \/>/i, `<meta property="og:updated_time" content="${escapeHtmlAttr(latestDate)}T09:30:00+05:30" />`)
   .replace(
     '</head>',
     `  <script id="jsonld-home-faq-schema" type="application/ld+json">${JSON.stringify(homeFaqSchema)}</script>\n</head>`
@@ -931,11 +1012,19 @@ allRoutes.forEach((r) => {
   const safeTitle = escapeHtmlAttr(r.title);
   const safeTitleText = escapeHtmlText(r.title);
   const safeDesc = escapeHtmlAttr(r.description);
+  const routeDate = r.publishedTime || r.lastmod || latestDate;
+  const routeDateIso = routeDate.includes('T') ? routeDate : `${routeDate}T09:30:00+05:30`;
+  const routeDateShort = routeDate.slice(0, 10);
   let html = template;
 
   html = html.replace(/<title>.*?<\/title>/i, `<title>${safeTitleText}</title>`);
   html = html.replace(/<meta name="title" content=".*?" \/>/i, `<meta name="title" content="${safeTitle}" />`);
   html = html.replace(/<meta name="description" content=".*?" \/>/i, `<meta name="description" content="${safeDesc}" />`);
+  html = html.replace(/<meta name="publish_date" content=".*?" \/>/i, `<meta name="publish_date" content="${escapeHtmlAttr(routeDateShort)}" />`);
+  html = html.replace(/<meta name="date" content=".*?" \/>/i, `<meta name="date" content="${escapeHtmlAttr(routeDateShort)}" />`);
+  html = html.replace(/<meta property="article:published_time" content=".*?" \/>/i, `<meta property="article:published_time" content="${escapeHtmlAttr(routeDateIso)}" />`);
+  html = html.replace(/<meta property="article:modified_time" content=".*?" \/>/i, `<meta property="article:modified_time" content="${escapeHtmlAttr(routeDateIso)}" />`);
+  html = html.replace(/<meta property="og:updated_time" content=".*?" \/>/i, `<meta property="og:updated_time" content="${escapeHtmlAttr(routeDateIso)}" />`);
   html = html.replace(/<link rel="canonical" href=".*?" \/>/i, `<link rel="canonical" href="${canonicalUrl}" />`);
   html = html.replace(/<link rel="alternate" hreflang="hi-IN" href=".*?" \/>/i, `<link rel="alternate" hreflang="hi-IN" href="${canonicalUrl}" />`);
   html = html.replace(/<link rel="alternate" hreflang="x-default" href=".*?" \/>/i, `<link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />`);
@@ -966,9 +1055,6 @@ allRoutes.forEach((r) => {
   }
 
   const extraHeadTags = [];
-  if (r.publishedTime) {
-    extraHeadTags.push(`  <meta property="article:published_time" content="${escapeHtmlAttr(r.publishedTime)}" />`);
-  }
   if (r.section) {
     extraHeadTags.push(`  <meta property="article:section" content="${escapeHtmlAttr(r.section)}" />`);
   }
@@ -979,7 +1065,17 @@ allRoutes.forEach((r) => {
     html = html.replace('</head>', `${extraHeadTags.join('\n')}\n</head>`);
   }
 
-  html = html.replace('<div id="root"></div>', `<div id="root">${r.bodySnippet}</div>`);
+  const metaStrip = !r.bodySnippet.includes('<time ')
+    ? `<div style="max-width:850px;margin:1rem auto 0;padding:0 1rem;font-family:sans-serif;font-size:0.85rem;color:#475569;">प्रकाशक: <strong>UPCOS Editorial Team</strong> | अद्यतन तिथि: <time datetime="${escapeHtmlAttr(routeDateIso)}">${escapeHtmlText(routeDateShort)}</time></div>`
+    : '';
+  const visualBanner = !r.bodySnippet.includes('<img ')
+    ? `<div style="max-width:850px;margin:1rem auto 0;padding:0 1rem;"><img src="/og-banner.jpg" alt="${safeTitle}" width="1376" height="768" style="max-width:100%;height:auto;border-radius:10px;" /></div>`
+    : '';
+
+  html = html.replace(
+    '<div id="root"></div>',
+    `<div id="root">${SITE_HEADER}${metaStrip}${visualBanner}${r.bodySnippet}${SITE_FOOTER}</div>`
+  );
 
   fs.writeFileSync(path.join(targetDir, 'index.html'), html, 'utf-8');
 });

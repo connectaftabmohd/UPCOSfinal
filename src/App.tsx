@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { 
   BrowserRouter, 
   Routes, 
@@ -31,23 +31,23 @@ import { Footer } from './components/Footer';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdPlacement } from './components/AdPlacement';
 
-// Pages & Modals
-import { SearchModal } from './components/SearchModal';
-import { ArticleDetailPage } from './components/ArticleDetailPage';
-import { GovOrderDetailPage } from './components/GovOrderDetailPage';
-import { DepartmentDetailPage } from './components/DepartmentDetailPage';
-import { NewsListPage } from './components/NewsListPage';
-import { SearchResultsPage } from './components/SearchResultsPage';
-import { StaticPages, PolicyPageType } from './components/StaticPages';
-import { AdminCMS } from './components/AdminCMS';
-import { CommunityFeedPage } from './components/CommunityFeedPage';
-import { BloggerThemeExportModal } from './components/BloggerThemeExportModal';
-import { SewayojanSyncModal } from './components/SewayojanSyncModal';
-import { AuthModal } from './components/AuthModal';
-import { UserProfileModal } from './components/UserProfileModal';
-import { AdminAccessModal } from './components/AdminAccessModal';
-import { NotFoundPage } from './components/NotFoundPage';
-import { SitemapPage } from './components/SitemapPage';
+// Pages & Modals (Lazy-loaded to reduce initial main-thread parse/FID)
+const SearchModal = lazy(() => import('./components/SearchModal').then((m) => ({ default: m.SearchModal })));
+const ArticleDetailPage = lazy(() => import('./components/ArticleDetailPage').then((m) => ({ default: m.ArticleDetailPage })));
+const GovOrderDetailPage = lazy(() => import('./components/GovOrderDetailPage').then((m) => ({ default: m.GovOrderDetailPage })));
+const DepartmentDetailPage = lazy(() => import('./components/DepartmentDetailPage').then((m) => ({ default: m.DepartmentDetailPage })));
+const NewsListPage = lazy(() => import('./components/NewsListPage').then((m) => ({ default: m.NewsListPage })));
+const SearchResultsPage = lazy(() => import('./components/SearchResultsPage').then((m) => ({ default: m.SearchResultsPage })));
+const StaticPages = lazy(() => import('./components/StaticPages').then((m) => ({ default: m.StaticPages })));
+const AdminCMS = lazy(() => import('./components/AdminCMS').then((m) => ({ default: m.AdminCMS })));
+const CommunityFeedPage = lazy(() => import('./components/CommunityFeedPage').then((m) => ({ default: m.CommunityFeedPage })));
+const BloggerThemeExportModal = lazy(() => import('./components/BloggerThemeExportModal').then((m) => ({ default: m.BloggerThemeExportModal })));
+const SewayojanSyncModal = lazy(() => import('./components/SewayojanSyncModal').then((m) => ({ default: m.SewayojanSyncModal })));
+const AuthModal = lazy(() => import('./components/AuthModal').then((m) => ({ default: m.AuthModal })));
+const UserProfileModal = lazy(() => import('./components/UserProfileModal').then((m) => ({ default: m.UserProfileModal })));
+const AdminAccessModal = lazy(() => import('./components/AdminAccessModal').then((m) => ({ default: m.AdminAccessModal })));
+const NotFoundPage = lazy(() => import('./components/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
+const SitemapPage = lazy(() => import('./components/SitemapPage').then((m) => ({ default: m.SitemapPage })));
 import { initializeAutoSyncEngine } from './services/sewayojanSyncService';
 import { authService } from './services/authService';
 import { UserProfile } from './types';
@@ -639,18 +639,27 @@ function MainApp() {
     return { type: 'home' };
   }, [location.pathname]);
 
-  // Lifecycle listeners (run once on mount)
+  // Lifecycle listeners (deferred non-critical work to keep initial FID < 50ms)
   useEffect(() => {
-    refreshData();
+    let cleanupSync: (() => void) | undefined;
+    let idleId: number | undefined;
+    let timerId: number | undefined;
 
-    // Verify server session
-    authService.verifyServerSession().then((u) => {
-      if (u) setCurrentUser(u);
-    });
+    const runDeferredInit = () => {
+      authService.verifyServerSession().then((u) => {
+        if (u) setCurrentUser(u);
+      });
+      cleanupSync = initializeAutoSyncEngine(() => {
+        refreshData();
+      });
+    };
 
-    const cleanup = initializeAutoSyncEngine(() => {
-      refreshData();
-    });
+    const win = typeof window !== 'undefined' ? window : undefined;
+    if (win && 'requestIdleCallback' in win) {
+      idleId = (win as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback(runDeferredInit, { timeout: 1500 });
+    } else if (win) {
+      timerId = win.setTimeout(runDeferredInit, 600);
+    }
 
     const unsubAuth = authService.subscribe((u) => {
       setCurrentUser(u);
@@ -687,15 +696,20 @@ function MainApp() {
     checkAdminHash();
 
     return () => {
-      cleanup();
+      if (idleId && win && 'cancelIdleCallback' in win) {
+        (win as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+      }
+      if (timerId && win) win.clearTimeout(timerId);
+      if (cleanupSync) cleanupSync();
       unsubAuth();
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('hashchange', checkAdminHash);
     };
   }, []);
 
-  // Update Dynamic SEO per pathname
+  // Update Dynamic SEO per pathname (scheduled via idle/micro-yield so hydration stays snappy)
   useEffect(() => {
+    const applyRouteSeo = () => {
     const isEn = language === 'EN';
     const p = location.pathname;
     const makeBreadcrumbs = (label: string, pathStr: string) => ({
@@ -706,7 +720,7 @@ function MainApp() {
       ]
     });
 
-    const activeJobPostings = (news || []).flatMap((article) => buildArticleJobPostingNodes(article));
+    const activeJobPostings = (news || []).slice(0, 6).flatMap((article) => buildArticleJobPostingNodes(article));
 
     if (p === '/') {
       const homeUrl = getCanonicalUrl('/');
@@ -921,9 +935,28 @@ function MainApp() {
         noindex: true
       });
     }
+    };
+
+    let idleSeoId: number | undefined;
+    let timerSeoId: number | undefined;
+    const win = typeof window !== 'undefined' ? window : undefined;
+    if (win && 'requestIdleCallback' in win) {
+      idleSeoId = (win as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback(applyRouteSeo, { timeout: 800 });
+    } else if (win) {
+      timerSeoId = win.setTimeout(applyRouteSeo, 50);
+    }
+    return () => {
+      if (idleSeoId && win && 'cancelIdleCallback' in win) {
+        (win as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleSeoId);
+      }
+      if (timerSeoId && win) win.clearTimeout(timerSeoId);
+    };
   }, [location.pathname, language, faqs, news]);
 
-  const featuredNews = contentStore.getFeaturedNews() || news[0];
+  const featuredNews = useMemo(
+    () => (news || []).find((n) => n.isFeatured) || (news && news[0]),
+    [news]
+  );
 
   const isAdEligible = useMemo(() => {
     const p = location.pathname.replace(/\/+$/, '') || '/';
@@ -985,6 +1018,7 @@ function MainApp() {
 
       {/* Main Content Area - React Router Switch */}
       <main className="w-full flex-1 overflow-x-hidden">
+        <Suspense fallback={<div className="min-h-[40vh] flex items-center justify-center text-sm text-slate-500">लोड हो रहा है...</div>}>
         <Routes>
           {/* 1. Home View */}
           <Route
@@ -1193,6 +1227,7 @@ function MainApp() {
             }
           />
         </Routes>
+        </Suspense>
       </main>
 
       {/* Why Join Section */}
@@ -1216,6 +1251,7 @@ function MainApp() {
       />
 
       {/* Modals */}
+      <Suspense fallback={null}>
       <AdminAccessModal
         isOpen={isAdminAccessModalOpen}
         onClose={() => setIsAdminAccessModalOpen(false)}
@@ -1262,6 +1298,7 @@ function MainApp() {
         }}
         onNavigate={handleNavigate}
       />
+      </Suspense>
 
       <MobileBottomNav
         currentView={currentView}

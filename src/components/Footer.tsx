@@ -81,7 +81,7 @@ export const Footer: React.FC<FooterProps> = ({
               <span className="text-xs font-semibold text-slate-400 block mb-2.5">
                 {isEnglish ? 'Follow Us on Social Media:' : 'सोशल मीडिया पर जुड़ें (Follow Us):'}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {[
                   { 
                     name: 'Facebook', 
@@ -91,32 +91,39 @@ export const Footer: React.FC<FooterProps> = ({
                     ariaLabel: 'Facebook - UP Outsource Seva Nigam News and Information'
                   },
                   { 
+                    name: 'Telegram', 
+                    icon: Send, 
+                    color: 'hover:bg-[#229ED9] hover:border-[#229ED9] text-slate-300 hover:text-white', 
+                    url: 'https://t.me/UPOutsource',
+                    ariaLabel: 'Telegram Channel - @UPOutsource'
+                  },
+                  { 
                     name: 'WhatsApp', 
                     icon: MessageCircle, 
                     color: 'hover:bg-[#25D366] hover:border-[#25D366] text-slate-300 hover:text-white', 
-                    url: 'https://whatsapp.com',
-                    ariaLabel: 'WhatsApp'
+                    url: 'https://whatsapp.com/channel/0029VaUPOutsource',
+                    ariaLabel: 'WhatsApp Channel - UP Outsource Seva Nigam'
                   },
                   { 
                     name: 'YouTube', 
                     icon: Youtube, 
                     color: 'hover:bg-[#FF0000] hover:border-[#FF0000] text-slate-300 hover:text-white', 
-                    url: 'https://youtube.com',
-                    ariaLabel: 'YouTube'
+                    url: 'https://www.youtube.com/@UPOutsource',
+                    ariaLabel: 'YouTube - @UPOutsource'
                   },
                   { 
                     name: 'X (Twitter)', 
                     icon: Twitter, 
                     color: 'hover:bg-slate-700 hover:border-slate-600 text-slate-300 hover:text-white', 
-                    url: 'https://x.com',
-                    ariaLabel: 'X (Twitter)'
+                    url: 'https://x.com/UPOutsource',
+                    ariaLabel: 'X (Twitter) - @UPOutsource'
                   },
                   { 
                     name: 'Instagram', 
                     icon: Instagram, 
                     color: 'hover:bg-pink-600 hover:border-pink-500 text-slate-300 hover:text-white', 
-                    url: 'https://instagram.com',
-                    ariaLabel: 'Instagram'
+                    url: 'https://www.instagram.com/upoutsource',
+                    ariaLabel: 'Instagram - @upoutsource'
                   },
                 ].map((s) => {
                   const Icon = s.icon;
@@ -125,7 +132,7 @@ export const Footer: React.FC<FooterProps> = ({
                       key={s.name}
                       href={s.url}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel="noopener noreferrer me"
                       title={s.name}
                       aria-label={s.ariaLabel}
                       className={`w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-110 ${s.color}`}
