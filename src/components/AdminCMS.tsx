@@ -95,6 +95,16 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const [activeTab, setActiveTab] = useState<AdminTab>('DASHBOARD');
   const [successMsg, setSuccessMsg] = useState('');
   const [isSewayojanSyncing, setIsSewayojanSyncing] = useState(false);
+  const [supabaseDbStatus, setSupabaseDbStatus] = useState<{
+    configured?: boolean;
+    hasUrl?: boolean;
+    hasAnonKey?: boolean;
+    hasServiceRoleKey?: boolean;
+    schemaReady?: boolean;
+    tables?: Record<string, { exists: boolean; count: number | null }>;
+  } | null>(null);
+  const [isCheckingSupabase, setIsCheckingSupabase] = useState(false);
+  const [isSyncingSupabase, setIsSyncingSupabase] = useState(false);
 
   // Active data fallback
   const departments = propDepartments || contentStore.getDepartments();
@@ -105,6 +115,25 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(''), 4500);
   };
+
+  const syncServerContent = () => {
+    void contentStore.syncToServer(authService.getAuthToken());
+  };
+
+  const loadSupabaseDbStatus = async () => {
+    setIsCheckingSupabase(true);
+    const status = await contentStore.getSupabaseDatabaseStatus(authService.getAuthToken());
+    if (status.success) {
+      setSupabaseDbStatus(status);
+    }
+    setIsCheckingSupabase(false);
+  };
+
+  React.useEffect(() => {
+    if (isAuthorized && activeTab === 'BACKUP') {
+      void loadSupabaseDbStatus();
+    }
+  }, [isAuthorized, activeTab]);
 
   const handleAuthorize = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,6 +262,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     };
 
     contentStore.addNews(newItem);
+    syncServerContent();
     onRefresh();
     showNotification('नया समाचार सफलतापूर्वक प्रकाशित किया गया!');
     setIsAddNewsOpen(false);
@@ -258,6 +288,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       fullContent: Array.isArray(editingNews.fullContent) ? editingNews.fullContent : [editingNews.shortDescription],
     });
 
+    syncServerContent();
     onRefresh();
     setEditingNews(null);
     showNotification('समाचार सफलतापूर्वक अद्यतित (Update) कर दिया गया!');
@@ -266,6 +297,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleDeleteNews = (id: string, title: string) => {
     if (confirm(`क्या आप इस समाचार को हटाना चाहते हैं?\n"${title}"`)) {
       contentStore.deleteNews(id);
+      syncServerContent();
       onRefresh();
       showNotification('समाचार पोर्टल से हटा दिया गया।');
     }
@@ -273,6 +305,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
 
   const handleToggleFeaturedNews = (item: NewsItem) => {
     contentStore.updateNews(item.id, { isFeatured: !item.isFeatured });
+    syncServerContent();
     onRefresh();
     showNotification(item.isFeatured ? 'मुख्य समाचार से हटाया गया।' : 'मुख्य समाचार (Featured) के रूप में सेट किया गया!');
   };
@@ -340,6 +373,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     };
 
     contentStore.addOrder(newOrder);
+    syncServerContent();
     onRefresh();
     showNotification('नया शासनादेश सफलतापूर्वक जोड़ दिया गया!');
     setIsAddOrderOpen(false);
@@ -366,6 +400,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       keyPoints: editingOrder.keyPoints,
     });
 
+    syncServerContent();
     onRefresh();
     setEditingOrder(null);
     showNotification('शासनादेश सफलतापूर्वक अद्यतित कर दिया गया!');
@@ -374,6 +409,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleDeleteOrder = (id: string, num: string) => {
     if (confirm(`क्या आप इस शासनादेश को हटाना चाहते हैं?\n"${num}"`)) {
       contentStore.deleteOrder(id);
+      syncServerContent();
       onRefresh();
       showNotification('शासनादेश हटा दिया गया।');
     }
@@ -420,6 +456,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     };
 
     contentStore.addDepartment(newDept);
+    syncServerContent();
     onRefresh();
     showNotification('नया विभाग सफलतापूर्वक जोड़ दिया गया!');
     setIsAddDeptOpen(false);
@@ -440,6 +477,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       nodalPortal: editingDept.nodalPortal,
     });
 
+    syncServerContent();
     onRefresh();
     setEditingDept(null);
     showNotification('विभाग की जानकारी सफलतापूर्वक अद्यतित कर दी गई!');
@@ -448,6 +486,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleDeleteDept = (id: string, name: string) => {
     if (confirm(`क्या आप इस विभाग को सूची से हटाना चाहते हैं?\n"${name}"`)) {
       contentStore.deleteDepartment(id);
+      syncServerContent();
       onRefresh();
       showNotification('विभाग हटा दिया गया।');
     }
@@ -464,6 +503,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     e.preventDefault();
     if (!newTickerText.trim()) return;
     contentStore.addTickerItem(newTickerText.trim());
+    syncServerContent();
     onRefresh();
     setNewTickerText('');
     showNotification('नया ब्रेकिंग टिकर अलर्ट जोड़ दिया गया!');
@@ -472,6 +512,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleSaveTickerEdit = (index: number) => {
     if (!editingTickerText.trim()) return;
     contentStore.updateTickerItem(index, editingTickerText.trim());
+    syncServerContent();
     onRefresh();
     setEditingTickerIdx(null);
     showNotification('टिकर संदेश अपडेट कर दिया गया!');
@@ -480,6 +521,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleDeleteTicker = (index: number) => {
     if (confirm('क्या आप इस टिकर संदेश को हटाना चाहते हैं?')) {
       contentStore.deleteTickerItem(index);
+      syncServerContent();
       onRefresh();
       showNotification('टिकर संदेश हटा दिया गया।');
     }
@@ -514,6 +556,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       answer: newFaqA.trim(),
       category: newFaqCat,
     });
+    syncServerContent();
     onRefresh();
     showNotification('नया FAQ जोड़ दिया गया!');
     setIsAddFaqOpen(false);
@@ -524,6 +567,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleSaveFaqEdit = () => {
     if (editingFaqIdx === null || !editingFaq) return;
     contentStore.updateFaq(editingFaqIdx, editingFaq);
+    syncServerContent();
     onRefresh();
     setEditingFaqIdx(null);
     setEditingFaq(null);
@@ -533,6 +577,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleDeleteFaq = (index: number) => {
     if (confirm('क्या आप इस FAQ को हटाना चाहते हैं?')) {
       contentStore.deleteFaq(index);
+      syncServerContent();
       onRefresh();
       showNotification('FAQ हटा दिया गया।');
     }
@@ -541,6 +586,18 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   // -------------------------------------------------------------
   // 6. BACKUP & RESTORE
   // -------------------------------------------------------------
+  const handleSyncToSupabase = async () => {
+    setIsSyncingSupabase(true);
+    const res = await contentStore.seedSupabaseDatabase(authService.getAuthToken());
+    setIsSyncingSupabase(false);
+    if (res.success) {
+      showNotification('वेबसाइट का समस्त डेटा Supabase डेटाबेस में सफलतापूर्वक सिंक हो गया!');
+      void loadSupabaseDbStatus();
+    } else {
+      alert(res.error || 'Supabase डेटा सिंक करने में त्रुटि आई।');
+    }
+  };
+
   const handleExportBackup = () => {
     const jsonStr = contentStore.exportFullBackup();
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -563,6 +620,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       if (content) {
         const res = contentStore.importFullBackup(content);
         if (res.success) {
+          syncServerContent();
           onRefresh();
           showNotification(res.message);
         } else {
@@ -577,6 +635,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleResetDefaults = () => {
     if (confirm('⚠️ चेतावनी: क्या आप पोर्टल की समस्त सामग्री को मूल प्रामाणिक डिफ़ॉल्ट डेटा में रीसेट करना चाहते हैं? आपकी कस्टम प्रविष्टियां मिट सकती हैं।')) {
       contentStore.resetToDefaults();
+      syncServerContent();
       onRefresh();
       showNotification('पोर्टल का समस्त डेटा मूल प्रामाणिक स्थिति में पुनर्स्थापित हो गया!');
     }
@@ -1909,6 +1968,112 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
         {/* ========================================================================= */}
         {activeTab === 'BACKUP' && (
           <div className="space-y-6">
+            {/* Supabase Website Database Setup & Live Status */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                  <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                    <Database className="w-5 h-5 text-emerald-700" />
+                    <span>Supabase डेटाबेस कनेक्शन एवं वेबसाइट स्टोरेज</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    सभी समाचार, शासनादेश, विभाग, टिकर, FAQs, कम्युनिटी पोस्ट व कर्मचारी प्रोफ़ाइल Supabase में सुरक्षित रखें।
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold ${
+                      supabaseDbStatus?.configured && supabaseDbStatus?.schemaReady
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : supabaseDbStatus?.configured
+                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                        : 'bg-slate-100 text-slate-700 border border-slate-300'
+                    }`}
+                  >
+                    {supabaseDbStatus?.configured && supabaseDbStatus?.schemaReady
+                      ? 'Supabase Connected & Ready'
+                      : supabaseDbStatus?.configured
+                      ? 'Connected (Run schema.sql)'
+                      : 'Secrets Not Configured'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void loadSupabaseDbStatus()}
+                    disabled={isCheckingSupabase}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 cursor-pointer flex items-center gap-1"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isCheckingSupabase ? 'animate-spin' : ''}`} />
+                    <span>जांचें</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 text-xs">
+                <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                  <span className="font-mono text-slate-700">SUPABASE_URL</span>
+                  <span className={`font-bold ${supabaseDbStatus?.hasUrl ? 'text-emerald-700' : 'text-rose-600'}`}>
+                    {supabaseDbStatus?.hasUrl ? 'Configured' : 'Missing'}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                  <span className="font-mono text-slate-700">SUPABASE_ANON_KEY</span>
+                  <span className={`font-bold ${supabaseDbStatus?.hasAnonKey ? 'text-emerald-700' : 'text-rose-600'}`}>
+                    {supabaseDbStatus?.hasAnonKey ? 'Configured' : 'Missing'}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                  <span className="font-mono text-slate-700">SERVICE_ROLE_KEY</span>
+                  <span className={`font-bold ${supabaseDbStatus?.hasServiceRoleKey ? 'text-emerald-700' : 'text-rose-600'}`}>
+                    {supabaseDbStatus?.hasServiceRoleKey ? 'Configured' : 'Missing'}
+                  </span>
+                </div>
+              </div>
+
+              {supabaseDbStatus?.tables && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+                  {(Object.entries(supabaseDbStatus.tables) as Array<[string, { exists: boolean; count: number | null }]>).map(([tableName, info]) => (
+                    <div
+                      key={tableName}
+                      className={`p-2.5 rounded-xl border text-[11px] ${
+                        info.exists
+                          ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                          : 'bg-slate-50 border-slate-200 text-slate-500'
+                      }`}
+                    >
+                      <div className="font-mono font-bold truncate">{tableName}</div>
+                      <div className="mt-1 flex items-center justify-between">
+                        <span>{info.exists ? 'Ready' : 'Not Created'}</span>
+                        {info.exists && <span className="font-bold">{info.count ?? 0} rows</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-950 space-y-2 mb-4">
+                <p className="font-bold">Supabase डेटाबेस कनेक्ट करने के 3 आसान चरण:</p>
+                <ol className="list-decimal list-inside space-y-1 text-slate-700">
+                  <li>अपने Supabase प्रोजेक्ट के Settings → API से Project URL, anon key और service_role key कॉपी करें।</li>
+                  <li>सर्वर Environment Secrets में <code className="font-mono bg-white px-1 rounded">SUPABASE_URL</code>, <code className="font-mono bg-white px-1 rounded">SUPABASE_ANON_KEY</code> और <code className="font-mono bg-white px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> जोड़ें।</li>
+                  <li>Supabase SQL Editor में प्रोजेक्ट की <code className="font-mono bg-white px-1 rounded">supabase/schema.sql</code> चलाएं और नीचे दिए बटन से पूरा वेबसाइट डेटा सिंक करें।</li>
+                </ol>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSyncToSupabase}
+                disabled={isSyncingSupabase}
+                className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                <Upload className="w-4 h-4" />
+                <span>
+                  {isSyncingSupabase
+                    ? 'Supabase में डेटा सिंक हो रहा है...'
+                    : 'सम्पूर्ण वेबसाइट डेटा Supabase में सिंक करें (Sync All Data)'}
+                </span>
+              </button>
+            </div>
+
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
               <h3 className="text-base font-black text-slate-900 mb-2 flex items-center gap-2">
                 <Database className="w-5 h-5 text-blue-900" />

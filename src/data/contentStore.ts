@@ -377,5 +377,110 @@ export const contentStore = {
     saveStoredTicker(BREAKING_NEWS_ITEMS);
     saveStoredFaqs(FAQS_DATA);
   },
+
+  fetchFromServer: async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/content/bootstrap');
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (!data || data.source !== 'supabase') return false;
+
+      let updated = false;
+      if (Array.isArray(data.news) && data.news.length > 0) {
+        saveStoredNews(data.news);
+        updated = true;
+      }
+      if (Array.isArray(data.orders) && data.orders.length > 0) {
+        saveStoredGovOrders(data.orders);
+        updated = true;
+      }
+      if (Array.isArray(data.departments) && data.departments.length > 0) {
+        saveStoredDepartments(data.departments);
+        updated = true;
+      }
+      if (Array.isArray(data.faqs) && data.faqs.length > 0) {
+        saveStoredFaqs(data.faqs);
+        updated = true;
+      }
+      if (Array.isArray(data.ticker) && data.ticker.length > 0) {
+        saveStoredTicker(data.ticker);
+        updated = true;
+      }
+      return updated;
+    } catch {
+      return false;
+    }
+  },
+
+  syncToServer: async (
+    authToken?: string | null
+  ): Promise<{ success: boolean; supabaseConfigured?: boolean; supabaseSynced?: boolean; error?: string }> => {
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) headers.Authorization = `Bearer ${authToken}`;
+      const res = await fetch('/api/admin/content/sync', {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({
+          news: getStoredNews(),
+          orders: getStoredGovOrders(),
+          departments: getStoredDepartments(),
+          faqs: getStoredFaqs(),
+          ticker: getStoredTicker()
+        })
+      });
+      return await res.json();
+    } catch {
+      return { success: false, error: 'सर्वर सिंक विफल रहा।' };
+    }
+  },
+
+  getSupabaseDatabaseStatus: async (authToken?: string | null): Promise<{
+    success: boolean;
+    configured?: boolean;
+    hasUrl?: boolean;
+    hasAnonKey?: boolean;
+    hasServiceRoleKey?: boolean;
+    schemaReady?: boolean;
+    tables?: Record<string, { exists: boolean; count: number | null }>;
+    error?: string;
+  }> => {
+    try {
+      const headers: Record<string, string> = {};
+      if (authToken) headers.Authorization = `Bearer ${authToken}`;
+      const res = await fetch('/api/admin/supabase-status', {
+        credentials: 'include',
+        headers
+      });
+      return await res.json();
+    } catch {
+      return { success: false, error: 'डेटाबेस स्थिति जांचने में त्रुटि आई।' };
+    }
+  },
+
+  seedSupabaseDatabase: async (
+    authToken?: string | null
+  ): Promise<{ success: boolean; syncedCounts?: Record<string, number>; error?: string }> => {
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) headers.Authorization = `Bearer ${authToken}`;
+      const res = await fetch('/api/admin/supabase-seed', {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({
+          news: getStoredNews(),
+          orders: getStoredGovOrders(),
+          departments: getStoredDepartments(),
+          faqs: getStoredFaqs(),
+          ticker: getStoredTicker()
+        })
+      });
+      return await res.json();
+    } catch {
+      return { success: false, error: 'Supabase डेटा सिंक करने में त्रुटि आई।' };
+    }
+  }
 };
 

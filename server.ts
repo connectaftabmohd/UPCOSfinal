@@ -17,9 +17,21 @@ import {
   handleEmailOtpVerify,
   handleLogout,
   handleRequestOtp,
+  handleSupabaseSessionSync,
   handleVerifyOtp,
   AuthRouteResponse
 } from "./src/server/authHandlers";
+import {
+  handleAdminContentSync,
+  handleAdminSupabaseSeed,
+  handleAdminSupabaseStatus,
+  handleContentBootstrap,
+  handleCreateCommunityPost,
+  handleGetCommunity,
+  handleGetNews,
+  handleGetOrders,
+  handleReportCommunityPost
+} from "./src/server/contentHandlers";
 import { dbService } from "./src/server/dbService";
 import { supabaseService } from "./src/server/supabaseService";
 
@@ -109,6 +121,7 @@ async function startServer() {
   app.post("/api/auth/otp-login", async (req, res) => sendAuthRes(res, await handleAuthOtpLogin(toAuthReq(req))));
   app.post("/api/auth/email-otp/request", async (req, res) => sendAuthRes(res, await handleEmailOtpRequest(toAuthReq(req))));
   app.post("/api/auth/email-otp/verify", async (req, res) => sendAuthRes(res, await handleEmailOtpVerify(toAuthReq(req))));
+  app.post("/api/auth/supabase-session", async (req, res) => sendAuthRes(res, await handleSupabaseSessionSync(toAuthReq(req))));
   app.post("/api/auth/reset-password", async (req, res) => sendAuthRes(res, await handleAuthResetPassword(toAuthReq(req))));
   app.post("/api/auth/profile", async (req, res) => sendAuthRes(res, await handleAuthProfileUpdate(toAuthReq(req))));
   app.post("/api/auth/logout", (req, res) => sendAuthRes(res, handleLogout(toAuthReq(req))));
@@ -133,40 +146,18 @@ async function startServer() {
     res.json({ success: true, id: record.id });
   });
 
-  // 4. Content APIs
-  app.get("/api/content/news", (_req, res) => {
-    res.json(dbService.getNews());
-  });
+  // 5. Website Content & Supabase Database APIs
+  app.get("/api/content/bootstrap", async (_req, res) => sendAuthRes(res, await handleContentBootstrap()));
+  app.get("/api/content/news", async (_req, res) => sendAuthRes(res, await handleGetNews()));
+  app.get("/api/content/orders", async (_req, res) => sendAuthRes(res, await handleGetOrders()));
+  app.get("/api/content/community", async (_req, res) => sendAuthRes(res, await handleGetCommunity()));
+  app.post("/api/content/community", async (req, res) => sendAuthRes(res, await handleCreateCommunityPost(toAuthReq(req))));
+  app.post("/api/content/community/report", async (req, res) => sendAuthRes(res, await handleReportCommunityPost(toAuthReq(req))));
 
-  app.get("/api/content/orders", (_req, res) => {
-    res.json(dbService.getOrders());
-  });
-
-  app.get("/api/content/community", (_req, res) => {
-    res.json(dbService.getCommunityPosts());
-  });
-
-  app.post("/api/content/community", (req, res) => {
-    const { authorId, authorName, authorDistrict, authorDepartment, category, content } = req.body;
-    if (!authorName || !content || !content.trim()) {
-      return res.status(400).json({ success: false, error: "संदेश सामग्री रिक्त नहीं हो सकती।" });
-    }
-    const created = dbService.createCommunityPost({
-      authorId: authorId || "anon",
-      authorName,
-      authorDistrict: authorDistrict || "उत्तर प्रदेश",
-      authorDepartment: authorDepartment || "समस्त विभाग",
-      category: category || "सामान्य",
-      content
-    });
-    res.status(201).json({ success: true, post: created });
-  });
-
-  app.post("/api/content/community/report", (req, res) => {
-    const { postId } = req.body;
-    const ok = dbService.reportCommunityPost(postId || "");
-    res.json({ success: ok });
-  });
+  // 6. Admin Supabase Database Setup & Content Sync APIs
+  app.get("/api/admin/supabase-status", async (req, res) => sendAuthRes(res, await handleAdminSupabaseStatus(toAuthReq(req))));
+  app.post("/api/admin/content/sync", async (req, res) => sendAuthRes(res, await handleAdminContentSync(toAuthReq(req))));
+  app.post("/api/admin/supabase-seed", async (req, res) => sendAuthRes(res, await handleAdminSupabaseSeed(toAuthReq(req))));
 
   // Dynamic Social Link Preview (OpenGraph / Twitter Card) Meta Injection for Vite & Express routes
   const fs = await import("fs");

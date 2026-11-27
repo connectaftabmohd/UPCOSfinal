@@ -649,6 +649,9 @@ function MainApp() {
       authService.verifyServerSession().then((u) => {
         if (u) setCurrentUser(u);
       });
+      contentStore.fetchFromServer().then((updated) => {
+        if (updated) refreshData();
+      });
       cleanupSync = initializeAutoSyncEngine(() => {
         refreshData();
       });

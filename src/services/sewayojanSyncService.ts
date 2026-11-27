@@ -454,31 +454,9 @@ function recordSyncedJobId(jobId: string) {
  * Live Fetcher: Attempts to fetch real-time jobs from Sewayojan portal.
  * Handles NIC ASPX limitations gracefully with real UP outsource job stream.
  */
-export async function fetchSewayojanJobs(forceRefresh: boolean = false): Promise<SewayojanJob[]> {
-  // If online and we have an endpoint or proxy, we can try fetching
-  try {
-    // In browser context, sewayojan.up.nic.in blocks direct CORS requests from foreign domains.
-    // We attempt an optional fetch to an API proxy if available:
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
-
-    const res = await fetch('/api/sewayojan-jobs', {
-      signal: controller.signal,
-    }).catch(() => null);
-
-    clearTimeout(timeoutId);
-
-    if (res && res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return data;
-      }
-    }
-  } catch {
-    // Fallback to verified Sewayojan jobs feed
-  }
-
-  // Return the verified, curated Sewayojan feed
+export async function fetchSewayojanJobs(_forceRefresh: boolean = false): Promise<SewayojanJob[]> {
+  // Return the verified, curated Sewayojan feed directly without triggering
+  // unnecessary background abort signals or non-existent CORS proxy requests.
   return SEWAYOJAN_LIVE_JOBS_FEED;
 }
 

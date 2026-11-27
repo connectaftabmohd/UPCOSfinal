@@ -6,7 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { NewsItem, GovernmentOrder, Department, FAQItem, UserProfile } from '../types';
-import { NEWS_DATA, GOV_ORDERS_DATA, DEPARTMENTS_DATA, FAQS_DATA } from '../data/mockData';
+import { NEWS_DATA, GOV_ORDERS_DATA, DEPARTMENTS_DATA, FAQS_DATA, BREAKING_NEWS_ITEMS } from '../data/mockData';
 
 export interface ContactMessage {
   id: string;
@@ -63,6 +63,7 @@ export interface DatabaseSchema {
   orders: GovernmentOrder[];
   departments: Department[];
   faqs: FAQItem[];
+  tickerItems?: string[];
   communityPosts: CommunityPostRecord[];
   contacts: ContactMessage[];
   users: StoredUserRecord[];
@@ -102,6 +103,7 @@ function ensureInitialDatabase(): DatabaseSchema {
     orders: GOV_ORDERS_DATA,
     departments: DEPARTMENTS_DATA,
     faqs: FAQS_DATA,
+    tickerItems: BREAKING_NEWS_ITEMS,
     communityPosts: [
       {
         id: 'cp-1',
@@ -185,6 +187,13 @@ export const dbService = {
     return db.news.length < len;
   },
 
+  replaceAllNews(items: NewsItem[]): NewsItem[] {
+    const db = ensureInitialDatabase();
+    db.news = items;
+    persistDb();
+    return db.news;
+  },
+
   getOrders(): GovernmentOrder[] {
     const db = ensureInitialDatabase();
     return db.orders;
@@ -207,14 +216,47 @@ export const dbService = {
     return order;
   },
 
+  replaceAllOrders(items: GovernmentOrder[]): GovernmentOrder[] {
+    const db = ensureInitialDatabase();
+    db.orders = items;
+    persistDb();
+    return db.orders;
+  },
+
   getDepartments(): Department[] {
     const db = ensureInitialDatabase();
+    return db.departments;
+  },
+
+  saveDepartments(items: Department[]): Department[] {
+    const db = ensureInitialDatabase();
+    db.departments = items;
+    persistDb();
     return db.departments;
   },
 
   getFaqs(): FAQItem[] {
     const db = ensureInitialDatabase();
     return db.faqs;
+  },
+
+  saveFaqs(items: FAQItem[]): FAQItem[] {
+    const db = ensureInitialDatabase();
+    db.faqs = items;
+    persistDb();
+    return db.faqs;
+  },
+
+  getTickerItems(): string[] {
+    const db = ensureInitialDatabase();
+    return Array.isArray(db.tickerItems) && db.tickerItems.length > 0 ? db.tickerItems : BREAKING_NEWS_ITEMS;
+  },
+
+  saveTickerItems(items: string[]): string[] {
+    const db = ensureInitialDatabase();
+    db.tickerItems = items;
+    persistDb();
+    return db.tickerItems;
   },
 
   getCommunityPosts(): CommunityPostRecord[] {

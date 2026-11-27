@@ -94,7 +94,144 @@ export async function handleAdminStatus(): Promise<AuthRouteResponse> {
     body: {
       needsSetup: await isAdminSetupRequiredAsync(),
       otpConfigured: isOtpGatewayConfigured(),
-      supabaseAuthConfigured: supabaseService.isConfigured()
+      supabaseAuthConfigured: supabaseService.isConfigured(),
+      supabaseConfig: supabaseService.getPublicClientConfig()
+    }
+  };
+}
+
+async function resolveAuthenticatedSession(req: AuthRouteRequest): Promise<{
+  valid: boolean;
+  token: string;
+  userId?: string;
+  role?: 'admin' | 'user';
+  supabaseUser?: {
+    supabaseUserId: string;
+    email?: string;
+    phone?: string;
+    emailConfirmed: boolean;
+    userMetadata: Record<string, any>;
+  };
+}> {
+  const token = extractSessionToken(req.headers);
+  if (!token) return { valid: false, token: '' };
+
+  const hmacSession = validateSessionToken(token);
+  if (hmacSession.valid && hmacSession.userId && hmacSession.role) {
+    return {
+      valid: true,
+      token,
+      userId: hmacSession.userId,
+      role: hmacSession.role
+    };
+  }
+
+  if (supabaseService.isConfigured()) {
+    const sbUser = await supabaseService.getUserFromAccessToken(token);
+    if (sbUser) {
+      return {
+        valid: true,
+        token,
+        userId: `sb-${sbUser.supabaseUserId}`,
+        role: 'user',
+        supabaseUser: sbUser
+      };
+    }
+  }
+
+  return { valid: false, token };
+}
+
+async function syncSupabaseUserRecord(sbUser: {
+  supabaseUserId: string;
+  email?: string;
+  phone?: string;
+  emailConfirmed: boolean;
+  userMetadata: Record<string, any>;
+}): Promise<StoredUserRecord> {
+  const meta = sbUser.userMetadata || {};
+  const sbId = `sb-${sbUser.supabaseUserId}`;
+  const cleanEmail = sbUser.email ? sbUser.email.trim().toLowerCase() : undefined;
+  const cleanMobile = (meta.mobile || sbUser.phone || '').toString().replace(/\D/g, '').slice(-10);
+
+  let existing = await findUserByIdAnyStore(sbId);
+  if (!existing && cleanEmail) {
+    existing = await findUserAnyStore(cleanEmail);
+  }
+  if (!existing && cleanMobile.length === 10) {
+    existing = await findUserAnyStore(cleanMobile);
+  }
+
+  if (existing) {
+    const patch: Partial<StoredUserRecord> = {};
+    if (meta.name && meta.name !== existing.name) patch.name = String(meta.name);
+    if (meta.district && meta.district !== existing.district) patch.district = String(meta.district);
+    if (meta.department && meta.department !== existing.department) patch.department = String(meta.department);
+    if (meta.designation && meta.designation !== existing.designation) patch.designation = String(meta.designation);
+    if (cleanMobile.length === 10 && !existing.mobile) patch.mobile = cleanMobile;
+    if (cleanEmail && !existing.email) patch.email = cleanEmail;
+    if (sbUser.emailConfirmed && !existing.isVerified) patch.isVerified = true;
+
+    if (Object.keys(patch).length > 0) {
+      const updated = await updateUserAnyStore(existing.id, patch);
+      if (updated) return updated;
+    }
+    return existing;
+  }
+
+  const newUser: StoredUserRecord = {
+    id: sbId,
+    name: meta.name || (cleanEmail ? cleanEmail.split('@')[0] : 'कर्मचारी साथी'),
+    mobile: cleanMobile,
+    email: cleanEmail,
+    district: meta.district || 'लखनऊ (Lucknow)',
+    department: meta.department || 'चिकित्सा स्वास्थ्य एवं परिवार कल्याण (Health Dept)',
+    designation: meta.designation || 'आउटसोर्सिंग कर्मचारी',
+    avatar:
+      meta.avatar ||
+      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    isVerified: Boolean(sbUser.emailConfirmed || meta.isVerified),
+    role: 'user',
+    joinedDate: meta.joinedDate || 'हाल ही में'
+  };
+
+  await createUserAnyStore(newUser);
+  return newUser;
+}
+
+export async function handleSupabaseSessionSync(req: AuthRouteRequest): Promise<AuthRouteResponse> {
+  if (!isRequestOriginAllowed(req.headers)) {
+    return { status: 403, body: { success: false, error: 'Forbidden origin' } };
+  }
+  if (!supabaseService.isConfigured()) {
+    return { status: 503, body: { success: false, error: 'Supabase Auth is not configured on the server.' } };
+  }
+
+  const bearerToken = extractSessionToken(req.headers);
+  const accessToken = bearerToken || (typeof req.body?.accessToken === 'string' ? req.body.accessToken.trim() : '');
+  if (!accessToken) {
+    return { status: 401, body: { success: false, error: 'Supabase access token is required.' } };
+  }
+
+  const sbUser = await supabaseService.getUserFromAccessToken(accessToken);
+  if (!sbUser) {
+    return { status: 401, body: { success: false, error: 'Invalid or expired Supabase session.' } };
+  }
+
+  if (sbUser.email && isAdminIdentifier(sbUser.email)) {
+    return { status: 403, body: { success: false, error: 'प्रशासक खाता मानक लॉगिन द्वारा ही अनुमत है।' } };
+  }
+
+  const userRecord = await syncSupabaseUserRecord(sbUser);
+  const sessionToken = createSessionToken(userRecord.id, userRecord.role || 'user');
+
+  return {
+    status: 200,
+    cookie: buildSessionCookieHeader(sessionToken, req.isHttps),
+    body: {
+      success: true,
+      token: sessionToken,
+      user: dbService.toSafeUserProfile(userRecord)
     }
   };
 }
@@ -165,8 +302,7 @@ export function handleAdminVerify(req: AuthRouteRequest): AuthRouteResponse {
 }
 
 export async function handleAuthVerify(req: AuthRouteRequest): Promise<AuthRouteResponse> {
-  const token = extractSessionToken(req.headers);
-  const session = validateSessionToken(token);
+  const session = await resolveAuthenticatedSession(req);
   if (!session.valid || !session.userId || !session.role) {
     return { status: 401, body: { valid: false, error: 'Unauthorized or expired session' } };
   }
@@ -176,8 +312,20 @@ export async function handleAuthVerify(req: AuthRouteRequest): Promise<AuthRoute
       status: 200,
       body: {
         valid: true,
-        token,
+        token: session.token,
         user: ADMIN_PUBLIC_PROFILE
+      }
+    };
+  }
+
+  if (session.supabaseUser) {
+    const synced = await syncSupabaseUserRecord(session.supabaseUser);
+    return {
+      status: 200,
+      body: {
+        valid: true,
+        token: session.token,
+        user: dbService.toSafeUserProfile(synced)
       }
     };
   }
@@ -188,7 +336,7 @@ export async function handleAuthVerify(req: AuthRouteRequest): Promise<AuthRoute
       status: 200,
       body: {
         valid: true,
-        token,
+        token: session.token,
         userId: session.userId,
         role: session.role
       }
@@ -199,7 +347,7 @@ export async function handleAuthVerify(req: AuthRouteRequest): Promise<AuthRoute
     status: 200,
     body: {
       valid: true,
-      token,
+      token: session.token,
       user: dbService.toSafeUserProfile(stored)
     }
   };
@@ -224,11 +372,26 @@ export async function handleAuthRegister(req: AuthRouteRequest): Promise<AuthRou
   if (!isRequestOriginAllowed(req.headers)) {
     return { status: 403, body: { success: false, error: 'Forbidden origin' } };
   }
-  const { name, mobile, email, district, department, designation, password } = req.body || {};
+  const {
+    name,
+    mobile,
+    email,
+    district,
+    department,
+    designation,
+    password,
+    supabaseUserId,
+    skipSupabaseSignUp,
+    requiresEmailConfirmation
+  } = req.body || {};
   const cleanName = typeof name === 'string' ? name.trim() : '';
   const cleanMobile = typeof mobile === 'string' ? mobile.replace(/\D/g, '').slice(-10) : '';
   const cleanEmail = typeof email === 'string' && email.trim() ? email.trim().toLowerCase() : undefined;
   const cleanPassword = typeof password === 'string' ? password.trim() : '';
+  const cleanSupabaseId =
+    typeof supabaseUserId === 'string' && supabaseUserId.trim()
+      ? supabaseUserId.trim().replace(/^sb-/, '')
+      : '';
 
   if (cleanName.length < 2) {
     return { status: 400, body: { success: false, error: 'कृपया पूरा नाम दर्ज करें।' } };
@@ -252,7 +415,7 @@ export async function handleAuthRegister(req: AuthRouteRequest): Promise<AuthRou
 
   const { hash, salt } = hashPassword(cleanPassword);
   const newUser: StoredUserRecord = {
-    id: `usr-${Date.now()}`,
+    id: cleanSupabaseId ? `sb-${cleanSupabaseId}` : `usr-${Date.now()}`,
     name: cleanName,
     mobile: cleanMobile,
     email: cleanEmail,
@@ -265,15 +428,15 @@ export async function handleAuthRegister(req: AuthRouteRequest): Promise<AuthRou
         : 'चिकित्सा स्वास्थ्य एवं परिवार कल्याण (Health Dept)',
     designation: typeof designation === 'string' && designation.trim() ? designation.trim() : 'डाटा एंट्री ऑपरेटर',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    isVerified: false,
+    isVerified: Boolean(cleanSupabaseId && !requiresEmailConfirmation),
     role: 'user',
     joinedDate: 'हाल ही में'
   };
 
   await createUserAnyStore(newUser);
 
-  // Sync optional email+password registration with Supabase Auth if configured
-  if (cleanEmail && cleanPassword.length >= 6 && supabaseService.isConfigured()) {
+  // Sync optional email+password registration with Supabase Auth if not already registered via browser client
+  if (!skipSupabaseSignUp && cleanEmail && cleanPassword.length >= 6 && supabaseService.isConfigured()) {
     await supabaseService.signUpWithEmailPassword(cleanEmail, cleanPassword, {
       name: newUser.name,
       mobile: newUser.mobile,
@@ -281,6 +444,17 @@ export async function handleAuthRegister(req: AuthRouteRequest): Promise<AuthRou
       department: newUser.department,
       designation: newUser.designation
     });
+  }
+
+  if (requiresEmailConfirmation) {
+    return {
+      status: 201,
+      body: {
+        success: true,
+        pendingConfirmation: true,
+        user: dbService.toSafeUserProfile(newUser)
+      }
+    };
   }
 
   const token = createSessionToken(newUser.id, 'user');
@@ -329,13 +503,36 @@ export async function handleAuthLogin(req: AuthRouteRequest): Promise<AuthRouteR
     };
   }
 
-  const found = await findUserAnyStore(cleanId);
+  let found = await findUserAnyStore(cleanId);
   if (found) {
-    if (!found.passwordHash || !found.salt || !verifyPassword(cleanPass, found.passwordHash, found.salt)) {
-      return {
-        status: 401,
-        body: { success: false, error: 'अमान्य पासवर्ड! कृपया सही पासवर्ड दर्ज करें।' }
-      };
+    let authenticated = false;
+
+    if (found.id.startsWith('sb-') && found.email && supabaseService.isConfigured()) {
+      const sbCheck = await supabaseService.signInWithEmailPassword(found.email, cleanPass);
+      if (sbCheck.emailNotConfirmed) {
+        return {
+          status: 403,
+          body: {
+            success: false,
+            error: 'आपका ईमेल अभी सत्यापित नहीं हुआ है। कृपया अपने ईमेल इनबॉक्स में भेजे गए सत्यापन लिंक की पुष्टि करें।'
+          }
+        };
+      }
+      if (sbCheck.success) {
+        authenticated = true;
+        if (!found.isVerified) {
+          found = (await updateUserAnyStore(found.id, { isVerified: true })) || { ...found, isVerified: true };
+        }
+      }
+    }
+
+    if (!authenticated) {
+      if (!found.passwordHash || !found.salt || !verifyPassword(cleanPass, found.passwordHash, found.salt)) {
+        return {
+          status: 401,
+          body: { success: false, error: 'अमान्य पासवर्ड! कृपया सही पासवर्ड दर्ज करें।' }
+        };
+      }
     }
 
     const token = createSessionToken(found.id, found.role || 'user');
@@ -353,13 +550,25 @@ export async function handleAuthLogin(req: AuthRouteRequest): Promise<AuthRouteR
   // Fallback: check Supabase Auth directly if identifier is an email
   if (cleanId.includes('@') && supabaseService.isConfigured()) {
     const sbAuth = await supabaseService.signInWithEmailPassword(cleanId, cleanPass);
+    if (sbAuth.emailNotConfirmed) {
+      return {
+        status: 403,
+        body: {
+          success: false,
+          error: 'आपका ईमेल अभी सत्यापित नहीं हुआ है। कृपया अपने ईमेल इनबॉक्स में भेजे गए सत्यापन लिंक की पुष्टि करें।'
+        }
+      };
+    }
     if (sbAuth.success && sbAuth.supabaseUserId) {
       const meta = sbAuth.userMetadata || {};
+      const { hash, salt } = hashPassword(cleanPass);
       const syncedUser: StoredUserRecord = {
         id: `sb-${sbAuth.supabaseUserId}`,
         name: meta.name || cleanId.split('@')[0],
         mobile: meta.mobile || '',
         email: sbAuth.email || cleanId,
+        passwordHash: hash,
+        salt,
         district: meta.district || 'लखनऊ (Lucknow)',
         department: meta.department || 'चिकित्सा स्वास्थ्य एवं परिवार कल्याण (Health Dept)',
         designation: meta.designation || 'आउटसोर्सिंग कर्मचारी',
@@ -580,8 +789,7 @@ export async function handleAuthProfileUpdate(req: AuthRouteRequest): Promise<Au
   if (!isRequestOriginAllowed(req.headers)) {
     return { status: 403, body: { success: false, error: 'Forbidden origin' } };
   }
-  const token = extractSessionToken(req.headers);
-  const session = validateSessionToken(token);
+  const session = await resolveAuthenticatedSession(req);
   if (!session.valid || !session.userId) {
     return { status: 401, body: { success: false, error: 'कृपया पहले लॉगिन करें।' } };
   }
@@ -590,12 +798,21 @@ export async function handleAuthProfileUpdate(req: AuthRouteRequest): Promise<Au
     return { status: 403, body: { success: false, error: 'प्रशासक प्रोफ़ाइल यहाँ से संशोधित नहीं की जा सकती।' } };
   }
 
-  const { name, district, department, designation, password } = req.body || {};
+  if (session.supabaseUser) {
+    await syncSupabaseUserRecord(session.supabaseUser);
+  }
+
+  const { name, district, department, designation, mobile, avatar, password } = req.body || {};
   const updates: Record<string, any> = {};
   if (typeof name === 'string' && name.trim().length >= 2) updates.name = name.trim();
   if (typeof district === 'string' && district.trim()) updates.district = district.trim();
   if (typeof department === 'string' && department.trim()) updates.department = department.trim();
   if (typeof designation === 'string' && designation.trim()) updates.designation = designation.trim();
+  if (typeof avatar === 'string' && avatar.trim()) updates.avatar = avatar.trim();
+  if (typeof mobile === 'string') {
+    const cleanMobile = mobile.replace(/\D/g, '').slice(-10);
+    if (cleanMobile.length === 10) updates.mobile = cleanMobile;
+  }
   if (typeof password === 'string' && password.trim().length >= 4) {
     const { hash, salt } = hashPassword(password.trim());
     updates.passwordHash = hash;
@@ -605,6 +822,20 @@ export async function handleAuthProfileUpdate(req: AuthRouteRequest): Promise<Au
   const updated = await updateUserAnyStore(session.userId, updates);
   if (!updated) {
     return { status: 404, body: { success: false, error: 'उपयोगकर्ता खाता नहीं मिला।' } };
+  }
+
+  if (supabaseService.isConfigured() && session.userId.startsWith('sb-')) {
+    await supabaseService.updateAuthUserById(session.userId, {
+      password: typeof password === 'string' && password.trim().length >= 6 ? password.trim() : undefined,
+      userMetadata: {
+        name: updated.name,
+        mobile: updated.mobile,
+        district: updated.district,
+        department: updated.department,
+        designation: updated.designation,
+        avatar: updated.avatar
+      }
+    });
   }
 
   return {

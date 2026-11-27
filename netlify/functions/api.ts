@@ -13,9 +13,21 @@ import {
   handleEmailOtpVerify,
   handleLogout,
   handleRequestOtp,
+  handleSupabaseSessionSync,
   handleVerifyOtp,
   AuthRouteResponse
 } from '../../src/server/authHandlers';
+import {
+  handleAdminContentSync,
+  handleAdminSupabaseSeed,
+  handleAdminSupabaseStatus,
+  handleContentBootstrap,
+  handleCreateCommunityPost,
+  handleGetCommunity,
+  handleGetNews,
+  handleGetOrders,
+  handleReportCommunityPost
+} from '../../src/server/contentHandlers';
 import { dbService } from '../../src/server/dbService';
 import { supabaseService } from '../../src/server/supabaseService';
 
@@ -121,6 +133,9 @@ export const handler = async (event: any) => {
     if (path === '/auth/email-otp/verify' && method === 'POST') {
       return formatAuthResponse(baseHeaders, await handleEmailOtpVerify(authReq));
     }
+    if (path === '/auth/supabase-session' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleSupabaseSessionSync(authReq));
+    }
     if (path === '/auth/reset-password' && method === 'POST') {
       return formatAuthResponse(baseHeaders, await handleAuthResetPassword(authReq));
     }
@@ -167,63 +182,42 @@ export const handler = async (event: any) => {
       };
     }
 
-    // 5. Public Content Read APIs
+    // 5. Public Content & Supabase Database APIs
+    if (path === '/content/bootstrap' && method === 'GET') {
+      return formatAuthResponse(baseHeaders, await handleContentBootstrap());
+    }
+
     if (path === '/content/news' && method === 'GET') {
-      return {
-        statusCode: 200,
-        headers: baseHeaders,
-        body: JSON.stringify(dbService.getNews())
-      };
+      return formatAuthResponse(baseHeaders, await handleGetNews());
     }
 
     if (path === '/content/orders' && method === 'GET') {
-      return {
-        statusCode: 200,
-        headers: baseHeaders,
-        body: JSON.stringify(dbService.getOrders())
-      };
+      return formatAuthResponse(baseHeaders, await handleGetOrders());
     }
 
     if (path === '/content/community' && method === 'GET') {
-      return {
-        statusCode: 200,
-        headers: baseHeaders,
-        body: JSON.stringify(dbService.getCommunityPosts())
-      };
+      return formatAuthResponse(baseHeaders, await handleGetCommunity());
     }
 
     if (path === '/content/community' && method === 'POST') {
-      const { authorId, authorName, authorDistrict, authorDepartment, category, content } = body;
-      if (!authorName || !content || !content.trim()) {
-        return {
-          statusCode: 400,
-          headers: baseHeaders,
-          body: JSON.stringify({ success: false, error: 'संदेश सामग्री रिक्त नहीं हो सकती।' })
-        };
-      }
-      const created = dbService.createCommunityPost({
-        authorId: authorId || 'anon',
-        authorName,
-        authorDistrict: authorDistrict || 'उत्तर प्रदेश',
-        authorDepartment: authorDepartment || 'समस्त विभाग',
-        category: category || 'सामान्य',
-        content
-      });
-      return {
-        statusCode: 201,
-        headers: baseHeaders,
-        body: JSON.stringify({ success: true, post: created })
-      };
+      return formatAuthResponse(baseHeaders, await handleCreateCommunityPost(authReq));
     }
 
     if (path === '/content/community/report' && method === 'POST') {
-      const { postId } = body;
-      const ok = dbService.reportCommunityPost(postId || '');
-      return {
-        statusCode: 200,
-        headers: baseHeaders,
-        body: JSON.stringify({ success: ok })
-      };
+      return formatAuthResponse(baseHeaders, await handleReportCommunityPost(authReq));
+    }
+
+    // 6. Admin Supabase Database Setup & Content Sync
+    if (path === '/admin/supabase-status' && method === 'GET') {
+      return formatAuthResponse(baseHeaders, await handleAdminSupabaseStatus(authReq));
+    }
+
+    if (path === '/admin/content/sync' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleAdminContentSync(authReq));
+    }
+
+    if (path === '/admin/supabase-seed' && method === 'POST') {
+      return formatAuthResponse(baseHeaders, await handleAdminSupabaseSeed(authReq));
     }
 
     return {

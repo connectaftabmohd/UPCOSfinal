@@ -48,6 +48,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  React.useEffect(() => {
+    if (user && isOpen) {
+      setName(user.name || '');
+      setDistrict(user.district || UP_DISTRICTS[0]);
+      setDepartment(user.department || UP_DEPARTMENTS[0]);
+      setDesignation(user.designation || '');
+      setSaveError('');
+    }
+  }, [user, isOpen]);
+
   if (!isOpen || !user) return null;
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -198,6 +208,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                           <span>मोबाइल नंबर:</span>
                         </span>
                         <span className="font-bold text-slate-900 dark:text-white">{user.mobile}</span>
+                      </div>
+                    )}
+
+                    {user.email && (
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-700">
+                        <span className="text-slate-500 flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5 text-blue-600" />
+                          <span>ईमेल पता:</span>
+                        </span>
+                        <span className="font-bold text-slate-900 dark:text-white truncate max-w-[220px]">{user.email}</span>
                       </div>
                     )}
 
